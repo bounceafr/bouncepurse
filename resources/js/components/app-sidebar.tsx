@@ -2,14 +2,18 @@ import { usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
 import {
     ClipboardList,
+    DollarSign,
     LayoutGrid,
     MapPin,
     Settings2,
     ShieldAlert,
+    SlidersHorizontal,
     Trophy,
     Users,
     Video,
 } from 'lucide-react';
+import { index as allocationIndex } from '@/actions/App/Http/Controllers/Admin/AllocationController';
+import { edit as allocationConfigEdit } from '@/actions/App/Http/Controllers/Admin/AllocationConfigurationController';
 import { index as courtsIndex } from '@/actions/App/Http/Controllers/Admin/CourtController';
 import { index as gamesIndex } from '@/actions/App/Http/Controllers/Admin/GameController';
 import { index as usersIndex } from '@/actions/App/Http/Controllers/Admin/UserController';
@@ -53,6 +57,15 @@ export function AppSidebar() {
                       title: 'Ranking Config',
                       href: ranking.edit().url,
                       icon: Settings2,
+                  },
+              ]
+            : []),
+        ...(can('manage-allocation-configuration')
+            ? [
+                  {
+                      title: 'Allocation Config',
+                      href: allocationConfigEdit().url,
+                      icon: SlidersHorizontal,
                   },
               ]
             : []),
@@ -102,6 +115,15 @@ export function AppSidebar() {
                       title: 'Flagged Games',
                       href: override.index().url,
                       icon: ShieldAlert,
+                  },
+              ]
+            : []),
+        ...(can('view-allocations')
+            ? [
+                  {
+                      title: 'Allocations',
+                      href: allocationIndex().url,
+                      icon: DollarSign,
                   },
               ]
             : []),

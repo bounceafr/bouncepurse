@@ -8,9 +8,13 @@ use App\Models\Allocation;
 use App\Models\AllocationConfiguration;
 use App\Models\Game;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 final class CreateAllocation
 {
+    /**
+     * @throws Throwable
+     */
     public function handle(Game $game): Allocation
     {
         $config = AllocationConfiguration::query()->latest('id')->firstOrFail();

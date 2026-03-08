@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Actions\Admin\Allocation\GetAllocationSummary;
+use App\Actions\Admin\Allocation\ListAllocations;
 use App\Http\Controllers\Controller;
 use App\Models\Allocation;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,7 +16,7 @@ use Inertia\Response as InertiaResponse;
 
 final class AllocationController extends Controller
 {
-    public function index(Request $request, GetAllocationSummary $summary): InertiaResponse
+    public function index(Request $request, GetAllocationSummary $summary, ListAllocations $list): InertiaResponse
     {
         $filters = array_filter([
             'from' => $request->query('from'),
@@ -26,6 +27,7 @@ final class AllocationController extends Controller
 
         return Inertia::render('admin/allocation/index', [
             'summary' => $summary->handle($filters),
+            'allocations' => $list->handle($filters),
             'filters' => $filters,
         ]);
     }

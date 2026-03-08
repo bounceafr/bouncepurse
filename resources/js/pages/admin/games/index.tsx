@@ -97,7 +97,7 @@ function statusBadge(status: string) {
     };
     return (
         <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${colors[status] ?? 'bg-gray-400'}`}
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs capitalize font-medium text-white ${colors[status] ?? 'bg-gray-400'}`}
         >
             {status}
         </span>
