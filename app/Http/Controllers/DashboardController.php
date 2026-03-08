@@ -33,7 +33,7 @@ final class DashboardController extends Controller
             'recent_games' => Game::query()
                 ->with(['court', 'player'])
                 ->latest('played_at')
-                ->limit(5)
+                ->limit(15)
                 ->get()
                 ->map(fn (Game $game): array => [
                     'id' => $game->id,

@@ -74,13 +74,13 @@ const chartConfig = {
 function statusBadgeClass(status: string): string {
     switch (status) {
         case 'approved':
-            return 'border-transparent bg-green-500 text-white';
+            return 'border-transparent bg-green-500 capitalize text-white';
         case 'pending':
-            return 'border-transparent bg-yellow-500 text-white';
+            return 'border-transparent bg-yellow-500 capitalize text-white';
         case 'rejected':
-            return 'border-transparent bg-red-500 text-white';
+            return 'border-transparent bg-red-500 capitalize text-white';
         case 'flagged':
-            return 'border-transparent bg-orange-500 text-white';
+            return 'border-transparent bg-orange-500 capitalize text-white';
         default:
             return '';
     }
@@ -219,10 +219,10 @@ export default function Dashboard({
                         <CardContent>
                             <ChartContainer
                                 config={chartConfig}
-                                className="h-64 w-full"
+                                className="w-full min-h-115"
                             >
                                 <BarChart data={chartData}>
-                                    <CartesianGrid vertical={false} />
+                                    <CartesianGrid vertical={true} />
                                     <XAxis
                                         dataKey="month"
                                         tickLine={false}

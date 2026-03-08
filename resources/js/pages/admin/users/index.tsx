@@ -1,4 +1,4 @@
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import { MoreHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import UserController, {
@@ -329,7 +329,7 @@ export default function UsersIndex({
                                 asChild={link.url !== null}
                             >
                                 {link.url !== null ? (
-                                    <a
+                                    <Link
                                         href={link.url}
                                         dangerouslySetInnerHTML={{
                                             __html: link.label,

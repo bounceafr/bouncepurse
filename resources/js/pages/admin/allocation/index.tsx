@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { DownloadIcon } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -14,6 +14,14 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -26,6 +34,25 @@ type Summary = {
     count: number;
 };
 
+type Allocation = {
+    id: number;
+    game_id: number;
+    player: { id: number; name: string };
+    game: { format: string };
+    total_amount: number;
+    insurance_amount: number;
+    savings_amount: number;
+    pathway_amount: number;
+    administration_amount: number;
+    created_at: string;
+};
+
+type PaginatedAllocations = {
+    data: Allocation[];
+    links: { url: string | null; label: string; active: boolean }[];
+    last_page: number;
+};
+
 type Filters = {
     from?: string;
     to?: string;
@@ -35,6 +62,7 @@ type Filters = {
 
 type Props = {
     summary: Summary;
+    allocations: PaginatedAllocations;
     filters: Filters;
 };
 
@@ -68,7 +96,7 @@ function StatCard({
     );
 }
 
-export default function AllocationIndex({ summary, filters }: Props) {
+export default function AllocationIndex({ summary, allocations, filters }: Props) {
     const [from, setFrom] = useState(filters.from ?? '');
     const [to, setTo] = useState(filters.to ?? '');
     const [format, setFormat] = useState(filters.format ?? '');
@@ -211,6 +239,93 @@ export default function AllocationIndex({ summary, filters }: Props) {
                         </div>
                     </CardContent>
                 </Card>
+
+                <div className="rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Player</TableHead>
+                                <TableHead>Format</TableHead>
+                                <TableHead>Total</TableHead>
+                                <TableHead>Insurance</TableHead>
+                                <TableHead>Savings</TableHead>
+                                <TableHead>Pathway</TableHead>
+                                <TableHead>Administration</TableHead>
+                                <TableHead>Date</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {allocations.data.length === 0 ? (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={8}
+                                        className="py-8 text-center text-muted-foreground"
+                                    >
+                                        No allocations found.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                allocations.data.map((allocation) => (
+                                    <TableRow key={allocation.id}>
+                                        <TableCell className="font-medium">
+                                            {allocation.player.name}
+                                        </TableCell>
+                                        <TableCell>
+                                            {allocation.game.format}
+                                        </TableCell>
+                                        <TableCell>
+                                            ${allocation.total_amount.toFixed(2)}
+                                        </TableCell>
+                                        <TableCell>
+                                            ${allocation.insurance_amount.toFixed(4)}
+                                        </TableCell>
+                                        <TableCell>
+                                            ${allocation.savings_amount.toFixed(4)}
+                                        </TableCell>
+                                        <TableCell>
+                                            ${allocation.pathway_amount.toFixed(4)}
+                                        </TableCell>
+                                        <TableCell>
+                                            ${allocation.administration_amount.toFixed(4)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {new Date(allocation.created_at).toLocaleDateString()}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {allocations.last_page > 1 && (
+                    <div className="flex items-center justify-center gap-1">
+                        {allocations.links.map((link, i) => (
+                            <Button
+                                key={i}
+                                variant={link.active ? 'default' : 'outline'}
+                                size="sm"
+                                disabled={link.url === null}
+                                asChild={link.url !== null}
+                            >
+                                {link.url !== null ? (
+                                    <Link
+                                        href={link.url}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    />
+                                ) : (
+                                    <span
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    />
+                                )}
+                            </Button>
+                        ))}
+                    </div>
+                )}
             </div>
         </AppLayout>
     );
