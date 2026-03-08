@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import {
     index,
@@ -6,19 +7,17 @@ import {
 } from '@/actions/App/Http/Controllers/Admin/ModerationController';
 import { Button } from '@/components/ui/button';
 import {
+    DataTable,
+    LaravelPagination,
+    selectionColumn,
+    sortableHeader,
+} from '@/components/ui/data-table';
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -54,6 +53,82 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Moderation Queue', href: index().url },
 ];
 
+const columns: ColumnDef<Game, unknown>[] = [
+    selectionColumn<Game>(),
+    {
+        accessorKey: 'title',
+        header: sortableHeader('Title'),
+        cell: ({ row }) => (
+            <span className="font-medium">{row.getValue('title')}</span>
+        ),
+    },
+    {
+        id: 'player',
+        accessorFn: (row) => row.player?.name ?? '—',
+        header: sortableHeader('Player'),
+    },
+    {
+        accessorKey: 'format',
+        header: sortableHeader('Format'),
+    },
+    {
+        id: 'court',
+        accessorFn: (row) => row.court?.name ?? '—',
+        header: sortableHeader('Court'),
+    },
+    {
+        accessorKey: 'played_at',
+        header: sortableHeader('Played At'),
+        cell: ({ row }) =>
+            new Date(row.getValue('played_at')).toLocaleDateString(),
+    },
+    {
+        id: 'video',
+        header: 'Video',
+        enableSorting: false,
+        cell: ({ row }) => {
+            const game = row.original;
+            return game.vimeo_uri ? (
+                <a
+                    href={`https://vimeo.com${game.vimeo_uri}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 underline hover:text-blue-800"
+                >
+                    Watch
+                </a>
+            ) : (
+                <span className="text-xs text-muted-foreground">No video</span>
+            );
+        },
+    },
+    {
+        id: 'actions',
+        enableHiding: false,
+        enableSorting: false,
+        cell: ({ row }) => {
+            const game = row.original;
+            return (
+                <div className="text-right">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="size-4" />
+                                <span className="sr-only">Actions</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                                <Link href={show(game.uuid).url}>Review</Link>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            );
+        },
+    },
+];
+
 export default function ModerationIndex({ games }: { games: PaginatedGames }) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -68,127 +143,15 @@ export default function ModerationIndex({ games }: { games: PaginatedGames }) {
                     </p>
                 </div>
 
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Player</TableHead>
-                                <TableHead>Format</TableHead>
-                                <TableHead>Court</TableHead>
-                                <TableHead>Played At</TableHead>
-                                <TableHead>Video</TableHead>
-                                <TableHead className="text-right">
-                                    Actions
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {games.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={7}
-                                        className="py-8 text-center text-muted-foreground"
-                                    >
-                                        No games pending review.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                games.data.map((game) => (
-                                    <TableRow key={game.id}>
-                                        <TableCell className="font-medium">
-                                            {game.title}
-                                        </TableCell>
-                                        <TableCell>
-                                            {game.player?.name ?? '—'}
-                                        </TableCell>
-                                        <TableCell>{game.format}</TableCell>
-                                        <TableCell>
-                                            {game.court?.name ?? '—'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(
-                                                game.played_at,
-                                            ).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell>
-                                            {game.vimeo_uri ? (
-                                                <a
-                                                    href={`https://vimeo.com${game.vimeo_uri}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-sm text-blue-600 underline hover:text-blue-800"
-                                                >
-                                                    Watch
-                                                </a>
-                                            ) : (
-                                                <span className="text-xs text-muted-foreground">
-                                                    No video
-                                                </span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                    >
-                                                        <MoreHorizontal className="size-4" />
-                                                        <span className="sr-only">
-                                                            Actions
-                                                        </span>
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem asChild>
-                                                        <Link
-                                                            href={
-                                                                show(game.uuid)
-                                                                    .url
-                                                            }
-                                                        >
-                                                            Review
-                                                        </Link>
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {games.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-1">
-                        {games.links.map((link, i) => (
-                            <Button
-                                key={i}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                disabled={link.url === null}
-                                asChild={link.url !== null}
-                            >
-                                {link.url !== null ? (
-                                    <Link
-                                        href={link.url}
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                ) : (
-                                    <span
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                )}
-                            </Button>
-                        ))}
-                    </div>
-                )}
+                <DataTable
+                    columns={columns}
+                    data={games.data}
+                    pagination={
+                        games.last_page > 1 ? (
+                            <LaravelPagination links={games.links} />
+                        ) : undefined
+                    }
+                />
             </div>
         </AppLayout>
     );

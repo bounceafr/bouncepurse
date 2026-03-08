@@ -47,6 +47,7 @@ final class Profile extends Model
         return [
             'country_id' => 'integer',
             'player_id' => 'integer',
+            'is_pathway_candidate' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

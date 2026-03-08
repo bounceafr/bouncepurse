@@ -226,7 +226,7 @@ test('csv export includes data row with correct format', function (): void {
 
     $config = AllocationConfiguration::query()->latest()->first();
     $game = Game::factory()->create(['format' => 'singles']);
-    $player = User::find($game->player_id);
+    $player = User::query()->find($game->player_id);
 
     $allocation = Allocation::query()->create([
         'game_id' => $game->id,
@@ -310,7 +310,7 @@ test('csv export filters by date range', function (): void {
         'to' => now()->toDateString(),
     ]));
 
-    $lines = fn (string $content) => count(array_filter(explode("\n", mb_trim($content)))) - 1;
+    $lines = fn (string $content): int => count(array_filter(explode("\n", mb_trim($content)))) - 1;
 
     expect($lines($responseWithin->getContent()))->toBe(1)
         ->and($lines($responseOutside->getContent()))->toBe(0);

@@ -1,4 +1,5 @@
-import { Form, Head, Link, router } from '@inertiajs/react';
+import { Form, Head, router } from '@inertiajs/react';
+import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import UserController, {
@@ -6,6 +7,12 @@ import UserController, {
 } from '@/actions/App/Http/Controllers/Admin/UserController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import {
+    DataTable,
+    LaravelPagination,
+    selectionColumn,
+    sortableHeader,
+} from '@/components/ui/data-table';
 import {
     Dialog,
     DialogClose,
@@ -31,14 +38,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -208,144 +207,103 @@ export default function UsersIndex({
         return () => clearTimeout(timeout);
     }, [search]);
 
+    const columns: ColumnDef<User, unknown>[] = [
+        selectionColumn<User>(),
+        {
+            accessorKey: 'name',
+            header: sortableHeader('Name'),
+            cell: ({ row }) => (
+                <span className="font-medium">{row.getValue('name')}</span>
+            ),
+        },
+        {
+            accessorKey: 'email',
+            header: sortableHeader('Email'),
+        },
+        {
+            id: 'role',
+            header: 'Role',
+            enableSorting: false,
+            cell: ({ row }) => roleBadge(row.original.roles[0]?.name, roles),
+        },
+        {
+            accessorKey: 'created_at',
+            header: sortableHeader('Created At'),
+            cell: ({ row }) =>
+                new Date(row.getValue('created_at')).toLocaleDateString(),
+        },
+        {
+            id: 'actions',
+            enableHiding: false,
+            enableSorting: false,
+            cell: ({ row }) => {
+                const user = row.original;
+                return (
+                    <div className="text-right">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="size-4" />
+                                    <span className="sr-only">Actions</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onClick={() => setEditUser(user)}
+                                >
+                                    Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={() => setDeleteUser(user)}
+                                >
+                                    Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                );
+            },
+        },
+    ];
+
+    const toolbar = (
+        <>
+            <Input
+                placeholder="Search users..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-64"
+            />
+            <Button variant="default" onClick={() => setCreateOpen(true)}>
+                Add User
+            </Button>
+        </>
+    );
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Users" />
 
             <div className="flex flex-col gap-6 p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold">Users</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Manage all users ({users.total} total)
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <Input
-                            placeholder="Search users..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-64"
-                        />
-                        <Button
-                            variant="default"
-                            onClick={() => setCreateOpen(true)}
-                        >
-                            Add User
-                        </Button>
-                    </div>
+                <div>
+                    <h1 className="text-2xl font-semibold">Users</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Manage all users ({users.total} total)
+                    </p>
                 </div>
 
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Role</TableHead>
-                                <TableHead>Created At</TableHead>
-                                <TableHead className="text-right">
-                                    Actions
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {users.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={5}
-                                        className="py-8 text-center text-muted-foreground"
-                                    >
-                                        No users found.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                users.data.map((user) => (
-                                    <TableRow key={user.id}>
-                                        <TableCell className="font-medium">
-                                            {user.name}
-                                        </TableCell>
-                                        <TableCell>{user.email}</TableCell>
-                                        <TableCell>
-                                            {roleBadge(
-                                                user.roles[0]?.name,
-                                                roles,
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(
-                                                user.created_at,
-                                            ).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                    >
-                                                        <MoreHorizontal className="size-4" />
-                                                        <span className="sr-only">
-                                                            Actions
-                                                        </span>
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            setEditUser(user)
-                                                        }
-                                                    >
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem
-                                                        variant="destructive"
-                                                        onClick={() =>
-                                                            setDeleteUser(user)
-                                                        }
-                                                    >
-                                                        Delete
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {users.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-1">
-                        {users.links.map((link, i) => (
-                            <Button
-                                key={i}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                disabled={link.url === null}
-                                asChild={link.url !== null}
-                            >
-                                {link.url !== null ? (
-                                    <Link
-                                        href={link.url}
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                ) : (
-                                    <span
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                )}
-                            </Button>
-                        ))}
-                    </div>
-                )}
+                <DataTable
+                    columns={columns}
+                    data={users.data}
+                    toolbar={toolbar}
+                    pagination={
+                        users.last_page > 1 ? (
+                            <LaravelPagination links={users.links} />
+                        ) : undefined
+                    }
+                />
             </div>
 
             {/* Create User Modal */}

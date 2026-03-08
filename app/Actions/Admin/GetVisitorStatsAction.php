@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Admin;
 
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 
 final readonly class GetVisitorStatsAction
@@ -20,7 +20,7 @@ final readonly class GetVisitorStatsAction
             : 'DATE(FROM_UNIXTIME(last_activity))'; // @codeCoverageIgnore
 
         $rows = DB::table('sessions')
-            ->selectRaw("{$dateExpr} as date, user_agent")
+            ->selectRaw($dateExpr.' as date, user_agent')
             ->where('last_activity', '>=', $since)
             ->get();
 
@@ -31,7 +31,7 @@ final readonly class GetVisitorStatsAction
                 $grouped[$date] = ['desktop' => 0, 'mobile' => 0];
             }
 
-            if ($row->user_agent && preg_match('/'.self::MOBILE_PATTERN.'/i', $row->user_agent)) {
+            if ($row->user_agent && preg_match('/'.self::MOBILE_PATTERN.'/i', (string) $row->user_agent)) {
                 $grouped[$date]['mobile']++;
             } else {
                 $grouped[$date]['desktop']++;
@@ -40,7 +40,7 @@ final readonly class GetVisitorStatsAction
 
         $result = [];
         for ($i = $days - 1; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i)->toDateString();
+            $date = Date::today()->subDays($i)->toDateString();
             $result[] = [
                 'date' => $date,
                 'desktop' => $grouped[$date]['desktop'] ?? 0,

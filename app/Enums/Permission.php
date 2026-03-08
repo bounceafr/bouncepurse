@@ -31,6 +31,10 @@ enum Permission: string
     case ViewAllocations = 'view-allocations';
     case ManageAllocationConfiguration = 'manage-allocation-configuration';
 
+    // Pathway
+    case ViewPathwayEligibility = 'view-pathway-eligibility';
+    case ManagePathwayConfiguration = 'manage-pathway-configuration';
+
     /** @return list<string> */
     public static function values(): array
     {
@@ -55,6 +59,8 @@ enum Permission: string
             self::ManageRankingConfiguration => 'Manage Ranking Configuration',
             self::ViewAllocations => 'View Allocations',
             self::ManageAllocationConfiguration => 'Manage Allocation Configuration',
+            self::ViewPathwayEligibility => 'View Pathway Eligibility',
+            self::ManagePathwayConfiguration => 'Manage Pathway Configuration',
         };
     }
 }

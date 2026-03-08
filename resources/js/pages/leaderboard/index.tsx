@@ -1,5 +1,11 @@
 import { Head, router } from '@inertiajs/react';
+import { type ColumnDef } from '@tanstack/react-table';
 import { Trophy } from 'lucide-react';
+import {
+    DataTable,
+    selectionColumn,
+    sortableHeader,
+} from '@/components/ui/data-table';
 import {
     Select,
     SelectContent,
@@ -7,14 +13,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { leaderboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -50,6 +48,63 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Leaderboard', href: leaderboard().url },
 ];
 
+const columns: ColumnDef<LeaderboardEntry, unknown>[] = [
+    selectionColumn<LeaderboardEntry>(),
+    {
+        accessorKey: 'rank',
+        header: sortableHeader('Rank'),
+        cell: ({ row }) => (
+            <span className="font-bold">#{row.getValue('rank')}</span>
+        ),
+    },
+    {
+        accessorKey: 'player_name',
+        header: sortableHeader('Player'),
+        cell: ({ row }) => (
+            <span className="font-medium">{row.getValue('player_name')}</span>
+        ),
+    },
+    {
+        accessorKey: 'wins',
+        header: sortableHeader('W'),
+        cell: ({ row }) => (
+            <span className="block text-right text-green-600">
+                {row.getValue('wins')}
+            </span>
+        ),
+    },
+    {
+        accessorKey: 'losses',
+        header: sortableHeader('L'),
+        cell: ({ row }) => (
+            <span className="block text-right text-red-500">
+                {row.getValue('losses')}
+            </span>
+        ),
+    },
+    {
+        accessorKey: 'total_games',
+        header: sortableHeader('Games'),
+        cell: ({ row }) => (
+            <span className="block text-right">
+                {row.getValue('total_games')}
+            </span>
+        ),
+    },
+    {
+        accessorKey: 'score',
+        header: sortableHeader('Score'),
+        cell: ({ row }) => {
+            const score = row.getValue('score') as number;
+            return (
+                <span className="block text-right font-mono">
+                    {score.toFixed(2)}
+                </span>
+            );
+        },
+    },
+];
+
 export default function LeaderboardIndex({ entries, filters, formats }: Props) {
     function handleFilterChange(key: string, value: string) {
         router.get(
@@ -58,6 +113,46 @@ export default function LeaderboardIndex({ entries, filters, formats }: Props) {
             { preserveState: true },
         );
     }
+
+    const toolbar = (
+        <>
+            <div className="w-40">
+                <Select
+                    value={filters.format}
+                    onValueChange={(val) => handleFilterChange('format', val)}
+                >
+                    <SelectTrigger>
+                        <SelectValue placeholder="Format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {formats.map((fmt) => (
+                            <SelectItem key={fmt} value={fmt}>
+                                {fmt}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="w-44">
+                <Select
+                    value={filters.geo}
+                    onValueChange={(val) => handleFilterChange('geo', val)}
+                >
+                    <SelectTrigger>
+                        <SelectValue placeholder="Region" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {geoOptions.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        </>
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -74,105 +169,7 @@ export default function LeaderboardIndex({ entries, filters, formats }: Props) {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-4">
-                    <div className="w-40">
-                        <Select
-                            value={filters.format}
-                            onValueChange={(val) =>
-                                handleFilterChange('format', val)
-                            }
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Format" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {formats.map((fmt) => (
-                                    <SelectItem key={fmt} value={fmt}>
-                                        {fmt}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="w-44">
-                        <Select
-                            value={filters.geo}
-                            onValueChange={(val) =>
-                                handleFilterChange('geo', val)
-                            }
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Region" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {geoOptions.map((opt) => (
-                                    <SelectItem
-                                        key={opt.value}
-                                        value={opt.value}
-                                    >
-                                        {opt.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-16">Rank</TableHead>
-                                <TableHead>Player</TableHead>
-                                <TableHead className="text-right">W</TableHead>
-                                <TableHead className="text-right">L</TableHead>
-                                <TableHead className="text-right">
-                                    Games
-                                </TableHead>
-                                <TableHead className="text-right">
-                                    Score
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {entries.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={6}
-                                        className="py-8 text-center text-muted-foreground"
-                                    >
-                                        No rankings available for this
-                                        selection.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                entries.map((entry) => (
-                                    <TableRow key={entry.player_id}>
-                                        <TableCell className="font-bold">
-                                            #{entry.rank}
-                                        </TableCell>
-                                        <TableCell className="font-medium">
-                                            {entry.player_name}
-                                        </TableCell>
-                                        <TableCell className="text-right text-green-600">
-                                            {entry.wins}
-                                        </TableCell>
-                                        <TableCell className="text-right text-red-500">
-                                            {entry.losses}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {entry.total_games}
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono">
-                                            {entry.score.toFixed(2)}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                <DataTable columns={columns} data={entries} toolbar={toolbar} />
             </div>
         </AppLayout>
     );

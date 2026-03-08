@@ -55,6 +55,6 @@ test('excludes sessions older than the day range', function (): void {
     $action = new GetVisitorStatsAction;
     $result = $action->handle(7);
 
-    $total = array_sum(array_map(fn ($r) => $r['desktop'] + $r['mobile'], $result));
+    $total = array_sum(array_map(fn (array $r): float|int|array => $r['desktop'] + $r['mobile'], $result));
     expect($total)->toBe(0);
 });

@@ -1,20 +1,19 @@
 import { Head, Link } from '@inertiajs/react';
+import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+    DataTable,
+    LaravelPagination,
+    selectionColumn,
+    sortableHeader,
+} from '@/components/ui/data-table';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { index, show } from '@/routes/admin/override';
 import type { BreadcrumbItem } from '@/types';
@@ -61,6 +60,79 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Flagged Games', href: index().url },
 ];
 
+const columns: ColumnDef<Game, unknown>[] = [
+    selectionColumn<Game>(),
+    {
+        accessorKey: 'title',
+        header: sortableHeader('Title'),
+        cell: ({ row }) => (
+            <span className="font-medium">{row.getValue('title')}</span>
+        ),
+    },
+    {
+        id: 'player',
+        accessorFn: (row) => row.player?.name ?? '—',
+        header: sortableHeader('Player'),
+    },
+    {
+        accessorKey: 'format',
+        header: sortableHeader('Format'),
+    },
+    {
+        id: 'court',
+        accessorFn: (row) => row.court?.name ?? '—',
+        header: sortableHeader('Court'),
+    },
+    {
+        id: 'flagged_by',
+        accessorFn: (row) => {
+            const latest = row.moderation[row.moderation.length - 1] ?? null;
+            return latest?.moderator?.name ?? '—';
+        },
+        header: sortableHeader('Flagged By'),
+    },
+    {
+        id: 'flag_reason',
+        header: 'Flag Reason',
+        enableSorting: false,
+        cell: ({ row }) => {
+            const latest =
+                row.original.moderation[row.original.moderation.length - 1] ??
+                null;
+            return (
+                <span className="block max-w-xs truncate">
+                    {latest?.reason ?? '—'}
+                </span>
+            );
+        },
+    },
+    {
+        id: 'actions',
+        enableHiding: false,
+        enableSorting: false,
+        cell: ({ row }) => {
+            const game = row.original;
+            return (
+                <div className="text-right">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="size-4" />
+                                <span className="sr-only">Actions</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                                <Link href={show(game.uuid).url}>Review</Link>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            );
+        },
+    },
+];
+
 export default function OverrideIndex({ games }: { games: PaginatedGames }) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -75,125 +147,15 @@ export default function OverrideIndex({ games }: { games: PaginatedGames }) {
                     </p>
                 </div>
 
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Player</TableHead>
-                                <TableHead>Format</TableHead>
-                                <TableHead>Court</TableHead>
-                                <TableHead>Flagged By</TableHead>
-                                <TableHead>Flag Reason</TableHead>
-                                <TableHead className="text-right">
-                                    Actions
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {games.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={7}
-                                        className="py-8 text-center text-muted-foreground"
-                                    >
-                                        No flagged games.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                games.data.map((game) => {
-                                    const latestModeration =
-                                        game.moderation[
-                                            game.moderation.length - 1
-                                        ] ?? null;
-                                    return (
-                                        <TableRow key={game.id}>
-                                            <TableCell className="font-medium">
-                                                {game.title}
-                                            </TableCell>
-                                            <TableCell>
-                                                {game.player?.name ?? '—'}
-                                            </TableCell>
-                                            <TableCell>{game.format}</TableCell>
-                                            <TableCell>
-                                                {game.court?.name ?? '—'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {latestModeration?.moderator
-                                                    ?.name ?? '—'}
-                                            </TableCell>
-                                            <TableCell className="max-w-xs truncate">
-                                                {latestModeration?.reason ??
-                                                    '—'}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                        >
-                                                            <MoreHorizontal className="size-4" />
-                                                            <span className="sr-only">
-                                                                Actions
-                                                            </span>
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem
-                                                            asChild
-                                                        >
-                                                            <Link
-                                                                href={
-                                                                    show(
-                                                                        game.uuid,
-                                                                    ).url
-                                                                }
-                                                            >
-                                                                Review
-                                                            </Link>
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {games.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-1">
-                        {games.links.map((link, i) => (
-                            <Button
-                                key={i}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                disabled={link.url === null}
-                                asChild={link.url !== null}
-                            >
-                                {link.url !== null ? (
-                                    <Link
-                                        href={link.url}
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                ) : (
-                                    <span
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                )}
-                            </Button>
-                        ))}
-                    </div>
-                )}
+                <DataTable
+                    columns={columns}
+                    data={games.data}
+                    pagination={
+                        games.last_page > 1 ? (
+                            <LaravelPagination links={games.links} />
+                        ) : undefined
+                    }
+                />
             </div>
         </AppLayout>
     );

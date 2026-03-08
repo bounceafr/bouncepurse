@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\CourtController;
 use App\Http\Controllers\Admin\GameController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\OverrideController;
+use App\Http\Controllers\Admin\PathwayConfigurationController;
+use App\Http\Controllers\Admin\PathwayEligiblePlayersController;
 use App\Http\Controllers\Admin\RankingConfigurationController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
@@ -68,4 +70,14 @@ Route::middleware(['auth', 'verified', 'permission:view-allocations'])->group(fu
 Route::middleware(['auth', 'verified', 'permission:manage-allocation-configuration'])->group(function (): void {
     Route::get('admin/allocation-configuration', [AllocationConfigurationController::class, 'edit'])->name('admin.allocation-configuration.edit');
     Route::patch('admin/allocation-configuration', [AllocationConfigurationController::class, 'update'])->name('admin.allocation-configuration.update');
+});
+
+Route::middleware(['auth', 'verified', 'permission:manage-pathway-configuration'])->group(function (): void {
+    Route::get('admin/pathway', [PathwayConfigurationController::class, 'edit'])->name('admin.pathway.edit');
+    Route::post('admin/pathway', [PathwayConfigurationController::class, 'update'])->name('admin.pathway.update');
+});
+
+Route::middleware(['auth', 'verified', 'permission:view-pathway-eligibility'])->group(function (): void {
+    Route::get('admin/pathway-eligible', [PathwayEligiblePlayersController::class, 'index'])->name('admin.pathway-eligible.index');
+    Route::get('admin/pathway-eligible/export', [PathwayEligiblePlayersController::class, 'export'])->name('admin.pathway-eligible.export');
 });
