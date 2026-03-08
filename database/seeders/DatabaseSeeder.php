@@ -19,6 +19,11 @@ final class DatabaseSeeder extends Seeder
             CountrySeeder::class,
             RolesAndPermissionsSeeder::class,
             RankingConfigurationSeeder::class,
+            AllocationConfigurationSeeder::class,
+            UserSeeder::class,
+            PlayerSeeder::class,
+            CourtSeeder::class,
+            GameSeeder::class,
         ]);
 
         User::factory()->create([
