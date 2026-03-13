@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Admin\Allocation;
 
+use App\Enums\AllocationCategory;
 use App\Models\Allocation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -12,20 +13,21 @@ final class GetAllocationSummary
 {
     /**
      * @param  array{from?: string, to?: string, format?: string, player_id?: int}  $filters
-     * @return array{total: float, insurance: float, savings: float, pathway: float, administration: float, court_fees: float, count: int}
+     * @return array<string, float|int>
      */
     public function handle(array $filters = []): array
     {
+        $selects = [
+            DB::raw('COUNT(*) as count'),
+            DB::raw('SUM(total_amount) as total'),
+        ];
+
+        foreach (AllocationCategory::cases() as $category) {
+            $selects[] = DB::raw("SUM({$category->amountColumn()}) as {$category->value}");
+        }
+
         $query = Allocation::query()
-            ->select([
-                DB::raw('COUNT(*) as count'),
-                DB::raw('SUM(total_amount) as total'),
-                DB::raw('SUM(insurance_amount) as insurance'),
-                DB::raw('SUM(savings_amount) as savings'),
-                DB::raw('SUM(pathway_amount) as pathway'),
-                DB::raw('SUM(administration_amount) as administration'),
-                DB::raw('SUM(court_fees_amount) as court_fees'),
-            ])
+            ->select($selects)
             ->when(
                 isset($filters['from']),
                 fn (Builder $q) => $q->where('allocations.created_at', '>=', $filters['from'])
@@ -48,14 +50,16 @@ final class GetAllocationSummary
 
         $result = $query->first();
 
-        return [
+        $summary = [
             'total' => (float) ($result?->total ?? 0),
-            'insurance' => (float) ($result?->insurance ?? 0),
-            'savings' => (float) ($result?->savings ?? 0),
-            'pathway' => (float) ($result?->pathway ?? 0),
-            'administration' => (float) ($result?->administration ?? 0),
-            'court_fees' => (float) ($result?->court_fees ?? 0),
-            'count' => (int) ($result?->count ?? 0),
         ];
+
+        foreach (AllocationCategory::cases() as $category) {
+            $summary[$category->value] = (float) ($result?->{$category->value} ?? 0);
+        }
+
+        $summary['count'] = (int) ($result?->count ?? 0);
+
+        return $summary;
     }
 }

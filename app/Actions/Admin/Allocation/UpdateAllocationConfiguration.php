@@ -4,26 +4,24 @@ declare(strict_types=1);
 
 namespace App\Actions\Admin\Allocation;
 
+use App\Enums\AllocationCategory;
 use App\Models\AllocationConfiguration;
 use App\Models\User;
 
 final class UpdateAllocationConfiguration
 {
-    public function handle(
-        float $insurancePercentage,
-        float $savingsPercentage,
-        float $pathwayPercentage,
-        float $administrationPercentage,
-        float $courtFeesPercentage,
-        User $updatedBy,
-    ): AllocationConfiguration {
-        return AllocationConfiguration::query()->create([
-            'insurance_percentage' => $insurancePercentage,
-            'savings_percentage' => $savingsPercentage,
-            'pathway_percentage' => $pathwayPercentage,
-            'administration_percentage' => $administrationPercentage,
-            'court_fees_percentage' => $courtFeesPercentage,
-            'updated_by' => $updatedBy->id,
-        ]);
+    /**
+     * @param  array<string, float>  $percentages  Keyed by percentage column name (e.g. insurance_percentage => 20.0)
+     */
+    public function handle(array $percentages, User $updatedBy): AllocationConfiguration
+    {
+        $data = ['updated_by' => $updatedBy->id];
+
+        foreach (AllocationCategory::cases() as $category) {
+            $column = $category->percentageColumn();
+            $data[$column] = $percentages[$column];
+        }
+
+        return AllocationConfiguration::query()->create($data);
     }
 }

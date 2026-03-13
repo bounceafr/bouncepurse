@@ -19,27 +19,22 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
-type Summary = {
+type Category = {
+    value: string;
+    label: string;
+};
+
+type Summary = Record<string, number> & {
     total: number;
-    insurance: number;
-    savings: number;
-    pathway: number;
-    administration: number;
-    court_fees: number;
     count: number;
 };
 
-type Allocation = {
+type Allocation = Record<string, unknown> & {
     id: number;
     game_id: number;
     player: { id: number; name: string };
     game: { format: string };
     total_amount: number;
-    insurance_amount: number;
-    savings_amount: number;
-    pathway_amount: number;
-    administration_amount: number;
-    court_fees_amount: number;
     created_at: string;
 };
 
@@ -60,6 +55,7 @@ type Props = {
     summary: Summary;
     allocations: PaginatedAllocations;
     filters: Filters;
+    categories: Category[];
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -92,64 +88,44 @@ function StatCard({
     );
 }
 
-const columns: ColumnDef<Allocation, unknown>[] = [
-    selectionColumn<Allocation>(),
-    {
-        id: 'player',
-        accessorFn: (row) => row.player.name,
-        header: sortableHeader('Player'),
-        cell: ({ row }) => (
-            <span className="font-medium">{row.original.player.name}</span>
-        ),
-    },
-    {
-        id: 'format',
-        accessorFn: (row) => row.game.format,
-        header: sortableHeader('Format'),
-    },
-    {
-        accessorKey: 'total_amount',
-        header: sortableHeader('Total'),
-        cell: ({ row }) =>
-            `$${(row.getValue('total_amount') as number).toFixed(2)}`,
-    },
-    {
-        accessorKey: 'insurance_amount',
-        header: sortableHeader('Insurance'),
-        cell: ({ row }) =>
-            `$${(row.getValue('insurance_amount') as number).toFixed(4)}`,
-    },
-    {
-        accessorKey: 'savings_amount',
-        header: sortableHeader('Savings'),
-        cell: ({ row }) =>
-            `$${(row.getValue('savings_amount') as number).toFixed(4)}`,
-    },
-    {
-        accessorKey: 'pathway_amount',
-        header: sortableHeader('Pathway'),
-        cell: ({ row }) =>
-            `$${(row.getValue('pathway_amount') as number).toFixed(4)}`,
-    },
-    {
-        accessorKey: 'administration_amount',
-        header: sortableHeader('Administration'),
-        cell: ({ row }) =>
-            `$${(row.getValue('administration_amount') as number).toFixed(4)}`,
-    },
-    {
-        accessorKey: 'created_at',
-        header: sortableHeader('Date'),
-        cell: ({ row }) =>
-            new Date(row.getValue('created_at')).toLocaleDateString(),
-    },
-];
+function buildColumns(categories: Category[]): ColumnDef<Allocation, unknown>[] {
+    return [
+        selectionColumn<Allocation>(),
+        {
+            id: 'player',
+            accessorFn: (row) => row.player.name,
+            header: sortableHeader('Player'),
+            cell: ({ row }) => (
+                <span className="font-medium">{row.original.player.name}</span>
+            ),
+        },
+        {
+            id: 'format',
+            accessorFn: (row) => row.game.format,
+            header: sortableHeader('Format'),
+        },
+        {
+            accessorKey: 'total_amount',
+            header: sortableHeader('Total'),
+            cell: ({ row }) =>
+                `$${(row.getValue('total_amount') as number).toFixed(2)}`,
+        },
+        ...categories.map((cat): ColumnDef<Allocation, unknown> => ({
+            accessorKey: `${cat.value}_amount`,
+            header: sortableHeader(cat.label),
+            cell: ({ row }) =>
+                `$${(Number(row.getValue(`${cat.value}_amount`)) || 0).toFixed(4)}`,
+        })),
+        {
+            accessorKey: 'created_at',
+            header: sortableHeader('Date'),
+            cell: ({ row }) =>
+                new Date(row.getValue('created_at')).toLocaleDateString(),
+        },
+    ];
+}
 
-export default function AllocationIndex({
-    summary,
-    allocations,
-    filters,
-}: Props) {
+export default function AllocationIndex({ summary, allocations, filters, categories }: Props) {
     const [from, setFrom] = useState(filters.from ?? '');
     const [to, setTo] = useState(filters.to ?? '');
     const [format, setFormat] = useState(filters.format ?? '');
@@ -220,7 +196,7 @@ export default function AllocationIndex({
                         Allocation Summary
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        $1 per approved game, split across four categories.
+                        $1 per approved game, split across five categories.
                     </p>
                 </div>
 
@@ -230,26 +206,13 @@ export default function AllocationIndex({
                         value={`$${summary.total.toFixed(2)}`}
                         subtitle={`${summary.count} games`}
                     />
-                    <StatCard
-                        title="Insurance"
-                        value={`$${summary.insurance.toFixed(4)}`}
-                    />
-                    <StatCard
-                        title="Savings"
-                        value={`$${summary.savings.toFixed(4)}`}
-                    />
-                    <StatCard
-                        title="Pathway"
-                        value={`$${summary.pathway.toFixed(4)}`}
-                    />
-                    <StatCard
-                        title="Administration"
-                        value={`$${summary.administration.toFixed(4)}`}
-                    />
-                    <StatCard
-                        title="Court Fees"
-                        value={`$${summary.court_fees.toFixed(4)}`}
-                    />
+                    {categories.map((cat) => (
+                        <StatCard
+                            key={cat.value}
+                            title={cat.label}
+                            value={`$${(summary[cat.value] ?? 0).toFixed(4)}`}
+                        />
+                    ))}
                 </div>
 
                 <Card>
@@ -314,7 +277,7 @@ export default function AllocationIndex({
                 </Card>
 
                 <DataTable
-                    columns={columns}
+                    columns={buildColumns(categories)}
                     data={allocations.data}
                     toolbar={toolbar}
                     pagination={

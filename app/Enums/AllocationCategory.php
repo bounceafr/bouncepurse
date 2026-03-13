@@ -12,6 +12,17 @@ enum AllocationCategory: string
     case Administration = 'administration';
     case CourtFees = 'court_fees';
 
+    /**
+     * @return array<int, array{value: string, label: string}>
+     */
+    public static function toArray(): array
+    {
+        return array_map(fn (self $category): array => [
+            'value' => $category->value,
+            'label' => $category->label(),
+        ], self::cases());
+    }
+
     public function label(): string
     {
         return match ($this) {
@@ -21,5 +32,15 @@ enum AllocationCategory: string
             self::Administration => 'Administration',
             self::CourtFees => 'Court Fees',
         };
+    }
+
+    public function amountColumn(): string
+    {
+        return $this->value.'_amount';
+    }
+
+    public function percentageColumn(): string
+    {
+        return $this->value.'_percentage';
     }
 }

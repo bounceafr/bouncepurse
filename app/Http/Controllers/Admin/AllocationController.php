@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Admin\Allocation\GetAllocationSummary;
 use App\Actions\Admin\Allocation\ListAllocations;
+use App\Enums\AllocationCategory;
 use App\Http\Controllers\Controller;
 use App\Models\Allocation;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,6 +30,7 @@ final class AllocationController extends Controller
             'summary' => $summary->handle($filters),
             'allocations' => $list->handle($filters),
             'filters' => $filters,
+            'categories' => AllocationCategory::toArray(),
         ]);
     }
 
@@ -62,22 +64,32 @@ final class AllocationController extends Controller
 
         $rows = $query->get();
 
-        $csv = implode(',', ['ID', 'Game ID', 'Player', 'Format', 'Total', 'Insurance', 'Savings', 'Pathway', 'Administration', 'Court Fees', 'Date'])."\n";
+        $headers = ['ID', 'Game ID', 'Player', 'Format', 'Total'];
+
+        foreach (AllocationCategory::cases() as $category) {
+            $headers[] = $category->label();
+        }
+
+        $headers[] = 'Date';
+
+        $csv = implode(',', $headers)."\n";
 
         foreach ($rows as $row) {
-            $csv .= implode(',', [
+            $values = [
                 $row->id,
                 $row->game_id,
                 '"'.$row->player->name.'"',
                 '"'.($row->game->format ?? '').'"',
                 number_format($row->total_amount, 2),
-                number_format($row->insurance_amount, 4),
-                number_format($row->savings_amount, 4),
-                number_format($row->pathway_amount, 4),
-                number_format($row->administration_amount, 4),
-                number_format($row->court_fees_amount, 4),
-                $row->created_at?->toDateString(),
-            ])."\n";
+            ];
+
+            foreach (AllocationCategory::cases() as $category) {
+                $values[] = number_format($row->{$category->amountColumn()}, 4);
+            }
+
+            $values[] = $row->created_at?->toDateString();
+
+            $csv .= implode(',', $values)."\n";
         }
 
         return response($csv, 200, [

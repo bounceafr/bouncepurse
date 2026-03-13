@@ -17,24 +17,25 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
-type Config = {
+type Category = {
+    value: string;
+    label: string;
+};
+
+type Config = Record<string, number> & {
     id: number;
-    insurance_percentage: number;
-    savings_percentage: number;
-    pathway_percentage: number;
-    administration_percentage: number;
-    court_fees_percentage: number;
 };
 
 type Props = {
     config: Config;
+    categories: Category[];
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Allocation Configuration', href: edit().url },
 ];
 
-export default function AllocationConfigurationEdit({ config }: Props) {
+export default function AllocationConfigurationEdit({ config, categories }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Allocation Configuration" />
@@ -67,116 +68,35 @@ export default function AllocationConfigurationEdit({ config }: Props) {
                         >
                             {({ processing, errors }) => (
                                 <>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="insurance_percentage">
-                                            Insurance (%)
-                                        </Label>
-                                        <Input
-                                            id="insurance_percentage"
-                                            name="insurance_percentage"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
-                                            defaultValue={
-                                                config.insurance_percentage
-                                            }
-                                            required
-                                        />
-                                        <InputError
-                                            message={
-                                                errors.insurance_percentage
-                                            }
-                                        />
-                                    </div>
+                                    {categories.map((cat) => {
+                                        const field = `${cat.value}_percentage`;
 
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="savings_percentage">
-                                            Savings (%)
-                                        </Label>
-                                        <Input
-                                            id="savings_percentage"
-                                            name="savings_percentage"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
-                                            defaultValue={
-                                                config.savings_percentage
-                                            }
-                                            required
-                                        />
-                                        <InputError
-                                            message={errors.savings_percentage}
-                                        />
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="pathway_percentage">
-                                            Pathway (%)
-                                        </Label>
-                                        <Input
-                                            id="pathway_percentage"
-                                            name="pathway_percentage"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
-                                            defaultValue={
-                                                config.pathway_percentage
-                                            }
-                                            required
-                                        />
-                                        <InputError
-                                            message={errors.pathway_percentage}
-                                        />
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="administration_percentage">
-                                            Administration (%)
-                                        </Label>
-                                        <Input
-                                            id="administration_percentage"
-                                            name="administration_percentage"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
-                                            defaultValue={
-                                                config.administration_percentage
-                                            }
-                                            required
-                                        />
-                                        <InputError
-                                            message={
-                                                errors.administration_percentage
-                                            }
-                                        />
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="court_fees_percentage">
-                                            Court Fees (%)
-                                        </Label>
-                                        <Input
-                                            id="court_fees_percentage"
-                                            name="court_fees_percentage"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
-                                            defaultValue={
-                                                config.court_fees_percentage
-                                            }
-                                            required
-                                        />
-                                        <InputError
-                                            message={
-                                                errors.court_fees_percentage
-                                            }
-                                        />
-                                    </div>
+                                        return (
+                                            <div
+                                                key={cat.value}
+                                                className="grid gap-2"
+                                            >
+                                                <Label htmlFor={field}>
+                                                    {cat.label} (%)
+                                                </Label>
+                                                <Input
+                                                    id={field}
+                                                    name={field}
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    max="100"
+                                                    defaultValue={
+                                                        config[field]
+                                                    }
+                                                    required
+                                                />
+                                                <InputError
+                                                    message={errors[field]}
+                                                />
+                                            </div>
+                                        );
+                                    })}
 
                                     <Button
                                         disabled={processing}
