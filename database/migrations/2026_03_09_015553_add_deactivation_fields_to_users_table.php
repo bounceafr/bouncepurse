@@ -19,15 +19,4 @@ return new class extends Migration
             $table->text('deactivation_reason')->nullable()->after('deactivated_by');
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::table('users', function (Blueprint $table): void {
-            $table->dropForeign(['deactivated_by']);
-            $table->dropColumn(['deactivated_at', 'deactivated_by', 'deactivation_reason']);
-        });
-    }
 };
