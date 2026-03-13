@@ -23,7 +23,7 @@ final class GetAllocationSummary
         ];
 
         foreach (AllocationCategory::cases() as $category) {
-            $selects[] = DB::raw("SUM({$category->amountColumn()}) as {$category->value}");
+            $selects[] = DB::raw(sprintf('SUM(%s) as %s', $category->amountColumn(), $category->value));
         }
 
         $query = Allocation::query()
