@@ -1,8 +1,9 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import UserController, {
+    deactivate,
     index,
     show,
 } from '@/actions/App/Http/Controllers/Admin/UserController';
@@ -197,13 +198,19 @@ export default function UsersIndex({
     const [deleteUser, setDeleteUser] = useState<User | null>(null);
     const [deactivateUser, setDeactivateUser] = useState<User | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
-    const [roleFilter, setRoleFilter] = useState(filters.role ?? '');
+    const [roleFilter, setRoleFilter] = useState(filters.role ?? 'all');
+    const isInitialRender = useRef(true);
 
     useEffect(() => {
+        if (isInitialRender.current) {
+            isInitialRender.current = false;
+            return;
+        }
+
         const timeout = setTimeout(() => {
             router.get(index().url, {
                 search: search || undefined,
-                role: roleFilter || undefined,
+                role: roleFilter === 'all' ? undefined : roleFilter,
             }, { preserveState: true, replace: true });
         }, 300);
 
@@ -323,7 +330,7 @@ export default function UsersIndex({
                     <SelectValue placeholder="All roles" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">All roles</SelectItem>
+                    <SelectItem value="all">All roles</SelectItem>
                     {roles.map((r) => (
                         <SelectItem key={r.value} value={r.value}>
                             {r.label}
@@ -478,8 +485,7 @@ export default function UsersIndex({
 
                     {deactivateUser && (
                         <Form
-                            action={`/admin/users/${deactivateUser.id}/deactivate`}
-                            method="patch"
+                            {...deactivate.form(deactivateUser.id)}
                             onSuccess={() => setDeactivateUser(null)}
                         >
                             {({ processing, errors }) => (
@@ -493,11 +499,6 @@ export default function UsersIndex({
                                             name="reason"
                                             placeholder="Reason for deactivation"
                                             required
-                                        />
-                                        <input
-                                            type="hidden"
-                                            name="_method"
-                                            value="PATCH"
                                         />
                                         <InputError message={errors.reason} />
                                         <InputError message={errors.user} />

@@ -1,7 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, UserCheck, UserX } from 'lucide-react';
 import { useState } from 'react';
-import { index, show, update } from '@/actions/App/Http/Controllers/Admin/UserController';
+import { deactivate, index, reactivate, show, update } from '@/actions/App/Http/Controllers/Admin/UserController';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -289,10 +289,7 @@ export default function UserShow({ user, roles }: Props) {
                         </Button>
                     </Form>
                     {isDeactivated ? (
-                        <Form
-                            action={`/admin/users/${user.id}/reactivate`}
-                            method="patch"
-                        >
+                        <Form {...reactivate.form(user.id)}>
                             <Button
                                 type="submit"
                                 variant="outline"
@@ -337,12 +334,10 @@ function DeactivateButton({ user }: { user: UserData }) {
                         </DialogDescription>
                     </DialogHeader>
                     <Form
-                        action={`/admin/users/${user.id}/deactivate`}
-                        method="patch"
+                        {...deactivate.form(user.id)}
                         onSubmit={() => setOpen(false)}
                         className="space-y-4"
                     >
-                        <input type="hidden" name="_method" value="PATCH" />
                         <div className="grid gap-2">
                             <Label htmlFor="reason">Reason</Label>
                             <Input
