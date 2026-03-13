@@ -76,6 +76,28 @@ test('unverified factory state sets email verified at to null', function (): voi
     expect($user->email_verified_at)->toBeNull();
 });
 
+test('user has many games', function (): void {
+    $user = User::factory()->create();
+    App\Models\Game::factory()->count(2)->create(['player_id' => $user->id]);
+
+    expect($user->games)->toHaveCount(2)
+        ->and($user->games->first())->toBeInstanceOf(App\Models\Game::class);
+});
+
+test('active scope filters out deactivated users', function (): void {
+    $activeUser = User::factory()->create();
+    $deactivatedUser = User::factory()->create([
+        'deactivated_at' => now(),
+        'deactivated_by' => $activeUser->id,
+        'deactivation_reason' => 'Test',
+    ]);
+
+    $activeUsers = User::active()->pluck('id');
+
+    expect($activeUsers)->toContain($activeUser->id)
+        ->not->toContain($deactivatedUser->id);
+});
+
 test('with two factor factory state sets two factor fields', function (): void {
     $user = User::factory()->withTwoFactor()->create();
 

@@ -79,6 +79,17 @@ test('update dispatches recalculation job', function (): void {
     Queue::assertPushed(RecalculatePathwayEligibilityJob::class);
 });
 
+test('pathway configuration belongs to updater via updatedBy relationship', function (): void {
+    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+
+    $config = PathwayConfiguration::factory()->create([
+        'updated_by' => $admin->id,
+    ]);
+
+    expect($config->updatedBy)->toBeInstanceOf(User::class)
+        ->and($config->updatedBy->id)->toBe($admin->id);
+});
+
 test('validation rejects invalid values', function (): void {
     $admin = User::factory()->create()->assignRole(Role::Administrator->value);
     $this->actingAs($admin);

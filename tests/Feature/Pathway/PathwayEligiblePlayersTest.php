@@ -75,8 +75,31 @@ test('csv export returns correct headers and data', function (): void {
     $admin = User::factory()->create()->assignRole(Role::Administrator->value);
     $this->actingAs($admin);
 
+    $playerNoRank = User::factory()->create(['name' => 'No Rank Player'])->assignRole(Role::Player->value);
+    Profile::factory()->create(['player_id' => $playerNoRank->id, 'is_pathway_candidate' => true]);
+
     $player = User::factory()->create(['name' => 'Test Player'])->assignRole(Role::Player->value);
     Profile::factory()->create(['player_id' => $player->id, 'is_pathway_candidate' => true]);
+
+    $config = App\Models\RankingConfiguration::query()->create([
+        'win_weight' => 3.0,
+        'loss_weight' => 1.0,
+        'game_count_weight' => 0.5,
+        'frequency_weight' => 2.0,
+    ]);
+
+    App\Models\PlayerRanking::query()->create([
+        'player_id' => $player->id,
+        'format' => '1v1',
+        'wins' => 5,
+        'losses' => 2,
+        'total_games' => 7,
+        'recent_games' => 3,
+        'score' => 20.5,
+        'rank' => 3,
+        'ranking_configuration_id' => $config->id,
+        'calculated_at' => now(),
+    ]);
 
     $response = $this->get(route('admin.pathway-eligible.export'));
 
@@ -86,5 +109,6 @@ test('csv export returns correct headers and data', function (): void {
     $content = $response->getContent();
     expect($content)
         ->toContain('Name,Country,Best Rank,Approved Games,Savings Credits,Pathway Credits')
-        ->toContain('"Test Player"');
+        ->toContain('"Test Player"')
+        ->toContain('3');
 });

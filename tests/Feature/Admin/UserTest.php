@@ -216,6 +216,24 @@ test('deactivated user cannot log in', function (): void {
     $this->assertGuest();
 });
 
+test('admin cannot reactivate themselves', function (): void {
+    $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
+    $admin->update([
+        'deactivated_at' => now(),
+        'deactivated_by' => $admin->id,
+        'deactivation_reason' => 'Was deactivated',
+    ]);
+    $this->actingAs($admin);
+
+    $response = $this->patch(route('admin.users.reactivate', $admin));
+
+    $response->assertRedirect(route('admin.users.show', $admin));
+    $response->assertSessionHasErrors(['user']);
+
+    $admin->refresh();
+    expect($admin->deactivated_at)->not->toBeNull();
+});
+
 test('admin can reactivate user', function (): void {
     $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
     $user = User::factory()->create()->assignRole(Role::Player->value);

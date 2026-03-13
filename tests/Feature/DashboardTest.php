@@ -32,6 +32,27 @@ test('authenticated users can visit the dashboard', function (): void {
     );
 });
 
+test('pathway_eligibility is returned when pathway configuration exists', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    App\Models\PathwayConfiguration::factory()->create([
+        'min_approved_games' => 3,
+        'max_rank' => 10,
+        'max_conduct_flags' => 5,
+    ]);
+
+    $response = $this->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+        ->component('dashboard')
+        ->has('pathway_eligibility')
+        ->has('pathway_eligibility.is_eligible')
+        ->has('pathway_eligibility.criteria')
+    );
+});
+
 test('player_rankings prop is empty when player has no approved games', function (): void {
     $user = User::factory()->create();
     $this->actingAs($user);
