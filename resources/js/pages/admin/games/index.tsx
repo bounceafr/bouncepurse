@@ -6,7 +6,7 @@ import {
     MoreHorizontal,
     Search,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import GameController, {
     index,
 } from '@/actions/App/Http/Controllers/Admin/GameController';
@@ -284,8 +284,14 @@ export default function GamesIndex({
     const [editGame, setEditGame] = useState<Game | null>(null);
     const [deleteGame, setDeleteGame] = useState<Game | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
+    const isInitialRender = useRef(true);
 
     useEffect(() => {
+        if (isInitialRender.current) {
+            isInitialRender.current = false;
+            return;
+        }
+
         const timeout = setTimeout(() => {
             router.get(
                 index().url,
