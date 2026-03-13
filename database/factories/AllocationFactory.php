@@ -26,10 +26,11 @@ final class AllocationFactory extends Factory
             'game_id' => Game::factory(),
             'player_id' => User::factory(),
             'total_amount' => 1.00,
-            'insurance_amount' => 0.25,
-            'savings_amount' => 0.25,
-            'pathway_amount' => 0.25,
-            'administration_amount' => 0.25,
+            'insurance_amount' => 0.20,
+            'savings_amount' => 0.20,
+            'pathway_amount' => 0.20,
+            'administration_amount' => 0.20,
+            'court_fees_amount' => 0.20,
             'allocation_configuration_id' => AllocationConfiguration::factory(),
         ];
     }

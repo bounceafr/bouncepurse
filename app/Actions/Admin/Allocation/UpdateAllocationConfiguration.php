@@ -14,6 +14,7 @@ final class UpdateAllocationConfiguration
         float $savingsPercentage,
         float $pathwayPercentage,
         float $administrationPercentage,
+        float $courtFeesPercentage,
         User $updatedBy,
     ): AllocationConfiguration {
         return AllocationConfiguration::query()->create([
@@ -21,6 +22,7 @@ final class UpdateAllocationConfiguration
             'savings_percentage' => $savingsPercentage,
             'pathway_percentage' => $pathwayPercentage,
             'administration_percentage' => $administrationPercentage,
+            'court_fees_percentage' => $courtFeesPercentage,
             'updated_by' => $updatedBy->id,
         ]);
     }

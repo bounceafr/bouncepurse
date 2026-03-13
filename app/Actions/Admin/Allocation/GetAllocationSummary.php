@@ -12,7 +12,7 @@ final class GetAllocationSummary
 {
     /**
      * @param  array{from?: string, to?: string, format?: string, player_id?: int}  $filters
-     * @return array{total: float, insurance: float, savings: float, pathway: float, administration: float, count: int}
+     * @return array{total: float, insurance: float, savings: float, pathway: float, administration: float, court_fees: float, count: int}
      */
     public function handle(array $filters = []): array
     {
@@ -24,6 +24,7 @@ final class GetAllocationSummary
                 DB::raw('SUM(savings_amount) as savings'),
                 DB::raw('SUM(pathway_amount) as pathway'),
                 DB::raw('SUM(administration_amount) as administration'),
+                DB::raw('SUM(court_fees_amount) as court_fees'),
             ])
             ->when(
                 isset($filters['from']),
@@ -53,6 +54,7 @@ final class GetAllocationSummary
             'savings' => (float) ($result?->savings ?? 0),
             'pathway' => (float) ($result?->pathway ?? 0),
             'administration' => (float) ($result?->administration ?? 0),
+            'court_fees' => (float) ($result?->court_fees ?? 0),
             'count' => (int) ($result?->count ?? 0),
         ];
     }

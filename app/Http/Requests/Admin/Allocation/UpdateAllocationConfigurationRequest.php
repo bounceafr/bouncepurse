@@ -25,6 +25,7 @@ final class UpdateAllocationConfigurationRequest extends FormRequest
             'savings_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
             'pathway_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
             'administration_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
+            'court_fees_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
         ];
     }
 
@@ -36,6 +37,7 @@ final class UpdateAllocationConfigurationRequest extends FormRequest
                 'savings_percentage',
                 'pathway_percentage',
                 'administration_percentage',
+                'court_fees_percentage',
             ]);
 
             $sum = array_sum(array_map(floatval(...), $data));

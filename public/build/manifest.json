@@ -161,6 +161,13 @@
       "_index-B0Z-ysPe.js"
     ]
   },
+  "_index-BqlFZoj8.js": {
+    "file": "assets/index-BqlFZoj8.js",
+    "name": "index",
+    "imports": [
+      "resources/js/app.tsx"
+    ]
+  },
   "_index-CSEUMRIG.js": {
     "file": "assets/index-CSEUMRIG.js",
     "name": "index"
@@ -169,7 +176,8 @@
     "file": "assets/index-DcmOMlk_.js",
     "name": "index",
     "imports": [
-      "_index-CSEUMRIG.js"
+      "resources/js/app.tsx",
+      "_app-logo-icon-Cf20drgp.js"
     ]
   },
   "_index-DvleioHC.js": {

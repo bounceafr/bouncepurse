@@ -25,6 +25,7 @@ type Summary = {
     savings: number;
     pathway: number;
     administration: number;
+    court_fees: number;
     count: number;
 };
 
@@ -38,6 +39,7 @@ type Allocation = {
     savings_amount: number;
     pathway_amount: number;
     administration_amount: number;
+    court_fees_amount: number;
     created_at: string;
 };
 
@@ -222,7 +224,7 @@ export default function AllocationIndex({
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                     <StatCard
                         title="Total Allocated"
                         value={`$${summary.total.toFixed(2)}`}
@@ -243,6 +245,10 @@ export default function AllocationIndex({
                     <StatCard
                         title="Administration"
                         value={`$${summary.administration.toFixed(4)}`}
+                    />
+                    <StatCard
+                        title="Court Fees"
+                        value={`$${summary.court_fees.toFixed(4)}`}
                     />
                 </div>
 

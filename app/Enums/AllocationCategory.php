@@ -10,6 +10,7 @@ enum AllocationCategory: string
     case Savings = 'savings';
     case Pathway = 'pathway';
     case Administration = 'administration';
+    case CourtFees = 'court_fees';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum AllocationCategory: string
             self::Savings => 'Savings',
             self::Pathway => 'Pathway',
             self::Administration => 'Administration',
+            self::CourtFees => 'Court Fees',
         };
     }
 }

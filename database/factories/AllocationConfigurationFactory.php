@@ -20,10 +20,11 @@ final class AllocationConfigurationFactory extends Factory
     public function definition(): array
     {
         return [
-            'insurance_percentage' => 25.0,
-            'savings_percentage' => 25.0,
-            'pathway_percentage' => 25.0,
-            'administration_percentage' => 25.0,
+            'insurance_percentage' => 20.0,
+            'savings_percentage' => 20.0,
+            'pathway_percentage' => 20.0,
+            'administration_percentage' => 20.0,
+            'court_fees_percentage' => 20.0,
             'updated_by' => null,
         ];
     }
