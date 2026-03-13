@@ -1,5 +1,5 @@
 import { Form, Head, router } from '@inertiajs/react';
-import { Link } from '@inertiajs/react';
+import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import CourtController, {
@@ -7,6 +7,12 @@ import CourtController, {
 } from '@/actions/App/Http/Controllers/Admin/CourtController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import {
+    DataTable,
+    LaravelPagination,
+    selectionColumn,
+    sortableHeader,
+} from '@/components/ui/data-table';
 import {
     Dialog,
     DialogClose,
@@ -32,14 +38,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -213,157 +211,112 @@ export default function CourtsIndex({
         return () => clearTimeout(timeout);
     }, [search]);
 
+    const columns: ColumnDef<Court, unknown>[] = [
+        selectionColumn<Court>(),
+        {
+            accessorKey: 'name',
+            header: sortableHeader('Name'),
+            cell: ({ row }) => (
+                <span className="font-medium">{row.getValue('name')}</span>
+            ),
+        },
+        {
+            accessorKey: 'country',
+            header: sortableHeader('Country'),
+        },
+        {
+            accessorKey: 'city',
+            header: sortableHeader('City'),
+        },
+        {
+            accessorKey: 'status',
+            header: sortableHeader('Status'),
+            cell: ({ row }) => {
+                const status = statusMap[row.getValue('status') as string];
+                return status ? (
+                    <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${status.color}`}
+                    >
+                        {status.label}
+                    </span>
+                ) : null;
+            },
+        },
+        {
+            id: 'created_by',
+            accessorFn: (row) => row.created_by_user?.name ?? '—',
+            header: sortableHeader('Created By'),
+        },
+        {
+            id: 'actions',
+            enableHiding: false,
+            enableSorting: false,
+            cell: ({ row }) => {
+                const court = row.original;
+                return (
+                    <div className="text-right">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="size-4" />
+                                    <span className="sr-only">Actions</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onClick={() => setEditCourt(court)}
+                                >
+                                    Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={() => setDeleteCourt(court)}
+                                >
+                                    Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                );
+            },
+        },
+    ];
+
+    const toolbar = (
+        <>
+            <Input
+                placeholder="Search courts..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-64"
+            />
+            <Button onClick={() => setCreateOpen(true)}>Add Court</Button>
+        </>
+    );
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Courts" />
 
             <div className="flex flex-col gap-6 p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold">Courts</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Manage all courts ({courts.total} total)
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <Input
-                            placeholder="Search courts..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-64"
-                        />
-                        <Button onClick={() => setCreateOpen(true)}>
-                            Add Court
-                        </Button>
-                    </div>
+                <div>
+                    <h1 className="text-2xl font-semibold">Courts</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Manage all courts ({courts.total} total)
+                    </p>
                 </div>
 
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Country</TableHead>
-                                <TableHead>City</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Created By</TableHead>
-                                <TableHead className="text-right">
-                                    Actions
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {courts.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={6}
-                                        className="py-8 text-center text-muted-foreground"
-                                    >
-                                        No courts found.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                courts.data.map((court) => {
-                                    const status = statusMap[court.status];
-
-                                    return (
-                                        <TableRow key={court.id}>
-                                            <TableCell className="font-medium">
-                                                {court.name}
-                                            </TableCell>
-                                            <TableCell>
-                                                {court.country}
-                                            </TableCell>
-                                            <TableCell>{court.city}</TableCell>
-                                            <TableCell>
-                                                {status && (
-                                                    <span
-                                                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${status.color}`}
-                                                    >
-                                                        {status.label}
-                                                    </span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                {court.created_by_user?.name ??
-                                                    '—'}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                        >
-                                                            <MoreHorizontal className="size-4" />
-                                                            <span className="sr-only">
-                                                                Actions
-                                                            </span>
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem
-                                                            onClick={() =>
-                                                                setEditCourt(
-                                                                    court,
-                                                                )
-                                                            }
-                                                        >
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem
-                                                            variant="destructive"
-                                                            onClick={() =>
-                                                                setDeleteCourt(
-                                                                    court,
-                                                                )
-                                                            }
-                                                        >
-                                                            Delete
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {courts.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-1">
-                        {courts.links.map((link, i) => (
-                            <Button
-                                key={i}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                disabled={link.url === null}
-                                asChild={link.url !== null}
-                            >
-                                {link.url !== null ? (
-                                    <Link
-                                        href={link.url}
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                ) : (
-                                    <span
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                )}
-                            </Button>
-                        ))}
-                    </div>
-                )}
+                <DataTable
+                    columns={columns}
+                    data={courts.data}
+                    toolbar={toolbar}
+                    pagination={
+                        courts.last_page > 1 ? (
+                            <LaravelPagination links={courts.links} />
+                        ) : undefined
+                    }
+                />
             </div>
 
             {/* Create Court Modal */}

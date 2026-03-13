@@ -6,11 +6,15 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
@@ -33,6 +37,21 @@ final class FortifyServiceProvider extends ServiceProvider
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
+        $this->rejectDeactivatedUsers();
+    }
+
+    private function rejectDeactivatedUsers(): void
+    {
+        Event::listen(Login::class, function (Login $event): void {
+            if (! $event->user->isDeactivated()) {
+                return;
+            }
+
+            Auth::logout();
+            throw ValidationException::withMessages([
+                Fortify::username() => [__('Your account has been deactivated.')],
+            ]);
+        });
     }
 
     /**

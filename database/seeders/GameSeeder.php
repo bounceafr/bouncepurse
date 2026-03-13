@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Actions\Admin\Allocation\CreateAllocation;
+use App\Actions\Pathway\RecalculateAllPathwayEligibilityAction;
 use App\Actions\Ranking\CalculateRankingsAction;
 use App\Enums\GameStatus;
 use App\Enums\ResultStatus;
@@ -12,24 +13,66 @@ use App\Enums\Role;
 use App\Models\Court;
 use App\Models\Game;
 use App\Models\GameModeration;
+use App\Models\PathwayConfiguration;
 use App\Models\RankingConfiguration;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Random\RandomException;
+use Throwable;
 
 final class GameSeeder extends Seeder
 {
+    /**
+     * @throws Throwable
+     * @throws RandomException
+     */
     public function run(): void
     {
-        $players = User::role(Role::Player->value)->get();
-        $moderators = User::role(Role::Moderator->value)->get();
+        $players = User::query()->role(Role::Player->value)->get();
+        $moderators = User::query()->role(Role::Moderator->value)->get();
         $courts = Court::query()->get();
         $config = RankingConfiguration::query()->latest('id')->firstOrFail();
-        $createAllocation = app(CreateAllocation::class);
+        $createAllocation = resolve(CreateAllocation::class);
         $formats = ['1v1', '2v2', '3v3', '4v4', '5v5'];
 
-        // Step A — Approved games (60 total, 12 per format)
+        // Pick 5 players to be pathway-eligible (they'll get concentrated approved games)
+        $pathwayPlayers = $players->random(min(5, $players->count()));
+        $players->diff($pathwayPlayers);
+
+        // Step A — Approved games (60 general + 50 pathway-targeted)
         $rejectedGames = collect();
 
+        // A1 — Give each pathway player 10 approved games across formats
+        foreach ($pathwayPlayers as $pathwayPlayer) {
+            foreach ($formats as $format) {
+                for ($i = 0; $i < 2; $i++) {
+                    $playedAt = $i === 0
+                        ? fake()->dateTimeBetween('-30 days', 'now')
+                        : fake()->dateTimeBetween('-1 year', '-31 days');
+
+                    $game = Game::factory()->create([
+                        'player_id' => $pathwayPlayer->id,
+                        'format' => $format,
+                        'status' => GameStatus::Approved->value,
+                        'result' => fake()->randomElement([ResultStatus::WIN->value, ResultStatus::LOST->value]),
+                        'court_id' => random_int(1, 10) > 3 ? $courts->random()->id : null,
+                        'played_at' => $playedAt,
+                    ]);
+
+                    GameModeration::query()->create([
+                        'game_id' => $game->id,
+                        'moderator_id' => $moderators->random()->id,
+                        'status' => GameStatus::Approved->value,
+                        'reason' => fake()->sentence(),
+                        'is_override' => false,
+                    ]);
+
+                    $createAllocation->handle($game);
+                }
+            }
+        }
+
+        // A2 — Spread remaining approved games across all players
         foreach ($formats as $format) {
             for ($i = 0; $i < 12; $i++) {
                 $playedAt = $i < 6
@@ -41,7 +84,7 @@ final class GameSeeder extends Seeder
                     'format' => $format,
                     'status' => GameStatus::Approved->value,
                     'result' => fake()->randomElement([ResultStatus::WIN->value, ResultStatus::LOST->value]),
-                    'court_id' => rand(1, 10) > 3 ? $courts->random()->id : null,
+                    'court_id' => random_int(1, 10) > 3 ? $courts->random()->id : null,
                     'played_at' => $playedAt,
                 ]);
 
@@ -65,7 +108,7 @@ final class GameSeeder extends Seeder
                     'format' => $format,
                     'status' => GameStatus::Rejected->value,
                     'result' => null,
-                    'court_id' => rand(1, 10) > 3 ? $courts->random()->id : null,
+                    'court_id' => random_int(1, 10) > 3 ? $courts->random()->id : null,
                     'played_at' => fake()->dateTimeBetween('-1 year', 'now'),
                 ]);
 
@@ -89,7 +132,7 @@ final class GameSeeder extends Seeder
                     'format' => $format,
                     'status' => GameStatus::Flagged->value,
                     'result' => null,
-                    'court_id' => rand(1, 10) > 3 ? $courts->random()->id : null,
+                    'court_id' => random_int(1, 10) > 3 ? $courts->random()->id : null,
                     'played_at' => fake()->dateTimeBetween('-1 year', 'now'),
                 ]);
 
@@ -111,7 +154,7 @@ final class GameSeeder extends Seeder
                     'format' => $format,
                     'status' => GameStatus::Pending->value,
                     'result' => null,
-                    'court_id' => rand(1, 10) > 3 ? $courts->random()->id : null,
+                    'court_id' => random_int(1, 10) > 3 ? $courts->random()->id : null,
                     'played_at' => fake()->dateTimeBetween('-1 year', 'now'),
                 ]);
             }
@@ -138,6 +181,13 @@ final class GameSeeder extends Seeder
         }
 
         // Step F — Calculate Rankings
-        app(CalculateRankingsAction::class)->handle($config);
+        resolve(CalculateRankingsAction::class)->handle($config);
+
+        // Step G — Recalculate Pathway Eligibility
+        $pathwayConfig = PathwayConfiguration::query()->latest()->first();
+
+        if ($pathwayConfig !== null) {
+            resolve(RecalculateAllPathwayEligibilityAction::class)->handle($pathwayConfig);
+        }
     }
 }

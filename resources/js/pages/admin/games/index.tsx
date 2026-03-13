@@ -1,4 +1,5 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
+import { type ColumnDef } from '@tanstack/react-table';
 import {
     CalendarIcon,
     CirclePlusIcon,
@@ -12,6 +13,12 @@ import GameController, {
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
+import {
+    DataTable,
+    LaravelPagination,
+    selectionColumn,
+    sortableHeader,
+} from '@/components/ui/data-table';
 import {
     Dialog,
     DialogClose,
@@ -42,14 +49,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
@@ -97,7 +96,7 @@ function statusBadge(status: string) {
     };
     return (
         <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs capitalize font-medium text-white ${colors[status] ?? 'bg-gray-400'}`}
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white capitalize ${colors[status] ?? 'bg-gray-400'}`}
         >
             {status}
         </span>
@@ -298,187 +297,156 @@ export default function GamesIndex({
         return () => clearTimeout(timeout);
     }, [search]);
 
+    const columns: ColumnDef<Game, unknown>[] = [
+        selectionColumn<Game>(),
+        {
+            accessorKey: 'title',
+            header: sortableHeader('Title'),
+            cell: ({ row }) => (
+                <span className="font-medium">{row.getValue('title')}</span>
+            ),
+        },
+        {
+            id: 'player',
+            accessorFn: (row) => row.player?.name ?? '—',
+            header: sortableHeader('Player'),
+        },
+        {
+            accessorKey: 'format',
+            header: sortableHeader('Format'),
+        },
+        {
+            accessorKey: 'played_at',
+            header: sortableHeader('Played At'),
+            cell: ({ row }) =>
+                new Date(row.getValue('played_at')).toLocaleDateString(),
+        },
+        {
+            accessorKey: 'status',
+            header: sortableHeader('Status'),
+            cell: ({ row }) => statusBadge(row.getValue('status')),
+        },
+        {
+            id: 'result',
+            header: 'Result',
+            enableSorting: false,
+            cell: ({ row }) => {
+                const result = row.original.result;
+                return result ? (
+                    <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${result === 'win' ? 'bg-green-500' : 'bg-red-500'}`}
+                    >
+                        {result === 'win' ? 'Win' : 'Lost'}
+                    </span>
+                ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                );
+            },
+        },
+        {
+            accessorKey: 'points',
+            header: sortableHeader('Points'),
+            cell: ({ row }) => {
+                const points = row.getValue('points');
+                return points !== null ? (
+                    points
+                ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                );
+            },
+        },
+        {
+            id: 'video',
+            header: 'Video',
+            enableSorting: false,
+            cell: ({ row }) => vimeoStatusBadge(row.original.vimeo_status),
+        },
+        {
+            id: 'actions',
+            enableHiding: false,
+            enableSorting: false,
+            cell: ({ row }) => {
+                const game = row.original;
+                return (
+                    <div className="text-right">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="size-4" />
+                                    <span className="sr-only">Actions</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onClick={() => setEditGame(game)}
+                                >
+                                    Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link
+                                        href={
+                                            GameController.showUpload(game.uuid)
+                                                .url
+                                        }
+                                    >
+                                        Upload Video
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={() => setDeleteGame(game)}
+                                >
+                                    Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                );
+            },
+        },
+    ];
+
+    const toolbar = (
+        <>
+            <div className="relative w-64">
+                <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    placeholder="Search games..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-8"
+                />
+            </div>
+            <Button onClick={() => setCreateOpen(true)}>
+                <CirclePlusIcon />
+                Add Game
+            </Button>
+        </>
+    );
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Games" />
 
             <div className="flex flex-col gap-6 p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold">Games</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Manage all games ({games.total} total)
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <div className="relative w-64">
-                            <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                                placeholder="Search games..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-8"
-                            />
-                        </div>
-                        <Button onClick={() => setCreateOpen(true)}>
-                            <CirclePlusIcon></CirclePlusIcon>
-                            Add Game
-                        </Button>
-                    </div>
+                <div>
+                    <h1 className="text-2xl font-semibold">Games</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Manage all games ({games.total} total)
+                    </p>
                 </div>
 
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Player</TableHead>
-                                <TableHead>Format</TableHead>
-                                <TableHead>Played At</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Result</TableHead>
-                                <TableHead>Points</TableHead>
-                                <TableHead>Video</TableHead>
-                                <TableHead className="text-right">
-                                    Actions
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {games.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={9}
-                                        className="py-8 text-center text-muted-foreground"
-                                    >
-                                        No games found.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                games.data.map((game) => (
-                                    <TableRow key={game.id}>
-                                        <TableCell className="font-medium">
-                                            {game.title}
-                                        </TableCell>
-                                        <TableCell>
-                                            {game.player?.name ?? '—'}
-                                        </TableCell>
-                                        <TableCell>{game.format}</TableCell>
-                                        <TableCell>
-                                            {new Date(
-                                                game.played_at,
-                                            ).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell>
-                                            {statusBadge(game.status)}
-                                        </TableCell>
-                                        <TableCell>
-                                            {game.result ? (
-                                                <span
-                                                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${game.result === 'win' ? 'bg-green-500' : 'bg-red-500'}`}
-                                                >
-                                                    {game.result === 'win'
-                                                        ? 'Win'
-                                                        : 'Lost'}
-                                                </span>
-                                            ) : (
-                                                <span className="text-xs text-muted-foreground">
-                                                    —
-                                                </span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            {game.points ?? (
-                                                <span className="text-xs text-muted-foreground">
-                                                    —
-                                                </span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            {vimeoStatusBadge(
-                                                game.vimeo_status,
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                    >
-                                                        <MoreHorizontal className="size-4" />
-                                                        <span className="sr-only">
-                                                            Actions
-                                                        </span>
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            setEditGame(game)
-                                                        }
-                                                    >
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem asChild>
-                                                        <Link
-                                                            href={
-                                                                GameController.showUpload(
-                                                                    game.uuid,
-                                                                ).url
-                                                            }
-                                                        >
-                                                            Upload Video
-                                                        </Link>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem
-                                                        variant="destructive"
-                                                        onClick={() =>
-                                                            setDeleteGame(game)
-                                                        }
-                                                    >
-                                                        Delete
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {games.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-1">
-                        {games.links.map((link, i) => (
-                            <Button
-                                key={i}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                disabled={link.url === null}
-                                asChild={link.url !== null}
-                            >
-                                {link.url !== null ? (
-                                    <Link
-                                        href={link.url}
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                ) : (
-                                    <span
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                )}
-                            </Button>
-                        ))}
-                    </div>
-                )}
+                <DataTable
+                    columns={columns}
+                    data={games.data}
+                    toolbar={toolbar}
+                    pagination={
+                        games.last_page > 1 ? (
+                            <LaravelPagination links={games.links} />
+                        ) : undefined
+                    }
+                />
             </div>
 
             {/* Create Game Modal */}
@@ -527,7 +495,9 @@ export default function GamesIndex({
             <Dialog
                 open={editGame !== null}
                 onOpenChange={(open) => {
-                    if (!open) setEditGame(null);
+                    if (!open) {
+                        setEditGame(null);
+                    }
                 }}
             >
                 <DialogContent>
@@ -576,7 +546,9 @@ export default function GamesIndex({
             <Dialog
                 open={deleteGame !== null}
                 onOpenChange={(open) => {
-                    if (!open) setDeleteGame(null);
+                    if (!open) {
+                        setDeleteGame(null);
+                    }
                 }}
             >
                 <DialogContent>

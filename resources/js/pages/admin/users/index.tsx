@@ -1,11 +1,20 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
+import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import UserController, {
+    deactivate,
     index,
+    show,
 } from '@/actions/App/Http/Controllers/Admin/UserController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import {
+    DataTable,
+    LaravelPagination,
+    selectionColumn,
+    sortableHeader,
+} from '@/components/ui/data-table';
 import {
     Dialog,
     DialogClose,
@@ -31,14 +40,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -58,6 +59,7 @@ type User = {
     name: string;
     email: string;
     created_at: string;
+    deactivated_at: string | null;
     roles: UserRole[];
 };
 
@@ -189,163 +191,181 @@ export default function UsersIndex({
 }: {
     users: PaginatedUsers;
     roles: RoleOption[];
-    filters: { search: string | null };
+    filters: { search: string | null; role: string | null };
 }) {
     const [createOpen, setCreateOpen] = useState(false);
     const [editUser, setEditUser] = useState<User | null>(null);
     const [deleteUser, setDeleteUser] = useState<User | null>(null);
+    const [deactivateUser, setDeactivateUser] = useState<User | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
+    const [roleFilter, setRoleFilter] = useState(filters.role ?? 'all');
+    const isInitialRender = useRef(true);
 
     useEffect(() => {
+        if (isInitialRender.current) {
+            isInitialRender.current = false;
+            return;
+        }
+
         const timeout = setTimeout(() => {
-            router.get(
-                index().url,
-                { search: search || undefined },
-                { preserveState: true, replace: true },
-            );
+            router.get(index().url, {
+                search: search || undefined,
+                role: roleFilter === 'all' ? undefined : roleFilter,
+            }, { preserveState: true, replace: true });
         }, 300);
 
         return () => clearTimeout(timeout);
-    }, [search]);
+    }, [search, roleFilter]);
+
+    const columns: ColumnDef<User, unknown>[] = [
+        selectionColumn<User>(),
+        {
+            accessorKey: 'name',
+            header: sortableHeader('Name'),
+            cell: ({ row }) => {
+                const user = row.original;
+                return (
+                    <Link
+                        href={show(user.id).url}
+                        className="font-medium hover:underline"
+                    >
+                        {user.name}
+                    </Link>
+                );
+            },
+        },
+        {
+            accessorKey: 'email',
+            header: sortableHeader('Email'),
+        },
+        {
+            id: 'role',
+            header: 'Role',
+            enableSorting: false,
+            cell: ({ row }) => (
+                <div className="flex items-center gap-1.5">
+                    {roleBadge(row.original.roles[0]?.name, roles)}
+                    {row.original.deactivated_at && (
+                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                            Deactivated
+                        </span>
+                    )}
+                </div>
+            ),
+        },
+        {
+            accessorKey: 'created_at',
+            header: sortableHeader('Created At'),
+            cell: ({ row }) =>
+                new Date(row.getValue('created_at')).toLocaleDateString(),
+        },
+        {
+            id: 'actions',
+            enableHiding: false,
+            enableSorting: false,
+            cell: ({ row }) => {
+                const user = row.original;
+                return (
+                    <div className="text-right">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="size-4" />
+                                    <span className="sr-only">Actions</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                    <Link href={show(user.id).url}>
+                                        View
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => setEditUser(user)}
+                                >
+                                    Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                {user.deactivated_at ? (
+                                    <DropdownMenuItem asChild>
+                                        <Link href={show(user.id).url}>
+                                            View to reactivate
+                                        </Link>
+                                    </DropdownMenuItem>
+                                ) : (
+                                    <DropdownMenuItem
+                                        className="text-orange-600"
+                                        onClick={() => setDeactivateUser(user)}
+                                    >
+                                        Deactivate
+                                    </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={() => setDeleteUser(user)}
+                                >
+                                    Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                );
+            },
+        },
+    ];
+
+    const toolbar = (
+        <>
+            <Input
+                placeholder="Search users..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-64"
+            />
+            <Select
+                value={roleFilter}
+                onValueChange={setRoleFilter}
+            >
+                <SelectTrigger className="w-40">
+                    <SelectValue placeholder="All roles" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All roles</SelectItem>
+                    {roles.map((r) => (
+                        <SelectItem key={r.value} value={r.value}>
+                            {r.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Button variant="default" onClick={() => setCreateOpen(true)}>
+                Add User
+            </Button>
+        </>
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Users" />
 
             <div className="flex flex-col gap-6 p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold">Users</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Manage all users ({users.total} total)
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <Input
-                            placeholder="Search users..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-64"
-                        />
-                        <Button
-                            variant="default"
-                            onClick={() => setCreateOpen(true)}
-                        >
-                            Add User
-                        </Button>
-                    </div>
+                <div>
+                    <h1 className="text-2xl font-semibold">Users</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Manage all users ({users.total} total)
+                    </p>
                 </div>
 
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Role</TableHead>
-                                <TableHead>Created At</TableHead>
-                                <TableHead className="text-right">
-                                    Actions
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {users.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={5}
-                                        className="py-8 text-center text-muted-foreground"
-                                    >
-                                        No users found.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                users.data.map((user) => (
-                                    <TableRow key={user.id}>
-                                        <TableCell className="font-medium">
-                                            {user.name}
-                                        </TableCell>
-                                        <TableCell>{user.email}</TableCell>
-                                        <TableCell>
-                                            {roleBadge(
-                                                user.roles[0]?.name,
-                                                roles,
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(
-                                                user.created_at,
-                                            ).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                    >
-                                                        <MoreHorizontal className="size-4" />
-                                                        <span className="sr-only">
-                                                            Actions
-                                                        </span>
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            setEditUser(user)
-                                                        }
-                                                    >
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem
-                                                        variant="destructive"
-                                                        onClick={() =>
-                                                            setDeleteUser(user)
-                                                        }
-                                                    >
-                                                        Delete
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {users.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-1">
-                        {users.links.map((link, i) => (
-                            <Button
-                                key={i}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                disabled={link.url === null}
-                                asChild={link.url !== null}
-                            >
-                                {link.url !== null ? (
-                                    <Link
-                                        href={link.url}
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                ) : (
-                                    <span
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                )}
-                            </Button>
-                        ))}
-                    </div>
-                )}
+                <DataTable
+                    columns={columns}
+                    data={users.data}
+                    toolbar={toolbar}
+                    pagination={
+                        users.last_page > 1 ? (
+                            <LaravelPagination links={users.links} />
+                        ) : undefined
+                    }
+                />
             </div>
 
             {/* Create User Modal */}
@@ -432,6 +452,71 @@ export default function UsersIndex({
                                         <Button disabled={processing} asChild>
                                             <button type="submit">
                                                 Update User
+                                            </button>
+                                        </Button>
+                                    </DialogFooter>
+                                </>
+                            )}
+                        </Form>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Deactivate User Modal */}
+            <Dialog
+                open={deactivateUser !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeactivateUser(null);
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Deactivate User</DialogTitle>
+                        <DialogDescription>
+                            Deactivating will prevent{' '}
+                            <span className="font-medium">
+                                {deactivateUser?.name}
+                            </span>{' '}
+                            from logging in. Provide a reason (required).
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {deactivateUser && (
+                        <Form
+                            {...deactivate.form(deactivateUser.id)}
+                            onSuccess={() => setDeactivateUser(null)}
+                        >
+                            {({ processing, errors }) => (
+                                <>
+                                    <div className="grid gap-2 py-2">
+                                        <Label htmlFor="deactivate-reason">
+                                            Reason
+                                        </Label>
+                                        <Input
+                                            id="deactivate-reason"
+                                            name="reason"
+                                            placeholder="Reason for deactivation"
+                                            required
+                                        />
+                                        <InputError message={errors.reason} />
+                                        <InputError message={errors.user} />
+                                    </div>
+
+                                    <DialogFooter className="gap-2">
+                                        <DialogClose asChild>
+                                            <Button variant="secondary">
+                                                Cancel
+                                            </Button>
+                                        </DialogClose>
+                                        <Button
+                                            variant="destructive"
+                                            disabled={processing}
+                                            asChild
+                                        >
+                                            <button type="submit">
+                                                Deactivate
                                             </button>
                                         </Button>
                                     </DialogFooter>

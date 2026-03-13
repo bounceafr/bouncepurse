@@ -20,6 +20,7 @@ final class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             RankingConfigurationSeeder::class,
             AllocationConfigurationSeeder::class,
+            PathwayConfigurationSeeder::class,
             UserSeeder::class,
             PlayerSeeder::class,
             CourtSeeder::class,

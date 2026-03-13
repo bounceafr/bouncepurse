@@ -20,6 +20,10 @@ enum Permission: string
     case ModerateGames = 'moderate-games';
     case OverrideModeration = 'override-moderation';
 
+    // Admin
+    case ViewAdminDashboard = 'view-admin-dashboard';
+    case ViewModeratorPerformance = 'view-moderator-performance';
+
     // Users
     case ViewUsers = 'view-users';
     case ManageUsers = 'manage-users';
@@ -30,6 +34,10 @@ enum Permission: string
     // Allocation
     case ViewAllocations = 'view-allocations';
     case ManageAllocationConfiguration = 'manage-allocation-configuration';
+
+    // Pathway
+    case ViewPathwayEligibility = 'view-pathway-eligibility';
+    case ManagePathwayConfiguration = 'manage-pathway-configuration';
 
     /** @return list<string> */
     public static function values(): array
@@ -50,11 +58,15 @@ enum Permission: string
             self::DeleteGames => 'Delete Games',
             self::ModerateGames => 'Moderate Games',
             self::OverrideModeration => 'Override Moderation',
+            self::ViewAdminDashboard => 'View Admin Dashboard',
+            self::ViewModeratorPerformance => 'View Moderator Performance',
             self::ViewUsers => 'View Users',
             self::ManageUsers => 'Manage Users',
             self::ManageRankingConfiguration => 'Manage Ranking Configuration',
             self::ViewAllocations => 'View Allocations',
             self::ManageAllocationConfiguration => 'Manage Allocation Configuration',
+            self::ViewPathwayEligibility => 'View Pathway Eligibility',
+            self::ManagePathwayConfiguration => 'Manage Pathway Configuration',
         };
     }
 }

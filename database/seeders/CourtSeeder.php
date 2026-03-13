@@ -13,7 +13,7 @@ final class CourtSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::role(Role::Administrator->value)->first();
+        $admin = User::query()->role(Role::Administrator->value)->first();
 
         $courts = [
             // USA — 3 courts

@@ -1,22 +1,29 @@
 import { usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
 import {
+    Award,
+    BookOpen,
     ClipboardList,
     DollarSign,
     LayoutGrid,
     MapPin,
+    Route,
     Settings2,
     ShieldAlert,
     SlidersHorizontal,
     Trophy,
+    UserCog,
     Users,
     Video,
 } from 'lucide-react';
-import { index as allocationIndex } from '@/actions/App/Http/Controllers/Admin/AllocationController';
 import { edit as allocationConfigEdit } from '@/actions/App/Http/Controllers/Admin/AllocationConfigurationController';
+import { index as allocationIndex } from '@/actions/App/Http/Controllers/Admin/AllocationController';
 import { index as courtsIndex } from '@/actions/App/Http/Controllers/Admin/CourtController';
 import { index as gamesIndex } from '@/actions/App/Http/Controllers/Admin/GameController';
+import { edit as pathwayConfigEdit } from '@/actions/App/Http/Controllers/Admin/PathwayConfigurationController';
+import { index as pathwayEligibleIndex } from '@/actions/App/Http/Controllers/Admin/PathwayEligiblePlayersController';
 import { index as usersIndex } from '@/actions/App/Http/Controllers/Admin/UserController';
+import LedgerController from '@/actions/App/Http/Controllers/LedgerController';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -30,7 +37,9 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard, leaderboard } from '@/routes';
+import adminDashboard from '@/routes/admin/dashboard';
 import moderation from '@/routes/admin/moderation';
+import moderators from '@/routes/admin/moderators';
 import override from '@/routes/admin/override';
 import ranking from '@/routes/admin/ranking';
 import type { NavItem } from '@/types';
@@ -69,6 +78,15 @@ export function AppSidebar() {
                   },
               ]
             : []),
+        ...(can('manage-pathway-configuration')
+            ? [
+                  {
+                      title: 'Pathway Config',
+                      href: pathwayConfigEdit().url,
+                      icon: Route,
+                  },
+              ]
+            : []),
     ];
 
     const mainNavItems: NavItem[] = [
@@ -82,6 +100,29 @@ export function AppSidebar() {
             href: leaderboard().url,
             icon: Trophy,
         },
+        {
+            title: 'My Ledger',
+            href: LedgerController().url,
+            icon: BookOpen,
+        },
+        ...(can('view-admin-dashboard')
+            ? [
+                  {
+                      title: 'Admin Dashboard',
+                      href: adminDashboard.index().url,
+                      icon: LayoutGrid,
+                  },
+              ]
+            : []),
+        ...(can('view-pathway-eligibility')
+            ? [
+                  {
+                      title: 'Pathway Candidates',
+                      href: pathwayEligibleIndex().url,
+                      icon: Award,
+                  },
+              ]
+            : []),
         ...(can('edit-courts')
             ? [
                   {
@@ -124,6 +165,15 @@ export function AppSidebar() {
                       title: 'Allocations',
                       href: allocationIndex().url,
                       icon: DollarSign,
+                  },
+              ]
+            : []),
+        ...(can('view-moderator-performance')
+            ? [
+                  {
+                      title: 'Moderators',
+                      href: moderators.index().url,
+                      icon: UserCog,
                   },
               ]
             : []),
