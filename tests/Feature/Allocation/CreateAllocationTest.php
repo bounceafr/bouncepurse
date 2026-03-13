@@ -23,10 +23,11 @@ beforeEach(function (): void {
     ]);
 
     AllocationConfiguration::query()->create([
-        'insurance_percentage' => 25.0,
-        'savings_percentage' => 25.0,
-        'pathway_percentage' => 25.0,
-        'administration_percentage' => 25.0,
+        'insurance_percentage' => 20.0,
+        'savings_percentage' => 20.0,
+        'pathway_percentage' => 20.0,
+        'administration_percentage' => 20.0,
+        'court_fees_percentage' => 20.0,
     ]);
 });
 
@@ -40,10 +41,11 @@ test('create allocation action creates record with correct amounts', function ()
         ->and($allocation->game_id)->toBe($game->id)
         ->and($allocation->player_id)->toBe($game->player_id)
         ->and($allocation->total_amount)->toBe(1.0)
-        ->and($allocation->insurance_amount)->toBe(0.25)
-        ->and($allocation->savings_amount)->toBe(0.25)
-        ->and($allocation->pathway_amount)->toBe(0.25)
-        ->and($allocation->administration_amount)->toBe(0.25);
+        ->and($allocation->insurance_amount)->toBe(0.2)
+        ->and($allocation->savings_amount)->toBe(0.2)
+        ->and($allocation->pathway_amount)->toBe(0.2)
+        ->and($allocation->administration_amount)->toBe(0.2)
+        ->and($allocation->court_fees_amount)->toBe(0.2);
 });
 
 test('allocation amounts sum to total amount', function (): void {
@@ -55,7 +57,8 @@ test('allocation amounts sum to total amount', function (): void {
     $sum = $allocation->insurance_amount
         + $allocation->savings_amount
         + $allocation->pathway_amount
-        + $allocation->administration_amount;
+        + $allocation->administration_amount
+        + $allocation->court_fees_amount;
 
     expect(abs($sum - $allocation->total_amount))->toBeLessThan(0.001);
 });
@@ -72,10 +75,11 @@ test('allocation stores reference to configuration', function (): void {
 
 test('allocation is created with non-uniform percentages', function (): void {
     AllocationConfiguration::query()->create([
-        'insurance_percentage' => 40.0,
-        'savings_percentage' => 30.0,
+        'insurance_percentage' => 30.0,
+        'savings_percentage' => 25.0,
         'pathway_percentage' => 20.0,
-        'administration_percentage' => 10.0,
+        'administration_percentage' => 15.0,
+        'court_fees_percentage' => 10.0,
     ]);
 
     $game = Game::factory()->create(['status' => 'approved']);
@@ -83,10 +87,11 @@ test('allocation is created with non-uniform percentages', function (): void {
 
     $allocation = $action->handle($game);
 
-    expect($allocation->insurance_amount)->toBe(0.4)
-        ->and($allocation->savings_amount)->toBe(0.3)
+    expect($allocation->insurance_amount)->toBe(0.3)
+        ->and($allocation->savings_amount)->toBe(0.25)
         ->and($allocation->pathway_amount)->toBe(0.2)
-        ->and($allocation->administration_amount)->toBe(0.1);
+        ->and($allocation->administration_amount)->toBe(0.15)
+        ->and($allocation->court_fees_amount)->toBe(0.1);
 });
 
 test('approving game via moderation dispatches allocation job', function (): void {

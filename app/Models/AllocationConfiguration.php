@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read float $savings_percentage
  * @property-read float $pathway_percentage
  * @property-read float $administration_percentage
+ * @property-read float $court_fees_percentage
  * @property-read ?int $updated_by
  * @property-read ?CarbonInterface $created_at
  * @property-read ?CarbonInterface $updated_at
@@ -46,6 +47,7 @@ final class AllocationConfiguration extends Model
             'savings_percentage' => 'float',
             'pathway_percentage' => 'float',
             'administration_percentage' => 'float',
+            'court_fees_percentage' => 'float',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

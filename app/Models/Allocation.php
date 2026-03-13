@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read float $savings_amount
  * @property-read float $pathway_amount
  * @property-read float $administration_amount
+ * @property-read float $court_fees_amount
  * @property-read int $allocation_configuration_id
  * @property-read ?CarbonInterface $created_at
  * @property-read ?CarbonInterface $updated_at
@@ -57,6 +58,7 @@ final class Allocation extends Model
             'savings_amount' => 'float',
             'pathway_amount' => 'float',
             'administration_amount' => 'float',
+            'court_fees_amount' => 'float',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

@@ -15,10 +15,11 @@ beforeEach(function (): void {
     $this->seed(RolesAndPermissionsSeeder::class);
 
     AllocationConfiguration::query()->create([
-        'insurance_percentage' => 25.0,
-        'savings_percentage' => 25.0,
-        'pathway_percentage' => 25.0,
-        'administration_percentage' => 25.0,
+        'insurance_percentage' => 20.0,
+        'savings_percentage' => 20.0,
+        'pathway_percentage' => 20.0,
+        'administration_percentage' => 20.0,
+        'court_fees_percentage' => 20.0,
     ]);
 });
 
@@ -48,6 +49,7 @@ test('admin can view allocation summary page', function (): void {
             ->has('summary.savings')
             ->has('summary.pathway')
             ->has('summary.administration')
+            ->has('summary.court_fees')
             ->has('summary.count')
         );
 });
@@ -65,6 +67,7 @@ test('summary returns correct totals', function (): void {
         'savings_amount' => 0.25,
         'pathway_amount' => 0.25,
         'administration_amount' => 0.25,
+        'court_fees_amount' => 0.25,
         'allocation_configuration_id' => $config->id,
     ]);
 
@@ -76,6 +79,7 @@ test('summary returns correct totals', function (): void {
         'savings_amount' => 0.25,
         'pathway_amount' => 0.25,
         'administration_amount' => 0.25,
+        'court_fees_amount' => 0.25,
         'allocation_configuration_id' => $config->id,
     ]);
 
@@ -87,7 +91,8 @@ test('summary returns correct totals', function (): void {
         ->and($result['insurance'])->toBe(0.5)
         ->and($result['savings'])->toBe(0.5)
         ->and($result['pathway'])->toBe(0.5)
-        ->and($result['administration'])->toBe(0.5);
+        ->and($result['administration'])->toBe(0.5)
+        ->and($result['court_fees'])->toBe(0.5);
 });
 
 test('summary filters by player id', function (): void {
@@ -129,6 +134,7 @@ test('summary filters by date range', function (): void {
         'savings_amount' => 0.25,
         'pathway_amount' => 0.25,
         'administration_amount' => 0.25,
+        'court_fees_amount' => 0.25,
         'allocation_configuration_id' => $config->id,
         'created_at' => now()->subDays(10),
     ]);
@@ -188,6 +194,7 @@ test('csv export returns correct headers and data', function (): void {
         'savings_amount' => 0.25,
         'pathway_amount' => 0.25,
         'administration_amount' => 0.25,
+        'court_fees_amount' => 0.25,
         'allocation_configuration_id' => $config->id,
     ]);
 
@@ -236,6 +243,7 @@ test('csv export includes data row with correct format', function (): void {
         'savings_amount' => 0.50,
         'pathway_amount' => 0.50,
         'administration_amount' => 0.50,
+        'court_fees_amount' => 0.50,
         'allocation_configuration_id' => $config->id,
     ]);
 
@@ -296,6 +304,7 @@ test('csv export filters by date range', function (): void {
         'savings_amount' => 0.25,
         'pathway_amount' => 0.25,
         'administration_amount' => 0.25,
+        'court_fees_amount' => 0.25,
         'allocation_configuration_id' => $config->id,
         'created_at' => now()->subDays(10),
     ]);

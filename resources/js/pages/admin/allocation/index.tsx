@@ -31,6 +31,7 @@ type Summary = {
     savings: number;
     pathway: number;
     administration: number;
+    court_fees: number;
     count: number;
 };
 
@@ -44,6 +45,7 @@ type Allocation = {
     savings_amount: number;
     pathway_amount: number;
     administration_amount: number;
+    court_fees_amount: number;
     created_at: string;
 };
 
@@ -144,7 +146,7 @@ export default function AllocationIndex({ summary, allocations, filters }: Props
                             Allocation Summary
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            $1 per approved game, split across four categories.
+                            $1 per approved game, split across five categories.
                         </p>
                     </div>
                     <Button asChild variant="outline" size="sm">
@@ -155,7 +157,7 @@ export default function AllocationIndex({ summary, allocations, filters }: Props
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                     <StatCard
                         title="Total Allocated"
                         value={`$${summary.total.toFixed(2)}`}
@@ -176,6 +178,10 @@ export default function AllocationIndex({ summary, allocations, filters }: Props
                     <StatCard
                         title="Administration"
                         value={`$${summary.administration.toFixed(4)}`}
+                    />
+                    <StatCard
+                        title="Court Fees"
+                        value={`$${summary.court_fees.toFixed(4)}`}
                     />
                 </div>
 
@@ -251,6 +257,7 @@ export default function AllocationIndex({ summary, allocations, filters }: Props
                                 <TableHead>Savings</TableHead>
                                 <TableHead>Pathway</TableHead>
                                 <TableHead>Administration</TableHead>
+                                <TableHead>Court Fees</TableHead>
                                 <TableHead>Date</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -258,7 +265,7 @@ export default function AllocationIndex({ summary, allocations, filters }: Props
                             {allocations.data.length === 0 ? (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={8}
+                                        colSpan={9}
                                         className="py-8 text-center text-muted-foreground"
                                     >
                                         No allocations found.
@@ -287,6 +294,9 @@ export default function AllocationIndex({ summary, allocations, filters }: Props
                                         </TableCell>
                                         <TableCell>
                                             ${allocation.administration_amount.toFixed(4)}
+                                        </TableCell>
+                                        <TableCell>
+                                            ${allocation.court_fees_amount.toFixed(4)}
                                         </TableCell>
                                         <TableCell>
                                             {new Date(allocation.created_at).toLocaleDateString()}

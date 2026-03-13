@@ -12,10 +12,11 @@ beforeEach(function (): void {
     $this->seed(RolesAndPermissionsSeeder::class);
 
     AllocationConfiguration::query()->create([
-        'insurance_percentage' => 25.0,
-        'savings_percentage' => 25.0,
-        'pathway_percentage' => 25.0,
-        'administration_percentage' => 25.0,
+        'insurance_percentage' => 20.0,
+        'savings_percentage' => 20.0,
+        'pathway_percentage' => 20.0,
+        'administration_percentage' => 20.0,
+        'court_fees_percentage' => 20.0,
     ]);
 });
 
@@ -44,6 +45,7 @@ test('admin can view allocation configuration edit page', function (): void {
             ->has('config.savings_percentage')
             ->has('config.pathway_percentage')
             ->has('config.administration_percentage')
+            ->has('config.court_fees_percentage')
         );
 });
 
@@ -52,17 +54,19 @@ test('admin can update allocation configuration', function (): void {
     $this->actingAs($admin);
 
     $this->patch(route('admin.allocation-configuration.update'), [
-        'insurance_percentage' => 40.0,
-        'savings_percentage' => 30.0,
+        'insurance_percentage' => 30.0,
+        'savings_percentage' => 25.0,
         'pathway_percentage' => 20.0,
-        'administration_percentage' => 10.0,
+        'administration_percentage' => 15.0,
+        'court_fees_percentage' => 10.0,
     ])->assertRedirect(route('admin.allocation-configuration.edit'));
 
     $this->assertDatabaseHas('allocation_configurations', [
-        'insurance_percentage' => 40.0,
-        'savings_percentage' => 30.0,
+        'insurance_percentage' => 30.0,
+        'savings_percentage' => 25.0,
         'pathway_percentage' => 20.0,
-        'administration_percentage' => 10.0,
+        'administration_percentage' => 15.0,
+        'court_fees_percentage' => 10.0,
         'updated_by' => $admin->id,
     ]);
 });
@@ -74,10 +78,11 @@ test('old config row is preserved when saving new configuration', function (): v
     $originalCount = AllocationConfiguration::query()->count();
 
     $this->patch(route('admin.allocation-configuration.update'), [
-        'insurance_percentage' => 40.0,
-        'savings_percentage' => 30.0,
+        'insurance_percentage' => 30.0,
+        'savings_percentage' => 25.0,
         'pathway_percentage' => 20.0,
-        'administration_percentage' => 10.0,
+        'administration_percentage' => 15.0,
+        'court_fees_percentage' => 10.0,
     ]);
 
     expect(AllocationConfiguration::query()->count())->toBe($originalCount + 1);
@@ -92,6 +97,7 @@ test('percentages must sum to 100', function (): void {
         'savings_percentage' => 30.0,
         'pathway_percentage' => 30.0,
         'administration_percentage' => 30.0,
+        'court_fees_percentage' => 30.0,
     ])->assertInvalid(['insurance_percentage']);
 });
 
@@ -105,6 +111,7 @@ test('validation rejects missing percentages', function (): void {
             'savings_percentage',
             'pathway_percentage',
             'administration_percentage',
+            'court_fees_percentage',
         ]);
 });
 
@@ -117,11 +124,13 @@ test('validation rejects percentages above 100', function (): void {
         'savings_percentage' => 101,
         'pathway_percentage' => 101,
         'administration_percentage' => 101,
+        'court_fees_percentage' => 101,
     ])->assertInvalid([
         'insurance_percentage',
         'savings_percentage',
         'pathway_percentage',
         'administration_percentage',
+        'court_fees_percentage',
     ]);
 });
 
@@ -134,20 +143,23 @@ test('validation rejects negative percentages', function (): void {
         'savings_percentage' => -1,
         'pathway_percentage' => -1,
         'administration_percentage' => -1,
+        'court_fees_percentage' => -1,
     ])->assertInvalid([
         'insurance_percentage',
         'savings_percentage',
         'pathway_percentage',
         'administration_percentage',
+        'court_fees_percentage',
     ]);
 });
 
 test('guest cannot update allocation configuration', function (): void {
     $this->patch(route('admin.allocation-configuration.update'), [
-        'insurance_percentage' => 25.0,
-        'savings_percentage' => 25.0,
-        'pathway_percentage' => 25.0,
-        'administration_percentage' => 25.0,
+        'insurance_percentage' => 20.0,
+        'savings_percentage' => 20.0,
+        'pathway_percentage' => 20.0,
+        'administration_percentage' => 20.0,
+        'court_fees_percentage' => 20.0,
     ])->assertRedirect(route('login'));
 });
 
@@ -156,10 +168,11 @@ test('player cannot update allocation configuration', function (): void {
     $this->actingAs($player);
 
     $this->patch(route('admin.allocation-configuration.update'), [
-        'insurance_percentage' => 25.0,
-        'savings_percentage' => 25.0,
-        'pathway_percentage' => 25.0,
-        'administration_percentage' => 25.0,
+        'insurance_percentage' => 20.0,
+        'savings_percentage' => 20.0,
+        'pathway_percentage' => 20.0,
+        'administration_percentage' => 20.0,
+        'court_fees_percentage' => 20.0,
     ])->assertForbidden();
 });
 
@@ -168,9 +181,10 @@ test('update redirects with success flash message', function (): void {
     $this->actingAs($admin);
 
     $this->patch(route('admin.allocation-configuration.update'), [
-        'insurance_percentage' => 40.0,
-        'savings_percentage' => 30.0,
+        'insurance_percentage' => 30.0,
+        'savings_percentage' => 25.0,
         'pathway_percentage' => 20.0,
-        'administration_percentage' => 10.0,
+        'administration_percentage' => 15.0,
+        'court_fees_percentage' => 10.0,
     ])->assertSessionHas('success');
 });

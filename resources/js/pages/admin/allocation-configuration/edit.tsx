@@ -23,6 +23,7 @@ type Config = {
     savings_percentage: number;
     pathway_percentage: number;
     administration_percentage: number;
+    court_fees_percentage: number;
 };
 
 type Props = {
@@ -56,7 +57,7 @@ export default function AllocationConfigurationEdit({ config }: Props) {
                         <CardTitle>Percentage Split</CardTitle>
                         <CardDescription>
                             Each approved game allocates $1 split across these
-                            four categories.
+                            five categories.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -150,6 +151,29 @@ export default function AllocationConfigurationEdit({ config }: Props) {
                                         <InputError
                                             message={
                                                 errors.administration_percentage
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="court_fees_percentage">
+                                            Court Fees (%)
+                                        </Label>
+                                        <Input
+                                            id="court_fees_percentage"
+                                            name="court_fees_percentage"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            defaultValue={
+                                                config.court_fees_percentage
+                                            }
+                                            required
+                                        />
+                                        <InputError
+                                            message={
+                                                errors.court_fees_percentage
                                             }
                                         />
                                     </div>

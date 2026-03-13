@@ -27,6 +27,7 @@ final class CreateAllocation
             'savings_amount' => round($config->savings_percentage / 100, 4),
             'pathway_amount' => round($config->pathway_percentage / 100, 4),
             'administration_amount' => round($config->administration_percentage / 100, 4),
+            'court_fees_amount' => round($config->court_fees_percentage / 100, 4),
             'allocation_configuration_id' => $config->id,
         ]));
     }

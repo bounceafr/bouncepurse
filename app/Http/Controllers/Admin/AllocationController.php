@@ -62,7 +62,7 @@ final class AllocationController extends Controller
 
         $rows = $query->get();
 
-        $csv = implode(',', ['ID', 'Game ID', 'Player', 'Format', 'Total', 'Insurance', 'Savings', 'Pathway', 'Administration', 'Date'])."\n";
+        $csv = implode(',', ['ID', 'Game ID', 'Player', 'Format', 'Total', 'Insurance', 'Savings', 'Pathway', 'Administration', 'Court Fees', 'Date'])."\n";
 
         foreach ($rows as $row) {
             $csv .= implode(',', [
@@ -75,6 +75,7 @@ final class AllocationController extends Controller
                 number_format($row->savings_amount, 4),
                 number_format($row->pathway_amount, 4),
                 number_format($row->administration_amount, 4),
+                number_format($row->court_fees_amount, 4),
                 $row->created_at?->toDateString(),
             ])."\n";
         }

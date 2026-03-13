@@ -36,6 +36,7 @@ final class AllocationConfigurationController extends Controller
             (float) $validated['savings_percentage'],
             (float) $validated['pathway_percentage'],
             (float) $validated['administration_percentage'],
+            (float) $validated['court_fees_percentage'],
             $user,
         );
 
