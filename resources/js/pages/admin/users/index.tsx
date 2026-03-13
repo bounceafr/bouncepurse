@@ -1,9 +1,10 @@
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import UserController, {
     index,
+    show,
 } from '@/actions/App/Http/Controllers/Admin/UserController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ type User = {
     name: string;
     email: string;
     created_at: string;
+    deactivated_at: string | null;
     roles: UserRole[];
 };
 
@@ -188,33 +190,42 @@ export default function UsersIndex({
 }: {
     users: PaginatedUsers;
     roles: RoleOption[];
-    filters: { search: string | null };
+    filters: { search: string | null; role: string | null };
 }) {
     const [createOpen, setCreateOpen] = useState(false);
     const [editUser, setEditUser] = useState<User | null>(null);
     const [deleteUser, setDeleteUser] = useState<User | null>(null);
+    const [deactivateUser, setDeactivateUser] = useState<User | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
+    const [roleFilter, setRoleFilter] = useState(filters.role ?? '');
 
     useEffect(() => {
         const timeout = setTimeout(() => {
-            router.get(
-                index().url,
-                { search: search || undefined },
-                { preserveState: true, replace: true },
-            );
+            router.get(index().url, {
+                search: search || undefined,
+                role: roleFilter || undefined,
+            }, { preserveState: true, replace: true });
         }, 300);
 
         return () => clearTimeout(timeout);
-    }, [search]);
+    }, [search, roleFilter]);
 
     const columns: ColumnDef<User, unknown>[] = [
         selectionColumn<User>(),
         {
             accessorKey: 'name',
             header: sortableHeader('Name'),
-            cell: ({ row }) => (
-                <span className="font-medium">{row.getValue('name')}</span>
-            ),
+            cell: ({ row }) => {
+                const user = row.original;
+                return (
+                    <Link
+                        href={show(user.id).url}
+                        className="font-medium hover:underline"
+                    >
+                        {user.name}
+                    </Link>
+                );
+            },
         },
         {
             accessorKey: 'email',
@@ -224,7 +235,16 @@ export default function UsersIndex({
             id: 'role',
             header: 'Role',
             enableSorting: false,
-            cell: ({ row }) => roleBadge(row.original.roles[0]?.name, roles),
+            cell: ({ row }) => (
+                <div className="flex items-center gap-1.5">
+                    {roleBadge(row.original.roles[0]?.name, roles)}
+                    {row.original.deactivated_at && (
+                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                            Deactivated
+                        </span>
+                    )}
+                </div>
+            ),
         },
         {
             accessorKey: 'created_at',
@@ -248,12 +268,31 @@ export default function UsersIndex({
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                    <Link href={show(user.id).url}>
+                                        View
+                                    </Link>
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={() => setEditUser(user)}
                                 >
                                     Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+                                {user.deactivated_at ? (
+                                    <DropdownMenuItem asChild>
+                                        <Link href={show(user.id).url}>
+                                            View to reactivate
+                                        </Link>
+                                    </DropdownMenuItem>
+                                ) : (
+                                    <DropdownMenuItem
+                                        className="text-orange-600"
+                                        onClick={() => setDeactivateUser(user)}
+                                    >
+                                        Deactivate
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
                                     variant="destructive"
                                     onClick={() => setDeleteUser(user)}
@@ -276,6 +315,22 @@ export default function UsersIndex({
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-64"
             />
+            <Select
+                value={roleFilter}
+                onValueChange={setRoleFilter}
+            >
+                <SelectTrigger className="w-40">
+                    <SelectValue placeholder="All roles" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="">All roles</SelectItem>
+                    {roles.map((r) => (
+                        <SelectItem key={r.value} value={r.value}>
+                            {r.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
             <Button variant="default" onClick={() => setCreateOpen(true)}>
                 Add User
             </Button>
@@ -390,6 +445,77 @@ export default function UsersIndex({
                                         <Button disabled={processing} asChild>
                                             <button type="submit">
                                                 Update User
+                                            </button>
+                                        </Button>
+                                    </DialogFooter>
+                                </>
+                            )}
+                        </Form>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Deactivate User Modal */}
+            <Dialog
+                open={deactivateUser !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeactivateUser(null);
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Deactivate User</DialogTitle>
+                        <DialogDescription>
+                            Deactivating will prevent{' '}
+                            <span className="font-medium">
+                                {deactivateUser?.name}
+                            </span>{' '}
+                            from logging in. Provide a reason (required).
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {deactivateUser && (
+                        <Form
+                            action={`/admin/users/${deactivateUser.id}/deactivate`}
+                            method="patch"
+                            onSuccess={() => setDeactivateUser(null)}
+                        >
+                            {({ processing, errors }) => (
+                                <>
+                                    <div className="grid gap-2 py-2">
+                                        <Label htmlFor="deactivate-reason">
+                                            Reason
+                                        </Label>
+                                        <Input
+                                            id="deactivate-reason"
+                                            name="reason"
+                                            placeholder="Reason for deactivation"
+                                            required
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="_method"
+                                            value="PATCH"
+                                        />
+                                        <InputError message={errors.reason} />
+                                        <InputError message={errors.user} />
+                                    </div>
+
+                                    <DialogFooter className="gap-2">
+                                        <DialogClose asChild>
+                                            <Button variant="secondary">
+                                                Cancel
+                                            </Button>
+                                        </DialogClose>
+                                        <Button
+                                            variant="destructive"
+                                            disabled={processing}
+                                            asChild
+                                        >
+                                            <button type="submit">
+                                                Deactivate
                                             </button>
                                         </Button>
                                     </DialogFooter>

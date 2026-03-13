@@ -17,6 +17,8 @@ test('permission label returns correct string for each case', function (Permissi
     [Permission::DeleteGames, 'Delete Games'],
     [Permission::ModerateGames, 'Moderate Games'],
     [Permission::OverrideModeration, 'Override Moderation'],
+    [Permission::ViewAdminDashboard, 'View Admin Dashboard'],
+    [Permission::ViewModeratorPerformance, 'View Moderator Performance'],
     [Permission::ViewUsers, 'View Users'],
     [Permission::ManageUsers, 'Manage Users'],
     [Permission::ManageRankingConfiguration, 'Manage Ranking Configuration'],
@@ -40,6 +42,8 @@ test('permission values returns all permission strings', function (): void {
         ->toContain('delete-games')
         ->toContain('moderate-games')
         ->toContain('override-moderation')
+        ->toContain('view-admin-dashboard')
+        ->toContain('view-moderator-performance')
         ->toContain('view-users')
         ->toContain('manage-users')
         ->toContain('manage-ranking-configuration')
@@ -47,5 +51,5 @@ test('permission values returns all permission strings', function (): void {
         ->toContain('manage-allocation-configuration')
         ->toContain('view-pathway-eligibility')
         ->toContain('manage-pathway-configuration')
-        ->toHaveCount(17);
+        ->toHaveCount(19);
 });

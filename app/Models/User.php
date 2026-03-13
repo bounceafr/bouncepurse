@@ -7,8 +7,10 @@ namespace App\Models;
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -28,6 +30,9 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read ?string $remember_token
  * @property-read ?CarbonInterface $created_at
  * @property-read ?CarbonInterface $updated_at
+ * @property ?CarbonInterface $deactivated_at
+ * @property-read ?int $deactivated_by
+ * @property-read ?string $deactivation_reason
  * @property-read ?Profile $profile
  */
 final class User extends Authenticatable implements MustVerifyEmail
@@ -73,6 +78,35 @@ final class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(PlayerRanking::class, 'player_id');
     }
 
+    /** @return HasMany<Game, self> */
+    public function games(): HasMany
+    {
+        return $this->hasMany(Game::class, 'player_id');
+    }
+
+    /** @return HasMany<GameModeration, self> */
+    public function moderationReviews(): HasMany
+    {
+        return $this->hasMany(GameModeration::class, 'moderator_id');
+    }
+
+    /** @return BelongsTo<User, self> */
+    public function deactivatedBy(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'deactivated_by');
+    }
+
+    /** @param Builder<User> $query */
+    public function scopeActive(Builder $query): void
+    {
+        $query->whereNull('deactivated_at');
+    }
+
+    public function isDeactivated(): bool
+    {
+        return $this->deactivated_at !== null;
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -84,6 +118,7 @@ final class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'deactivated_at' => 'datetime',
         ];
     }
 }

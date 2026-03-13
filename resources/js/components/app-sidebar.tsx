@@ -12,6 +12,7 @@ import {
     ShieldAlert,
     SlidersHorizontal,
     Trophy,
+    UserCog,
     Users,
     Video,
 } from 'lucide-react';
@@ -36,7 +37,9 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard, leaderboard } from '@/routes';
+import adminDashboard from '@/routes/admin/dashboard';
 import moderation from '@/routes/admin/moderation';
+import moderators from '@/routes/admin/moderators';
 import override from '@/routes/admin/override';
 import ranking from '@/routes/admin/ranking';
 import type { NavItem } from '@/types';
@@ -102,6 +105,15 @@ export function AppSidebar() {
             href: LedgerController().url,
             icon: BookOpen,
         },
+        ...(can('view-admin-dashboard')
+            ? [
+                  {
+                      title: 'Admin Dashboard',
+                      href: adminDashboard.index().url,
+                      icon: LayoutGrid,
+                  },
+              ]
+            : []),
         ...(can('view-pathway-eligibility')
             ? [
                   {
@@ -153,6 +165,15 @@ export function AppSidebar() {
                       title: 'Allocations',
                       href: allocationIndex().url,
                       icon: DollarSign,
+                  },
+              ]
+            : []),
+        ...(can('view-moderator-performance')
+            ? [
+                  {
+                      title: 'Moderators',
+                      href: moderators.index().url,
+                      icon: UserCog,
                   },
               ]
             : []),

@@ -5,14 +5,20 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\AllocationConfigurationController;
 use App\Http\Controllers\Admin\AllocationController;
 use App\Http\Controllers\Admin\CourtController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\GameController;
 use App\Http\Controllers\Admin\ModerationController;
+use App\Http\Controllers\Admin\ModeratorController;
 use App\Http\Controllers\Admin\OverrideController;
 use App\Http\Controllers\Admin\PathwayConfigurationController;
 use App\Http\Controllers\Admin\PathwayEligiblePlayersController;
 use App\Http\Controllers\Admin\RankingConfigurationController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
+
+Route::middleware(['auth', 'verified', 'permission:view-admin-dashboard'])->group(function (): void {
+    Route::get('admin/dashboard', DashboardController::class)->name('admin.dashboard.index');
+});
 
 Route::middleware(['auth', 'verified', 'permission:edit-courts'])->group(function (): void {
     Route::resource('admin/courts', CourtController::class)
@@ -36,12 +42,18 @@ Route::middleware(['auth', 'verified', 'permission:view-games'])->group(function
 Route::middleware(['auth', 'verified', 'permission:manage-users'])->group(function (): void {
     Route::resource('admin/users', UserController::class)
         ->names('admin.users')
-        ->only(['index', 'store', 'update', 'destroy']);
+        ->only(['index', 'show', 'store', 'update', 'destroy']);
+    Route::patch('admin/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('admin.users.deactivate');
+    Route::patch('admin/users/{user}/reactivate', [UserController::class, 'reactivate'])->name('admin.users.reactivate');
 });
 
 Route::middleware(['auth', 'verified', 'permission:manage-ranking-configuration'])->group(function (): void {
     Route::get('admin/ranking', [RankingConfigurationController::class, 'edit'])->name('admin.ranking.edit');
     Route::post('admin/ranking', [RankingConfigurationController::class, 'update'])->name('admin.ranking.update');
+});
+
+Route::middleware(['auth', 'verified', 'permission:view-moderator-performance'])->group(function (): void {
+    Route::get('admin/moderators', [ModeratorController::class, 'index'])->name('admin.moderators.index');
 });
 
 Route::middleware(['auth', 'verified', 'permission:moderate-games'])->group(function (): void {
