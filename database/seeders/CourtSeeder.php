@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Enums\Role;
+use App\Models\Country;
 use App\Models\Court;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -43,10 +44,13 @@ final class CourtSeeder extends Seeder
         ];
 
         foreach ($courts as $data) {
+            $country = Country::query()->firstWhere('name', $data['country'])
+                ?? Country::factory()->create(['name' => $data['country']]);
+
             $factory = Court::factory()->{$data['status']}();
 
             $factory->create([
-                'country' => $data['country'],
+                'country_id' => $country->id,
                 'city' => $data['city'],
                 'created_by' => $admin->id,
             ]);
