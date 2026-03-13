@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\AllocationConfigurationController;
 use App\Http\Controllers\Admin\AllocationController;
 use App\Http\Controllers\Admin\CourtController;
-use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\GameController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\ModeratorController;
@@ -15,10 +14,6 @@ use App\Http\Controllers\Admin\PathwayEligiblePlayersController;
 use App\Http\Controllers\Admin\RankingConfigurationController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
-
-Route::middleware(['auth', 'verified', 'permission:view-admin-dashboard'])->group(function (): void {
-    Route::get('admin/dashboard', DashboardController::class)->name('admin.dashboard.index');
-});
 
 Route::middleware(['auth', 'verified', 'permission:edit-courts'])->group(function (): void {
     Route::resource('admin/courts', CourtController::class)

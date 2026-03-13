@@ -37,7 +37,6 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard, leaderboard } from '@/routes';
-import adminDashboard from '@/routes/admin/dashboard';
 import moderation from '@/routes/admin/moderation';
 import moderators from '@/routes/admin/moderators';
 import override from '@/routes/admin/override';
@@ -105,15 +104,6 @@ export function AppSidebar() {
             href: LedgerController().url,
             icon: BookOpen,
         },
-        ...(can('view-admin-dashboard')
-            ? [
-                  {
-                      title: 'Admin Dashboard',
-                      href: adminDashboard.index().url,
-                      icon: LayoutGrid,
-                  },
-              ]
-            : []),
         ...(can('view-pathway-eligibility')
             ? [
                   {

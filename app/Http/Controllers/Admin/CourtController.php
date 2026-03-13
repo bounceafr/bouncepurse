@@ -13,6 +13,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Court\DeleteCourtRequest;
 use App\Http\Requests\Admin\Court\StoreCourtRequest;
 use App\Http\Requests\Admin\Court\UpdateCourtRequest;
+use App\Models\Country;
 use App\Models\Court;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -28,6 +29,7 @@ final class CourtController extends Controller
 
         return Inertia::render('admin/courts/index', [
             'courts' => $action->handle($search),
+            'countries' => Country::query()->orderBy('name')->get(['id', 'name', 'iso_alpha2']),
             'filters' => ['search' => $search],
             'statuses' => array_map(
                 fn (CourtStatus $status): array => [
@@ -43,6 +45,7 @@ final class CourtController extends Controller
     public function create(): Response
     {
         return Inertia::render('admin/courts/create', [
+            'countries' => Country::query()->orderBy('name')->get(['id', 'name', 'iso_alpha2']),
             'statuses' => array_map(
                 fn (CourtStatus $status): array => [
                     'value' => $status->value,
@@ -66,7 +69,8 @@ final class CourtController extends Controller
     public function edit(Court $court): Response
     {
         return Inertia::render('admin/courts/edit', [
-            'court' => $court,
+            'court' => $court->load('country'),
+            'countries' => Country::query()->orderBy('name')->get(['id', 'name', 'iso_alpha2']),
             'statuses' => array_map(
                 fn (CourtStatus $status): array => [
                     'value' => $status->value,

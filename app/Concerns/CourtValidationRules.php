@@ -18,8 +18,11 @@ trait CourtValidationRules
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'country' => ['required', 'string', 'max:255'],
+            'country_id' => ['required', 'integer', 'exists:countries,id'],
             'city' => ['required', 'string', 'max:255'],
+            'host_name' => ['nullable', 'string', 'max:255'],
+            'contact_email' => ['nullable', 'string', 'email', 'max:255'],
+            'contact_phone' => ['nullable', 'string', 'max:50'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'status' => ['required', Rule::enum(CourtStatus::class)],

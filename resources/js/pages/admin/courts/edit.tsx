@@ -16,12 +16,21 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
+type CountryOption = {
+    id: number;
+    name: string;
+    iso_alpha2: string;
+};
+
 type Court = {
     id: number;
     uuid: string;
     name: string;
-    country: string;
+    country_id: number;
     city: string;
+    host_name: string | null;
+    contact_email: string | null;
+    contact_phone: string | null;
     latitude: number | null;
     longitude: number | null;
     status: string;
@@ -46,9 +55,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function EditCourt({
     court,
+    countries,
     statuses,
 }: {
     court: Court;
+    countries: CountryOption[];
     statuses: StatusOption[];
 }) {
     return (
@@ -82,15 +93,27 @@ export default function EditCourt({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="country">Country</Label>
-                                <Input
-                                    id="country"
-                                    name="country"
-                                    defaultValue={court.country}
-                                    placeholder="Country"
+                                <Label htmlFor="country_id">Country</Label>
+                                <Select
+                                    name="country_id"
+                                    defaultValue={String(court.country_id)}
                                     required
-                                />
-                                <InputError message={errors.country} />
+                                >
+                                    <SelectTrigger id="country_id">
+                                        <SelectValue placeholder="Select a country" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {countries.map((country) => (
+                                            <SelectItem
+                                                key={country.id}
+                                                value={String(country.id)}
+                                            >
+                                                {country.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.country_id} />
                             </div>
 
                             <div className="grid gap-2">
@@ -103,6 +126,55 @@ export default function EditCourt({
                                     required
                                 />
                                 <InputError message={errors.city} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="host_name">Host Name</Label>
+                                <Input
+                                    id="host_name"
+                                    name="host_name"
+                                    defaultValue={court.host_name ?? ''}
+                                    placeholder="Owner or manager name"
+                                />
+                                <InputError message={errors.host_name} />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="contact_email">
+                                        Contact Email
+                                    </Label>
+                                    <Input
+                                        id="contact_email"
+                                        name="contact_email"
+                                        type="email"
+                                        defaultValue={
+                                            court.contact_email ?? ''
+                                        }
+                                        placeholder="email@example.com"
+                                    />
+                                    <InputError
+                                        message={errors.contact_email}
+                                    />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="contact_phone">
+                                        Contact Phone
+                                    </Label>
+                                    <Input
+                                        id="contact_phone"
+                                        name="contact_phone"
+                                        type="tel"
+                                        defaultValue={
+                                            court.contact_phone ?? ''
+                                        }
+                                        placeholder="+1 234 567 890"
+                                    />
+                                    <InputError
+                                        message={errors.contact_phone}
+                                    />
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

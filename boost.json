@@ -18,6 +18,9 @@
         "inertia-react-development",
         "tailwindcss-development",
         "developing-with-fortify",
-        "laravel-permission-development"
+        "laravel-permission-development",
+        "laravel-specialist",
+        "php-mcp-server-generator",
+        "php-pro"
     ]
 }

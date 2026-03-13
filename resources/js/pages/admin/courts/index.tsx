@@ -1,7 +1,7 @@
 import { Form, Head, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CourtController, {
     index,
 } from '@/actions/App/Http/Controllers/Admin/CourtController';
@@ -41,30 +41,34 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
+type CountryOption = {
+    id: number;
+    name: string;
+    iso_alpha2: string;
+};
+
 type StatusOption = {
     value: string;
     label: string;
     color: string;
 };
 
-type CourtUser = {
-    id: number;
-    name: string;
-};
-
 type Court = {
     id: number;
     uuid: string;
+    court_code: string;
     name: string;
-    country: string;
+    country_id: number;
+    country: CountryOption;
     city: string;
+    host_name: string | null;
+    contact_email: string | null;
+    contact_phone: string | null;
     latitude: number | null;
     longitude: number | null;
     status: string;
-    created_by: number;
     created_at: string;
     updated_at: string;
-    created_by_user: CourtUser | null;
 };
 
 type PaginationLink = {
@@ -90,10 +94,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 function CourtFormFields({
     court,
+    countries,
     statuses,
     errors,
 }: {
     court?: Court;
+    countries: CountryOption[];
     statuses: StatusOption[];
     errors: Record<string, string>;
 }) {
@@ -112,15 +118,31 @@ function CourtFormFields({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="country">Country</Label>
-                <Input
-                    id="country"
-                    name="country"
-                    defaultValue={court?.country}
-                    placeholder="Country"
+                <Label htmlFor="country_id">Country</Label>
+                <Select
+                    name="country_id"
+                    defaultValue={
+                        court?.country_id
+                            ? String(court.country_id)
+                            : undefined
+                    }
                     required
-                />
-                <InputError message={errors.country} />
+                >
+                    <SelectTrigger id="country_id">
+                        <SelectValue placeholder="Select a country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {countries.map((country) => (
+                            <SelectItem
+                                key={country.id}
+                                value={String(country.id)}
+                            >
+                                {country.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.country_id} />
             </div>
 
             <div className="grid gap-2">
@@ -133,6 +155,43 @@ function CourtFormFields({
                     required
                 />
                 <InputError message={errors.city} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="host_name">Host Name</Label>
+                <Input
+                    id="host_name"
+                    name="host_name"
+                    defaultValue={court?.host_name ?? ''}
+                    placeholder="Owner or manager name"
+                />
+                <InputError message={errors.host_name} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="contact_email">Contact Email</Label>
+                    <Input
+                        id="contact_email"
+                        name="contact_email"
+                        type="email"
+                        defaultValue={court?.contact_email ?? ''}
+                        placeholder="email@example.com"
+                    />
+                    <InputError message={errors.contact_email} />
+                </div>
+
+                <div className="grid gap-2">
+                    <Label htmlFor="contact_phone">Contact Phone</Label>
+                    <Input
+                        id="contact_phone"
+                        name="contact_phone"
+                        type="tel"
+                        defaultValue={court?.contact_phone ?? ''}
+                        placeholder="+1 234 567 890"
+                    />
+                    <InputError message={errors.contact_phone} />
+                </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -185,10 +244,12 @@ function CourtFormFields({
 
 export default function CourtsIndex({
     courts,
+    countries,
     statuses,
     filters,
 }: {
     courts: PaginatedCourts;
+    countries: CountryOption[];
     statuses: StatusOption[];
     filters: { search: string | null };
 }) {
@@ -196,10 +257,16 @@ export default function CourtsIndex({
     const [editCourt, setEditCourt] = useState<Court | null>(null);
     const [deleteCourt, setDeleteCourt] = useState<Court | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
+    const isInitialMount = useRef(true);
 
     const statusMap = Object.fromEntries(statuses.map((s) => [s.value, s]));
 
     useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
         const timeout = setTimeout(() => {
             router.get(
                 index().url,
@@ -214,6 +281,15 @@ export default function CourtsIndex({
     const columns: ColumnDef<Court, unknown>[] = [
         selectionColumn<Court>(),
         {
+            accessorKey: 'court_code',
+            header: sortableHeader('Code'),
+            cell: ({ row }) => (
+                <span className="font-mono text-sm">
+                    {row.getValue('court_code')}
+                </span>
+            ),
+        },
+        {
             accessorKey: 'name',
             header: sortableHeader('Name'),
             cell: ({ row }) => (
@@ -221,8 +297,9 @@ export default function CourtsIndex({
             ),
         },
         {
-            accessorKey: 'country',
+            id: 'country',
             header: sortableHeader('Country'),
+            cell: ({ row }) => row.original.country?.name ?? '—',
         },
         {
             accessorKey: 'city',
@@ -243,9 +320,9 @@ export default function CourtsIndex({
             },
         },
         {
-            id: 'created_by',
-            accessorFn: (row) => row.created_by_user?.name ?? '—',
-            header: sortableHeader('Created By'),
+            accessorKey: 'host_name',
+            header: sortableHeader('Host'),
+            cell: ({ row }) => row.getValue('host_name') || '—',
         },
         {
             id: 'actions',
@@ -339,6 +416,7 @@ export default function CourtsIndex({
                         {({ processing, errors }) => (
                             <>
                                 <CourtFormFields
+                                    countries={countries}
                                     statuses={statuses}
                                     errors={errors}
                                 />
@@ -390,6 +468,7 @@ export default function CourtsIndex({
                                 <>
                                     <CourtFormFields
                                         court={editCourt}
+                                        countries={countries}
                                         statuses={statuses}
                                         errors={errors}
                                     />

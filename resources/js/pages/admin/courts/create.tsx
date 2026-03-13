@@ -16,6 +16,12 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
+type CountryOption = {
+    id: number;
+    name: string;
+    iso_alpha2: string;
+};
+
 type StatusOption = {
     value: string;
     label: string;
@@ -34,8 +40,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function CreateCourt({
+    countries,
     statuses,
 }: {
+    countries: CountryOption[];
     statuses: StatusOption[];
 }) {
     return (
@@ -68,14 +76,23 @@ export default function CreateCourt({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="country">Country</Label>
-                                <Input
-                                    id="country"
-                                    name="country"
-                                    placeholder="Country"
-                                    required
-                                />
-                                <InputError message={errors.country} />
+                                <Label htmlFor="country_id">Country</Label>
+                                <Select name="country_id" required>
+                                    <SelectTrigger id="country_id">
+                                        <SelectValue placeholder="Select a country" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {countries.map((country) => (
+                                            <SelectItem
+                                                key={country.id}
+                                                value={String(country.id)}
+                                            >
+                                                {country.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.country_id} />
                             </div>
 
                             <div className="grid gap-2">
@@ -87,6 +104,48 @@ export default function CreateCourt({
                                     required
                                 />
                                 <InputError message={errors.city} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="host_name">Host Name</Label>
+                                <Input
+                                    id="host_name"
+                                    name="host_name"
+                                    placeholder="Owner or manager name"
+                                />
+                                <InputError message={errors.host_name} />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="contact_email">
+                                        Contact Email
+                                    </Label>
+                                    <Input
+                                        id="contact_email"
+                                        name="contact_email"
+                                        type="email"
+                                        placeholder="email@example.com"
+                                    />
+                                    <InputError
+                                        message={errors.contact_email}
+                                    />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="contact_phone">
+                                        Contact Phone
+                                    </Label>
+                                    <Input
+                                        id="contact_phone"
+                                        name="contact_phone"
+                                        type="tel"
+                                        placeholder="+1 234 567 890"
+                                    />
+                                    <InputError
+                                        message={errors.contact_phone}
+                                    />
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

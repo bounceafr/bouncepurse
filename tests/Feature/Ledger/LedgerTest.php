@@ -20,6 +20,7 @@ beforeEach(function (): void {
         'savings_percentage' => 25.0,
         'pathway_percentage' => 25.0,
         'administration_percentage' => 25.0,
+        'court_fees_percentage' => 25.0,
     ]);
 });
 
@@ -64,6 +65,7 @@ test('player only sees own allocations', function (): void {
             'savings_amount' => 0.25,
             'pathway_amount' => 0.25,
             'administration_amount' => 0.25,
+            'court_fees_amount' => 0.25,
             'allocation_configuration_id' => $config->id,
         ]);
     }
@@ -92,6 +94,7 @@ test('ledger filters by date range and format', function (): void {
         'savings_amount' => 0.25,
         'pathway_amount' => 0.25,
         'administration_amount' => 0.25,
+        'court_fees_amount' => 0.25,
         'allocation_configuration_id' => $config->id,
         'created_at' => now()->subDays(10),
     ]);
@@ -132,6 +135,7 @@ test('summary stats are correct for player', function (): void {
             'savings_amount' => 0.25,
             'pathway_amount' => 0.25,
             'administration_amount' => 0.25,
+            'court_fees_amount' => 0.25,
             'allocation_configuration_id' => $config->id,
         ]);
     }

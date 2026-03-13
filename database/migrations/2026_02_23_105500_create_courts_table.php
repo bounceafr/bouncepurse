@@ -19,9 +19,11 @@ return new class extends Migration
             $table->string('name');
             $table->string('country');
             $table->string('city');
-            $table->foreignId('host_id')->constrained();
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
+            $table->string('host_name')->nullable();
+            $table->string('contact_email')->nullable();
+            $table->string('contact_phone')->nullable();
             $table->string('status')->default('active');
             $table->foreignId('created_by')->constrained('users');
             $table->timestamps();

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->float('savings_percentage');
             $table->float('pathway_percentage');
             $table->float('administration_percentage');
+            $table->float('court_fees_percentage');
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });

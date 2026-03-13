@@ -111,6 +111,7 @@ test('summary filters by player id', function (): void {
             'savings_amount' => 0.25,
             'pathway_amount' => 0.25,
             'administration_amount' => 0.25,
+            'court_fees_amount' => 0.25,
             'allocation_configuration_id' => $config->id,
         ]);
     }
@@ -169,6 +170,7 @@ test('summary filters by game format', function (): void {
             'savings_amount' => 0.25,
             'pathway_amount' => 0.25,
             'administration_amount' => 0.25,
+            'court_fees_amount' => 0.25,
             'allocation_configuration_id' => $config->id,
         ]);
     }
@@ -277,6 +279,7 @@ test('csv export filters by player id', function (): void {
             'savings_amount' => 0.25,
             'pathway_amount' => 0.25,
             'administration_amount' => 0.25,
+            'court_fees_amount' => 0.25,
             'allocation_configuration_id' => $config->id,
         ]);
     }
@@ -342,6 +345,7 @@ test('csv export filters by game format', function (): void {
             'savings_amount' => 0.25,
             'pathway_amount' => 0.25,
             'administration_amount' => 0.25,
+            'court_fees_amount' => 0.25,
             'allocation_configuration_id' => $config->id,
         ]);
     }

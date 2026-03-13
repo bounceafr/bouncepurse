@@ -1,12 +1,13 @@
 import { Head, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
-import { DownloadIcon } from 'lucide-react';
+import { CalendarIcon, DownloadIcon } from 'lucide-react';
 import { useState } from 'react';
 import {
     exportMethod,
     index,
 } from '@/actions/App/Http/Controllers/Admin/AllocationController';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     DataTable,
@@ -16,7 +17,13 @@ import {
 } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 type Summary = {
@@ -138,6 +145,12 @@ const columns: ColumnDef<Allocation, unknown>[] = [
             `$${(row.getValue('administration_amount') as number).toFixed(4)}`,
     },
     {
+        accessorKey: 'court_fees_amount',
+        header: sortableHeader('Court Fees'),
+        cell: ({ row }) =>
+            `$${(row.getValue('court_fees_amount') as number).toFixed(4)}`,
+    },
+    {
         accessorKey: 'created_at',
         header: sortableHeader('Date'),
         cell: ({ row }) =>
@@ -150,20 +163,30 @@ export default function AllocationIndex({
     allocations,
     filters,
 }: Props) {
-    const [from, setFrom] = useState(filters.from ?? '');
-    const [to, setTo] = useState(filters.to ?? '');
+    const [fromDate, setFromDate] = useState<Date | undefined>(
+        filters.from ? new Date(filters.from + 'T00:00:00') : undefined,
+    );
+    const [toDate, setToDate] = useState<Date | undefined>(
+        filters.to ? new Date(filters.to + 'T00:00:00') : undefined,
+    );
+    const [fromCalendarOpen, setFromCalendarOpen] = useState(false);
+    const [toCalendarOpen, setToCalendarOpen] = useState(false);
     const [format, setFormat] = useState(filters.format ?? '');
     const [playerId, setPlayerId] = useState(
         filters.player_id ? String(filters.player_id) : '',
     );
 
+    function formatDateParam(date: Date): string {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+
     function applyFilters() {
         const params: Record<string, string> = {};
-        if (from) {
-            params.from = from;
+        if (fromDate) {
+            params.from = formatDateParam(fromDate);
         }
-        if (to) {
-            params.to = to;
+        if (toDate) {
+            params.to = formatDateParam(toDate);
         }
         if (format) {
             params.format = format;
@@ -176,8 +199,8 @@ export default function AllocationIndex({
     }
 
     function clearFilters() {
-        setFrom('');
-        setTo('');
+        setFromDate(undefined);
+        setToDate(undefined);
         setFormat('');
         setPlayerId('');
         router.get(index().url, {}, { preserveState: true });
@@ -259,22 +282,84 @@ export default function AllocationIndex({
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                             <div className="grid gap-1.5">
-                                <Label htmlFor="from">From</Label>
-                                <Input
-                                    id="from"
-                                    type="date"
-                                    value={from}
-                                    onChange={(e) => setFrom(e.target.value)}
-                                />
+                                <Label>From</Label>
+                                <Popover
+                                    open={fromCalendarOpen}
+                                    onOpenChange={setFromCalendarOpen}
+                                >
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className={cn(
+                                                'justify-start font-normal',
+                                                !fromDate &&
+                                                    'text-muted-foreground',
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 size-4" />
+                                            {fromDate
+                                                ? fromDate.toLocaleDateString(
+                                                      'default',
+                                                      {
+                                                          year: 'numeric',
+                                                          month: 'long',
+                                                          day: 'numeric',
+                                                      },
+                                                  )
+                                                : 'Pick a date'}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={fromDate}
+                                            onSelect={(d) => {
+                                                setFromDate(d);
+                                                setFromCalendarOpen(false);
+                                            }}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                             <div className="grid gap-1.5">
-                                <Label htmlFor="to">To</Label>
-                                <Input
-                                    id="to"
-                                    type="date"
-                                    value={to}
-                                    onChange={(e) => setTo(e.target.value)}
-                                />
+                                <Label>To</Label>
+                                <Popover
+                                    open={toCalendarOpen}
+                                    onOpenChange={setToCalendarOpen}
+                                >
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className={cn(
+                                                'justify-start font-normal',
+                                                !toDate &&
+                                                    'text-muted-foreground',
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 size-4" />
+                                            {toDate
+                                                ? toDate.toLocaleDateString(
+                                                      'default',
+                                                      {
+                                                          year: 'numeric',
+                                                          month: 'long',
+                                                          day: 'numeric',
+                                                      },
+                                                  )
+                                                : 'Pick a date'}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={toDate}
+                                            onSelect={(d) => {
+                                                setToDate(d);
+                                                setToCalendarOpen(false);
+                                            }}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                             <div className="grid gap-1.5">
                                 <Label htmlFor="format">Format</Label>

@@ -21,7 +21,6 @@ enum Permission: string
     case OverrideModeration = 'override-moderation';
 
     // Admin
-    case ViewAdminDashboard = 'view-admin-dashboard';
     case ViewModeratorPerformance = 'view-moderator-performance';
 
     // Users
@@ -58,7 +57,6 @@ enum Permission: string
             self::DeleteGames => 'Delete Games',
             self::ModerateGames => 'Moderate Games',
             self::OverrideModeration => 'Override Moderation',
-            self::ViewAdminDashboard => 'View Admin Dashboard',
             self::ViewModeratorPerformance => 'View Moderator Performance',
             self::ViewUsers => 'View Users',
             self::ManageUsers => 'Manage Users',
