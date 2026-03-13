@@ -122,7 +122,7 @@ test('summary stats are correct for player', function (): void {
     Game::factory()->count(3)->create(['player_id' => $player->id, 'status' => GameStatus::Approved]);
     Game::factory()->count(2)->create(['player_id' => $player->id, 'status' => GameStatus::Pending]);
 
-    $approvedGames = Game::withoutGlobalScopes()->where('player_id', $player->id)->where('status', GameStatus::Approved)->get();
+    $approvedGames = Game::query()->withoutGlobalScopes()->where('player_id', $player->id)->where('status', GameStatus::Approved)->get();
     foreach ($approvedGames as $game) {
         Allocation::query()->create([
             'game_id' => $game->id,

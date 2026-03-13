@@ -18,10 +18,10 @@ import {
 } from 'lucide-react';
 import { edit as allocationConfigEdit } from '@/actions/App/Http/Controllers/Admin/AllocationConfigurationController';
 import { index as allocationIndex } from '@/actions/App/Http/Controllers/Admin/AllocationController';
-import { edit as pathwayConfigEdit } from '@/actions/App/Http/Controllers/Admin/PathwayConfigurationController';
-import { index as pathwayEligibleIndex } from '@/actions/App/Http/Controllers/Admin/PathwayEligiblePlayersController';
 import { index as courtsIndex } from '@/actions/App/Http/Controllers/Admin/CourtController';
 import { index as gamesIndex } from '@/actions/App/Http/Controllers/Admin/GameController';
+import { edit as pathwayConfigEdit } from '@/actions/App/Http/Controllers/Admin/PathwayConfigurationController';
+import { index as pathwayEligibleIndex } from '@/actions/App/Http/Controllers/Admin/PathwayEligiblePlayersController';
 import { index as usersIndex } from '@/actions/App/Http/Controllers/Admin/UserController';
 import LedgerController from '@/actions/App/Http/Controllers/LedgerController';
 import { NavFooter } from '@/components/nav-footer';

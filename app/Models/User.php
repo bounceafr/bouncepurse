@@ -7,6 +7,7 @@ namespace App\Models;
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -96,15 +97,16 @@ final class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(self::class, 'deactivated_by');
     }
 
-    /** @param Builder<User> $query */
-    public function scopeActive(Builder $query): void
-    {
-        $query->whereNull('deactivated_at');
-    }
-
     public function isDeactivated(): bool
     {
         return $this->deactivated_at !== null;
+    }
+
+    /** @param Builder<User> $query */
+    #[Scope]
+    protected function active(Builder $query): void
+    {
+        $query->whereNull('deactivated_at');
     }
 
     /**

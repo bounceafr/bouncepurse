@@ -17,7 +17,7 @@ final class ListPathwayCandidatesAction
      */
     public function handle(array $filters = []): LengthAwarePaginator
     {
-        return User::role(Role::Player->value)
+        return User::query()->role(Role::Player->value)
             ->whereHas('profile', fn (Builder $q) => $q->where('is_pathway_candidate', true))
             ->with(['profile.country', 'rankings'])
             ->when(

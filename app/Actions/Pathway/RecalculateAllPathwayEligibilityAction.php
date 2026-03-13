@@ -14,7 +14,7 @@ final readonly class RecalculateAllPathwayEligibilityAction
 
     public function handle(PathwayConfiguration $config): void
     {
-        User::role(Role::Player->value)
+        User::query()->role(Role::Player->value)
             ->with('profile')
             ->chunk(200, function ($players) use ($config): void {
                 foreach ($players as $player) {

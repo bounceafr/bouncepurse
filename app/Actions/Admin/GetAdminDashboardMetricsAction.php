@@ -12,7 +12,7 @@ use App\Models\GameModeration;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-final class GetAdminDashboardMetricsAction
+final readonly class GetAdminDashboardMetricsAction
 {
     public function __construct(private GetAllocationSummary $allocationSummary) {}
 
@@ -30,7 +30,7 @@ final class GetAdminDashboardMetricsAction
      */
     public function handle(): array
     {
-        $games = Game::withoutGlobalScopes();
+        $games = Game::query()->withoutGlobalScopes();
 
         $totalUsers = User::query()->count();
         $activePlayers = (int) (clone $games)->selectRaw('COUNT(DISTINCT player_id) as c')->value('c');
@@ -42,7 +42,7 @@ final class GetAdminDashboardMetricsAction
 
         $allocationTotals = $this->allocationSummary->handle([]);
 
-        $pathwayCandidateCount = User::role(Role::Player->value)
+        $pathwayCandidateCount = User::query()->role(Role::Player->value)
             ->whereHas('profile', fn ($q) => $q->where('is_pathway_candidate', true))
             ->count();
 
@@ -70,8 +70,8 @@ final class GetAdminDashboardMetricsAction
         $gamesTable = (new Game)->getTable();
         $avgExpression = $this->averageReviewTimeSelectExpression($driver, $alias, $gamesTable);
 
-        $result = Game::withoutGlobalScopes()
-            ->joinSub($firstReviewSubquery, $alias, "{$gamesTable}.id", '=', "{$alias}.game_id")
+        $result = Game::query()->withoutGlobalScopes()
+            ->joinSub($firstReviewSubquery, $alias, $gamesTable.'.id', '=', $alias.'.game_id')
             ->selectRaw($avgExpression)
             ->first();
 
@@ -86,9 +86,9 @@ final class GetAdminDashboardMetricsAction
     private function averageReviewTimeSelectExpression(string $driver, string $alias, string $gamesTable): string
     {
         if ($driver === 'sqlite') {
-            return "AVG((julianday({$alias}.first_at) - julianday({$gamesTable}.created_at)) * 24) as avg_hours";
+            return sprintf('AVG((julianday(%s.first_at) - julianday(%s.created_at)) * 24) as avg_hours', $alias, $gamesTable);
         }
 
-        return "AVG(TIMESTAMPDIFF(HOUR, {$gamesTable}.created_at, {$alias}.first_at)) as avg_hours";
+        return sprintf('AVG(TIMESTAMPDIFF(HOUR, %s.created_at, %s.first_at)) as avg_hours', $gamesTable, $alias);
     }
 }

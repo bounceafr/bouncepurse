@@ -37,14 +37,14 @@ final class GameSeeder extends Seeder
 
         // Pick 5 players to be pathway-eligible (they'll get concentrated approved games)
         $pathwayPlayers = $players->random(min(5, $players->count()));
-        $otherPlayers = $players->diff($pathwayPlayers);
+        $players->diff($pathwayPlayers);
 
         // Step A — Approved games (60 general + 50 pathway-targeted)
         $rejectedGames = collect();
 
         // A1 — Give each pathway player 10 approved games across formats
         foreach ($pathwayPlayers as $pathwayPlayer) {
-            foreach ($formats as $j => $format) {
+            foreach ($formats as $format) {
                 for ($i = 0; $i < 2; $i++) {
                     $playedAt = $i === 0
                         ? fake()->dateTimeBetween('-30 days', 'now')

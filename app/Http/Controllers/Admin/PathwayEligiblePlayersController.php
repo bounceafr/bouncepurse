@@ -35,7 +35,7 @@ final class PathwayEligiblePlayersController extends Controller
 
     public function export(GetAllocationSummary $allocationSummary): Response
     {
-        $candidates = User::role(Role::Player->value)
+        $candidates = User::query()->role(Role::Player->value)
             ->whereHas('profile', fn (Builder $q) => $q->where('is_pathway_candidate', true))
             ->with(['profile.country', 'rankings'])
             ->get();
@@ -44,7 +44,7 @@ final class PathwayEligiblePlayersController extends Controller
 
         foreach ($candidates as $candidate) {
             $bestRank = $this->getBestRank($candidate->id);
-            $approvedGames = Game::withoutGlobalScopes()
+            $approvedGames = Game::query()->withoutGlobalScopes()
                 ->where('player_id', $candidate->id)
                 ->where('status', GameStatus::Approved)
                 ->count();

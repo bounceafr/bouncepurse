@@ -27,8 +27,8 @@ final class LedgerController extends Controller
             'player_id' => $user->id,
         ]);
 
-        $totalGames = Game::withoutGlobalScopes()->where('player_id', $user->id)->count();
-        $approvedGames = Game::withoutGlobalScopes()->where('player_id', $user->id)->where('status', GameStatus::Approved)->count();
+        $totalGames = Game::query()->withoutGlobalScopes()->where('player_id', $user->id)->count();
+        $approvedGames = Game::query()->withoutGlobalScopes()->where('player_id', $user->id)->where('status', GameStatus::Approved)->count();
 
         return Inertia::render('ledger/index', [
             'summary' => $summary->handle($filters),

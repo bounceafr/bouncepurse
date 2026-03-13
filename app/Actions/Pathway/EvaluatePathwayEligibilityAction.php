@@ -19,7 +19,7 @@ final class EvaluatePathwayEligibilityAction
      */
     public function handle(int $playerId, PathwayConfiguration $config): array
     {
-        $approvedGames = Game::withoutGlobalScopes()
+        $approvedGames = Game::query()->withoutGlobalScopes()
             ->where('player_id', $playerId)
             ->where('status', GameStatus::Approved)
             ->count();

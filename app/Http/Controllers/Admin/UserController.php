@@ -41,7 +41,7 @@ final class UserController extends Controller
     {
         $user->load(['roles', 'profile.country', 'deactivatedBy']);
 
-        $recentGames = Game::withoutGlobalScopes()
+        $recentGames = Game::query()->withoutGlobalScopes()
             ->where('player_id', $user->id)
             ->latest('created_at')
             ->limit(20)
@@ -60,7 +60,7 @@ final class UserController extends Controller
             ->latest()
             ->limit(20)
             ->get()
-            ->map(fn ($review) => [
+            ->map(fn ($review): array => [
                 'id' => $review->id,
                 'game_title' => $review->game->title ?? null,
                 'game_uuid' => $review->game->uuid ?? null,
@@ -78,7 +78,7 @@ final class UserController extends Controller
                 'deactivated_at' => $user->deactivated_at?->toISOString(),
                 'deactivation_reason' => $user->deactivation_reason,
                 'deactivated_by' => $user->deactivatedBy?->name,
-                'roles' => $user->roles->map(fn ($r) => ['id' => $r->id, 'name' => $r->name]),
+                'roles' => $user->roles->map(fn ($r): array => ['id' => $r->id, 'name' => $r->name]),
                 'profile' => $user->profile ? [
                     'date_of_birth' => $user->profile->date_of_birth?->format('Y-m-d'),
                     'city' => $user->profile->city,
@@ -132,6 +132,7 @@ final class UserController extends Controller
         if ($user->is($request->user())) {
             return to_route('admin.users.show', $user)->withErrors(['user' => 'You cannot reactivate your own account.']);
         }
+
         $action->handle($user);
 
         return to_route('admin.users.show', $user)->with('success', 'User reactivated.');

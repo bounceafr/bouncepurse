@@ -46,6 +46,7 @@ final class FortifyServiceProvider extends ServiceProvider
             if (! $event->user->isDeactivated()) {
                 return;
             }
+
             Auth::logout();
             throw ValidationException::withMessages([
                 Fortify::username() => [__('Your account has been deactivated.')],

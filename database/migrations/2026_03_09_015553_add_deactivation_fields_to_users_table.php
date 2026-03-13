@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->timestamp('deactivated_at')->nullable()->after('updated_at');
             $table->foreignId('deactivated_by')->nullable()->after('deactivated_at')->constrained('users')->nullOnDelete();
             $table->text('deactivation_reason')->nullable()->after('deactivated_by');
@@ -25,7 +25,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->dropForeign(['deactivated_by']);
             $table->dropColumn(['deactivated_at', 'deactivated_by', 'deactivation_reason']);
         });

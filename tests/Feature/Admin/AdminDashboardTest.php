@@ -25,12 +25,12 @@ test('super admin can access admin dashboard and sees metrics', function (): voi
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/dashboard')
             ->has('metrics')
-            ->where('metrics.total_users', fn ($v) => is_int($v) && $v >= 0)
-            ->where('metrics.active_players', fn ($v) => is_int($v) && $v >= 0)
-            ->where('metrics.games_submitted', fn ($v) => is_int($v) && $v >= 0)
-            ->where('metrics.games_approved', fn ($v) => is_int($v) && $v >= 0)
-            ->where('metrics.moderation_queue_size', fn ($v) => is_int($v) && $v >= 0)
-            ->where('metrics.pathway_candidate_count', fn ($v) => is_int($v) && $v >= 0)
+            ->where('metrics.total_users', fn ($v): bool => is_int($v) && $v >= 0)
+            ->where('metrics.active_players', fn ($v): bool => is_int($v) && $v >= 0)
+            ->where('metrics.games_submitted', fn ($v): bool => is_int($v) && $v >= 0)
+            ->where('metrics.games_approved', fn ($v): bool => is_int($v) && $v >= 0)
+            ->where('metrics.moderation_queue_size', fn ($v): bool => is_int($v) && $v >= 0)
+            ->where('metrics.pathway_candidate_count', fn ($v): bool => is_int($v) && $v >= 0)
             ->has('metrics.allocation_totals')
         );
 });

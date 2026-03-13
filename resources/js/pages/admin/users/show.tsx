@@ -1,12 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, UserCheck, UserX } from 'lucide-react';
 import { useState } from 'react';
-import UserController, {
-    index,
-    show,
-    update,
-} from '@/actions/App/Http/Controllers/Admin/UserController';
-import InputError from '@/components/input-error';
+import { index, show, update } from '@/actions/App/Http/Controllers/Admin/UserController';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -20,13 +15,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 

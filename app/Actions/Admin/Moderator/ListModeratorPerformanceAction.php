@@ -19,7 +19,7 @@ final class ListModeratorPerformanceAction
      */
     public function handle(array $filters = []): Collection
     {
-        $moderators = User::role(Role::Moderator->value)->orderBy('name')->get();
+        $moderators = User::query()->role(Role::Moderator->value)->orderBy('name')->get();
 
         $query = GameModeration::query()
             ->where('is_override', false)
