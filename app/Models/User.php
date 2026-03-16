@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -89,6 +90,20 @@ final class User extends Authenticatable implements MustVerifyEmail
     public function moderationReviews(): HasMany
     {
         return $this->hasMany(GameModeration::class, 'moderator_id');
+    }
+
+    /** @return HasOne<Team, self> */
+    public function ownedTeam(): HasOne
+    {
+        return $this->hasOne(Team::class);
+    }
+
+    /** @return BelongsToMany<Team, self> */
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'team_members')
+            ->withPivot('joined_at')
+            ->withTimestamps();
     }
 
     /** @return BelongsTo<User, self> */

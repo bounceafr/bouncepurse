@@ -18,4 +18,5 @@ Route::get('leaderboard', LeaderboardController::class)->middleware(['auth', 've
 Route::get('ledger', LedgerController::class)->middleware(['auth', 'verified', 'player.profile'])->name('ledger');
 
 require __DIR__.'/settings.php';
+require __DIR__.'/team.php';
 require __DIR__.'/admin.php';

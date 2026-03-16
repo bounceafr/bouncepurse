@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Actions\Fortify;
 
+use App\Actions\Team\AcceptTeamInvitation;
+use App\Actions\Team\CreateTeamForUser;
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
+use App\Enums\InvitationStatus;
 use App\Enums\Role;
+use App\Models\TeamInvitation;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -36,6 +40,33 @@ final class CreateNewUser implements CreatesNewUsers
 
         $user->assignRole(Role::Player);
 
+        if (! $this->acceptPendingInvitation($user)) {
+            app(CreateTeamForUser::class)->handle($user);
+        }
+
         return $user;
+    }
+
+    private function acceptPendingInvitation(User $user): bool
+    {
+        $token = session()->pull('team_invitation_token');
+
+        if (! $token) {
+            return false;
+        }
+
+        $invitation = TeamInvitation::query()
+            ->where('token', $token)
+            ->where('email', $user->email)
+            ->where('status', InvitationStatus::Pending)
+            ->first();
+
+        if (! $invitation) {
+            return false;
+        }
+
+        app(AcceptTeamInvitation::class)->handle($invitation, $user);
+
+        return true;
     }
 }
