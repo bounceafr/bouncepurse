@@ -9,7 +9,7 @@ import AuthSplitLayout from '@/layouts/auth/auth-split-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 
-export default function Register() {
+export default function Register({ email = '' }: { email?: string }) {
     return (
         <AuthSplitLayout
             title="Create an account"
@@ -52,6 +52,7 @@ export default function Register() {
                                     tabIndex={2}
                                     autoComplete="email"
                                     name="email"
+                                    defaultValue={email}
                                     placeholder="email@example.com"
                                 />
                                 <InputError message={errors.email} />
