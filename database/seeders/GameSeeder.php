@@ -17,6 +17,7 @@ use App\Models\PathwayConfiguration;
 use App\Models\RankingConfiguration;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Random\RandomException;
 use Throwable;
 
@@ -40,6 +41,7 @@ final class GameSeeder extends Seeder
         $players->diff($pathwayPlayers);
 
         // Step A — Approved games (60 general + 50 pathway-targeted)
+        /** @var Collection<int, Game> $rejectedGames */
         $rejectedGames = collect();
 
         // A1 — Give each pathway player 10 approved games across formats

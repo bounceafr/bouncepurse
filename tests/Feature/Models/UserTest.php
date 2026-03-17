@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Game;
 use App\Models\PlayerRanking;
 use App\Models\Profile;
 use App\Models\RankingConfiguration;
@@ -78,10 +79,10 @@ test('unverified factory state sets email verified at to null', function (): voi
 
 test('user has many games', function (): void {
     $user = User::factory()->create();
-    App\Models\Game::factory()->count(2)->create(['player_id' => $user->id]);
+    Game::factory()->count(2)->create(['player_id' => $user->id]);
 
     expect($user->games)->toHaveCount(2)
-        ->and($user->games->first())->toBeInstanceOf(App\Models\Game::class);
+        ->and($user->games->first())->toBeInstanceOf(Game::class);
 });
 
 test('active scope filters out deactivated users', function (): void {

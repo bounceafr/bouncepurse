@@ -30,7 +30,7 @@ test('registration auto-creates a team for the user', function (): void {
 test('team owner is added as first member', function (): void {
     $user = User::factory()->create();
 
-    app(CreateTeamForUser::class)->handle($user);
+    resolve(CreateTeamForUser::class)->handle($user);
 
     $team = $user->fresh()->ownedTeam;
 
@@ -41,7 +41,7 @@ test('team owner is added as first member', function (): void {
 test('team status is pending on creation', function (): void {
     $user = User::factory()->create();
 
-    $team = app(CreateTeamForUser::class)->handle($user);
+    $team = resolve(CreateTeamForUser::class)->handle($user);
 
     expect($team->status)->toBe(TeamStatus::PENDING);
 });

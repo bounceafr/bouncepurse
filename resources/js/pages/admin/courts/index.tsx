@@ -122,9 +122,7 @@ function CourtFormFields({
                 <Select
                     name="country_id"
                     defaultValue={
-                        court?.country_id
-                            ? String(court.country_id)
-                            : undefined
+                        court?.country_id ? String(court.country_id) : undefined
                     }
                     required
                 >

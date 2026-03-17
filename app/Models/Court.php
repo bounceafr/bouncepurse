@@ -35,15 +35,13 @@ final class Court extends Model
     /** @use HasFactory<CourtFactory> */
     use HasFactory;
 
-    protected $guarded = [];
-
     public static function generateCourtCode(Country $country, string $city): string
     {
-        $countryCode = mb_strtoupper($country->iso_alpha2);
+        $countryCode = mb_strtoupper((string) $country->iso_alpha2);
         $cityCode = mb_strtoupper(mb_substr($city, 0, 3));
         $prefix = sprintf('%s-%s', $countryCode, $cityCode);
 
-        $sequence = self::query()->count() + 1;
+        $sequence = self::query()->where('court_code', 'like', $prefix.'%')->count() + 1;
 
         return sprintf('%s-%06d', $prefix, $sequence);
     }

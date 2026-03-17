@@ -52,7 +52,7 @@ final class PathwayEligiblePlayersController extends Controller
 
             $csv .= implode(',', [
                 '"'.$candidate->name.'"',
-                '"'.($candidate->profile?->country?->name ?? '').'"',
+                '"'.($candidate->profile?->country->name ?? '').'"',
                 $bestRank ?? 'N/A',
                 $approvedGames,
                 number_format($summary['savings'], 4),
@@ -81,6 +81,7 @@ final class PathwayEligiblePlayersController extends Controller
         $bestRank = null;
 
         foreach ($latestPerFormat as $row) {
+            /** @var object{format: string, max_calculated_at: mixed} $row */
             $ranking = PlayerRanking::query()
                 ->where('player_id', $playerId)
                 ->where('format', $row->format)

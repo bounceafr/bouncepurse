@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\Pathway\RecalculateAllPathwayEligibilityAction;
 use App\Enums\GameStatus;
 use App\Enums\Role;
+use App\Jobs\RecalculatePathwayEligibilityJob;
 use App\Models\Game;
 use App\Models\PathwayConfiguration;
 use App\Models\PlayerRanking;
@@ -101,10 +102,69 @@ test('recalculate pathway eligibility job dispatches action', function (): void 
         'calculated_at' => now(),
     ]);
 
-    $job = new App\Jobs\RecalculatePathwayEligibilityJob($config->id);
+    $job = new RecalculatePathwayEligibilityJob($config->id);
     $job->handle(resolve(RecalculateAllPathwayEligibilityAction::class));
 
     expect($player->profile->fresh()->is_pathway_candidate)->toBeTrue();
+});
+
+test('non-player users are not evaluated during recalculation', function (): void {
+    $config = PathwayConfiguration::factory()->create([
+        'min_approved_games' => 1,
+        'max_rank' => 100,
+        'max_conduct_flags' => 5,
+    ]);
+
+    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    Profile::factory()->create(['player_id' => $admin->id, 'is_pathway_candidate' => false]);
+
+    $action = resolve(RecalculateAllPathwayEligibilityAction::class);
+    $action->handle($config);
+
+    expect($admin->profile->fresh()->is_pathway_candidate)->toBeFalse();
+});
+
+test('recalculation handles multiple players with mixed eligibility', function (): void {
+    $config = PathwayConfiguration::factory()->create([
+        'min_approved_games' => 3,
+        'max_rank' => 10,
+        'max_conduct_flags' => 5,
+    ]);
+
+    $eligible = User::factory()->create()->assignRole(Role::Player->value);
+    Profile::factory()->create(['player_id' => $eligible->id, 'is_pathway_candidate' => false]);
+    Game::factory()->count(3)->create([
+        'player_id' => $eligible->id,
+        'status' => GameStatus::Approved,
+    ]);
+    PlayerRanking::query()->create([
+        'player_id' => $eligible->id,
+        'format' => '1v1',
+        'wins' => 3,
+        'losses' => 0,
+        'total_games' => 3,
+        'recent_games' => 3,
+        'score' => 50.0,
+        'rank' => 5,
+        'ranking_configuration_id' => $this->rankingConfig->id,
+        'calculated_at' => now(),
+    ]);
+
+    $ineligible = User::factory()->create()->assignRole(Role::Player->value);
+    Profile::factory()->create(['player_id' => $ineligible->id, 'is_pathway_candidate' => true]);
+    Game::factory()->count(1)->create([
+        'player_id' => $ineligible->id,
+        'status' => GameStatus::Approved,
+    ]);
+
+    $noProfile = User::factory()->create()->assignRole(Role::Player->value);
+
+    $action = resolve(RecalculateAllPathwayEligibilityAction::class);
+    $action->handle($config);
+
+    expect($eligible->profile->fresh()->is_pathway_candidate)->toBeTrue()
+        ->and($ineligible->profile->fresh()->is_pathway_candidate)->toBeFalse()
+        ->and($noProfile->profile)->toBeNull();
 });
 
 test('previously eligible player becomes ineligible when criteria tighten', function (): void {

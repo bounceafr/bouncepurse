@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Team;
 
 use App\Enums\InvitationStatus;
-use App\Exceptions\TeamFullException;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
@@ -17,10 +16,6 @@ final readonly class SendTeamInvitation
 {
     public function handle(Team $team, string $email, User $invitedBy): TeamInvitation
     {
-        if ($team->isFull()) {
-            throw new TeamFullException;
-        }
-
         $invitation = TeamInvitation::query()->create([
             'team_id' => $team->id,
             'email' => $email,

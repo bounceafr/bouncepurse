@@ -20,10 +20,18 @@ final class EnsurePlayerProfileIsComplete
             return $next($request);
         }
 
-        if ($user->profile !== null) {
+        if ($request->routeIs('onboarding.*')) {
             return $next($request);
         }
 
-        return to_route('profile.edit');
+        if ($user->profile === null) {
+            return to_route('onboarding.complete-profile');
+        }
+
+        if ($user->isMinor() && (! $user->guardian || ! $user->guardian->isVerified())) {
+            return to_route('onboarding.guardian-pending');
+        }
+
+        return $next($request);
     }
 }

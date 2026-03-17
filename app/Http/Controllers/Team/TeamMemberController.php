@@ -17,7 +17,11 @@ final class TeamMemberController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $action->handle($user->ownedTeam, $member);
+        $team = $user->ownedTeam;
+
+        abort_unless($team !== null, 403);
+
+        $action->handle($team, $member);
 
         return back();
     }

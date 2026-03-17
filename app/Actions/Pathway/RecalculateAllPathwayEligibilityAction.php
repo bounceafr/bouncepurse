@@ -7,6 +7,7 @@ namespace App\Actions\Pathway;
 use App\Enums\Role;
 use App\Models\PathwayConfiguration;
 use App\Models\User;
+use Illuminate\Support\Collection;
 
 final readonly class RecalculateAllPathwayEligibilityAction
 {
@@ -16,7 +17,7 @@ final readonly class RecalculateAllPathwayEligibilityAction
     {
         User::query()->role(Role::Player->value)
             ->with('profile')
-            ->chunk(200, function ($players) use ($config): void {
+            ->chunk(200, function (Collection $players) use ($config): void {
                 foreach ($players as $player) {
                     if ($player->profile === null) {
                         continue;

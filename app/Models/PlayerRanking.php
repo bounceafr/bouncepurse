@@ -32,8 +32,6 @@ final class PlayerRanking extends Model
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
-    protected $guarded = [];
-
     /** @return BelongsTo<User,self> */
     public function player(): BelongsTo
     {

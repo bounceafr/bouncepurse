@@ -40,7 +40,7 @@ final class UpdateAllocationConfigurationRequest extends FormRequest
                 'court_fees_percentage',
             ]);
 
-            $sum = array_sum(array_map(floatval(...), $data));
+            $sum = array_sum(array_map(fn (mixed $v): float => is_numeric($v) ? (float) $v : 0.0, $data));
 
             if (abs($sum - 100.0) > 0.001) {
                 $v->errors()->add('insurance_percentage', 'The percentages must sum to 100.');

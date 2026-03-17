@@ -37,9 +37,7 @@ final readonly class AcceptTeamInvitation
             ]);
         }
 
-        if ($team->isFull()) {
-            throw new TeamFullException;
-        }
+        throw_if($team->isFull(), TeamFullException::class);
 
         DB::transaction(function () use ($invitation, $team, $user): void {
             $invitation->update([

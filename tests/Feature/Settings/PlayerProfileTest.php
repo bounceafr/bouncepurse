@@ -3,7 +3,11 @@
 declare(strict_types=1);
 
 use App\Enums\Role;
+use App\Http\Middleware\EnsurePlayerProfileIsComplete;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
@@ -15,13 +19,37 @@ use App\Models\Country;
 use App\Models\Profile;
 use App\Models\User;
 
-test('player without profile is redirected to profile settings when visiting dashboard', function (): void {
+test('player without profile can still access onboarding routes', function (): void {
+    $user = User::factory()->create();
+    $user->assignRole(Role::Player);
+
+    $response = $this->actingAs($user)->get(route('onboarding.complete-profile'));
+
+    $response->assertOk();
+});
+
+test('middleware allows onboarding routes even without profile', function (): void {
+    $user = User::factory()->create();
+    $user->assignRole(Role::Player);
+
+    $middleware = new EnsurePlayerProfileIsComplete;
+
+    $request = Request::create(route('onboarding.complete-profile'));
+    $request->setUserResolver(fn () => $user);
+    $request->setRouteResolver(fn () => (new Route('GET', 'onboarding/complete-profile', []))->name('onboarding.complete-profile'));
+
+    $response = $middleware->handle($request, fn (): Response => new Response('ok'));
+
+    expect($response->getContent())->toBe('ok');
+});
+
+test('player without profile is redirected to onboarding when visiting dashboard', function (): void {
     $user = User::factory()->create();
     $user->assignRole(Role::Player);
 
     $response = $this->actingAs($user)->get(route('dashboard'));
 
-    $response->assertRedirect(route('profile.edit'));
+    $response->assertRedirect(route('onboarding.complete-profile'));
 });
 
 test('player with profile can access the dashboard', function (): void {

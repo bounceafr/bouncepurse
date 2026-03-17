@@ -28,8 +28,6 @@ final class GameModeration extends Model
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
-    protected $guarded = [];
-
     /** @return BelongsTo<Game, self> */
     public function game(): BelongsTo
     {

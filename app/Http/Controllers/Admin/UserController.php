@@ -17,7 +17,9 @@ use App\Http\Requests\Admin\User\DeleteUserRequest;
 use App\Http\Requests\Admin\User\StoreUserRequest;
 use App\Http\Requests\Admin\User\UpdateUserRequest;
 use App\Models\Game;
+use App\Models\GameModeration;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -41,6 +43,9 @@ final class UserController extends Controller
     {
         $user->load(['roles', 'profile.country', 'deactivatedBy']);
 
+        /** @var Collection<int, \Spatie\Permission\Models\Role> $userRoles */
+        $userRoles = $user->roles;
+
         $recentGames = Game::query()->withoutGlobalScopes()
             ->where('player_id', $user->id)
             ->latest('created_at')
@@ -52,7 +57,7 @@ final class UserController extends Controller
                 'title' => $game->title,
                 'status' => $game->status->value,
                 'played_at' => $game->played_at->toISOString(),
-                'created_at' => $game->created_at->toISOString(),
+                'created_at' => $game->created_at?->toISOString() ?? '',
             ]);
 
         $recentModerationReviews = $user->moderationReviews()
@@ -60,12 +65,12 @@ final class UserController extends Controller
             ->latest()
             ->limit(20)
             ->get()
-            ->map(fn ($review): array => [
+            ->map(fn (GameModeration $review): array => [
                 'id' => $review->id,
                 'game_title' => $review->game->title ?? null,
                 'game_uuid' => $review->game->uuid ?? null,
                 'status' => $review->status->value,
-                'created_at' => $review->created_at->toISOString(),
+                'created_at' => $review->created_at?->toISOString() ?? '',
             ]);
 
         return Inertia::render('admin/users/show', [
@@ -74,17 +79,17 @@ final class UserController extends Controller
                 'uuid' => $user->uuid,
                 'name' => $user->name,
                 'email' => $user->email,
-                'created_at' => $user->created_at->toISOString(),
+                'created_at' => $user->created_at?->toISOString() ?? '',
                 'deactivated_at' => $user->deactivated_at?->toISOString(),
                 'deactivation_reason' => $user->deactivation_reason,
                 'deactivated_by' => $user->deactivatedBy?->name,
-                'roles' => $user->roles->map(fn ($r): array => ['id' => $r->id, 'name' => $r->name]),
+                'roles' => $userRoles->map(fn (\Spatie\Permission\Models\Role $r): array => ['id' => $r->id, 'name' => $r->name])->all(),
                 'profile' => $user->profile ? [
-                    'date_of_birth' => $user->profile->date_of_birth?->format('Y-m-d'),
+                    'date_of_birth' => $user->profile->date_of_birth->format('Y-m-d'),
                     'city' => $user->profile->city,
                     'bio' => $user->profile->bio,
                     'position' => $user->profile->position,
-                    'country' => $user->profile->country?->name,
+                    'country' => $user->profile->country->name,
                 ] : null,
                 'recent_games' => $recentGames->all(),
                 'recent_moderation_reviews' => $recentModerationReviews->all(),
@@ -122,7 +127,9 @@ final class UserController extends Controller
     {
         /** @var User $admin */
         $admin = $request->user();
-        $action->handle($user, $request->validated('reason'), $admin);
+        $reason = $request->validated('reason');
+        /** @var string $reason */
+        $action->handle($user, $reason, $admin);
 
         return to_route('admin.users.show', $user)->with('success', 'User deactivated.');
     }

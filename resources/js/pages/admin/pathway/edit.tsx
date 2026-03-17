@@ -79,9 +79,7 @@ export default function PathwayEdit({ config }: Props) {
                                             required
                                         />
                                         <InputError
-                                            message={
-                                                errors.min_approved_games
-                                            }
+                                            message={errors.min_approved_games}
                                         />
                                     </div>
 
@@ -94,12 +92,12 @@ export default function PathwayEdit({ config }: Props) {
                                             name="max_rank"
                                             type="number"
                                             min="1"
-                                            defaultValue={config?.max_rank ?? ''}
+                                            defaultValue={
+                                                config?.max_rank ?? ''
+                                            }
                                             required
                                         />
-                                        <InputError
-                                            message={errors.max_rank}
-                                        />
+                                        <InputError message={errors.max_rank} />
                                     </div>
 
                                     <div className="grid gap-2">
@@ -117,9 +115,7 @@ export default function PathwayEdit({ config }: Props) {
                                             required
                                         />
                                         <InputError
-                                            message={
-                                                errors.max_conduct_flags
-                                            }
+                                            message={errors.max_conduct_flags}
                                         />
                                     </div>
 

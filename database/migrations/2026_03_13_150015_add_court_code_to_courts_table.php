@@ -21,9 +21,11 @@ return new class extends Migration
         $sequence = 0;
         DB::table('courts')->where('court_code', '')->orderBy('id')->each(function (object $court) use (&$sequence): void {
             $sequence++;
-            $country = Country::query()->where('name', $court->country)->first();
-            $countryCode = $country ? mb_strtoupper($country->iso_alpha2) : mb_strtoupper(mb_substr($court->country, 0, 2));
-            $cityCode = mb_strtoupper(mb_substr($court->city, 0, 3));
+            $countryName = is_scalar($court->country) ? (string) $court->country : '';
+            $cityName = is_scalar($court->city) ? (string) $court->city : '';
+            $country = Country::query()->where('name', $countryName)->first();
+            $countryCode = $country ? mb_strtoupper((string) $country->iso_alpha2) : mb_strtoupper(mb_substr($countryName, 0, 2));
+            $cityCode = mb_strtoupper(mb_substr($cityName, 0, 3));
 
             DB::table('courts')->where('id', $court->id)->update([
                 'court_code' => sprintf('%s-%s-%06d', $countryCode, $cityCode, $sequence),

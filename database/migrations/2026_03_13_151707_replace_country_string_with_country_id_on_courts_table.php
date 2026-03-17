@@ -37,9 +37,11 @@ return new class extends Migration
         });
 
         DB::table('courts')->get()->each(function (object $court): void {
-            $country = Country::query()->find($court->country_id);
+            $countryId = $court->country_id;
+            /** @var int|string $countryId */
+            $country = Country::query()->find((int) $countryId);
 
-            if ($country) {
+            if ($country !== null) {
                 DB::table('courts')->where('id', $court->id)->update(['country' => $country->name]);
             }
         });

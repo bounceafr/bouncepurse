@@ -16,6 +16,11 @@ final class GetAllocationSummary
      */
     public function handle(array $filters = []): array
     {
+        $from = $filters['from'] ?? null;
+        $to = $filters['to'] ?? null;
+        $playerId = $filters['player_id'] ?? null;
+        $format = $filters['format'] ?? null;
+
         $query = Allocation::query()
             ->select([
                 DB::raw('COUNT(*) as count'),
@@ -26,36 +31,30 @@ final class GetAllocationSummary
                 DB::raw('SUM(administration_amount) as administration'),
                 DB::raw('SUM(court_fees_amount) as court_fees'),
             ])
+            ->when($from !== null, fn (Builder $q) => $q->where('allocations.created_at', '>=', $from))
+            ->when($to !== null, fn (Builder $q) => $q->where('allocations.created_at', '<=', $to))
+            ->when($playerId !== null, fn (Builder $q) => $q->where('player_id', $playerId))
             ->when(
-                isset($filters['from']),
-                fn (Builder $q) => $q->where('allocations.created_at', '>=', $filters['from'])
-            )
-            ->when(
-                isset($filters['to']),
-                fn (Builder $q) => $q->where('allocations.created_at', '<=', $filters['to'])
-            )
-            ->when(
-                isset($filters['player_id']),
-                fn (Builder $q) => $q->where('player_id', $filters['player_id'])
-            )
-            ->when(
-                isset($filters['format']),
+                $format !== null,
                 fn (Builder $q) => $q->whereHas(
                     'game',
-                    fn (Builder $gq) => $gq->where('format', $filters['format'])
+                    fn (Builder $gq) => $gq->where('format', $format)
                 )
             );
 
         $result = $query->first();
 
+        /** @var array<string, float|int|string> $row */
+        $row = $result !== null ? $result->toArray() : [];
+
         return [
-            'total' => (float) ($result?->total ?? 0),
-            'insurance' => (float) ($result?->insurance ?? 0),
-            'savings' => (float) ($result?->savings ?? 0),
-            'pathway' => (float) ($result?->pathway ?? 0),
-            'administration' => (float) ($result?->administration ?? 0),
-            'court_fees' => (float) ($result?->court_fees ?? 0),
-            'count' => (int) ($result?->count ?? 0),
+            'total' => (float) ($row['total'] ?? 0),
+            'insurance' => (float) ($row['insurance'] ?? 0),
+            'savings' => (float) ($row['savings'] ?? 0),
+            'pathway' => (float) ($row['pathway'] ?? 0),
+            'administration' => (float) ($row['administration'] ?? 0),
+            'court_fees' => (float) ($row['court_fees'] ?? 0),
+            'count' => (int) ($row['count'] ?? 0),
         ];
     }
 }

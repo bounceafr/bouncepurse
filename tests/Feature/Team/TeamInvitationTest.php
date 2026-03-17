@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\InvitationStatus;
 use App\Enums\Role;
+use App\Http\Requests\Team\SendInvitationRequest;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
@@ -236,6 +237,98 @@ test('invited member does not see invitations or team edit form', function (): v
             ->where('invitations', [])
             ->where('countries', [])
         );
+});
+
+test('non-owner cannot cancel an invitation', function (): void {
+    $owner = User::factory()->create()->assignRole(Role::Player->value);
+    $team = Team::factory()->create(['user_id' => $owner->id]);
+    $team->members()->attach($owner->id, ['joined_at' => now()]);
+
+    $invitation = TeamInvitation::factory()->create([
+        'team_id' => $team->id,
+        'invited_by' => $owner->id,
+    ]);
+
+    $otherUser = User::factory()->create()->assignRole(Role::Player->value);
+    Team::factory()->create(['user_id' => $otherUser->id]);
+
+    $this->actingAs($otherUser)
+        ->delete(route('team.invitations.destroy', $invitation->uuid))
+        ->assertForbidden();
+});
+
+test('user without team cannot send invitation', function (): void {
+    $user = User::factory()->create()->assignRole(Role::Player->value);
+
+    $this->actingAs($user)
+        ->post(route('team.invitations.store'), [
+            'email' => 'test@example.com',
+        ])
+        ->assertForbidden();
+});
+
+test('pending invitation with expired date is rejected and marked expired', function (): void {
+    $owner = User::factory()->create()->assignRole(Role::Player->value);
+    $team = Team::factory()->create(['user_id' => $owner->id]);
+    $team->members()->attach($owner->id, ['joined_at' => now()]);
+
+    $invitation = TeamInvitation::factory()->create([
+        'team_id' => $team->id,
+        'invited_by' => $owner->id,
+        'status' => InvitationStatus::Pending,
+        'expires_at' => now()->subDay(),
+    ]);
+
+    $invitee = User::factory()->create();
+
+    $this->actingAs($invitee)
+        ->get(route('team.invitations.accept', $invitation->token))
+        ->assertSessionHasErrors('invitation');
+
+    expect($invitation->fresh()->status)->toBe(InvitationStatus::Expired);
+});
+
+test('invitation token in session with mismatched email creates team instead', function (): void {
+    $owner = User::factory()->create()->assignRole(Role::Player->value);
+    $team = Team::factory()->create(['user_id' => $owner->id]);
+    $team->members()->attach($owner->id, ['joined_at' => now()]);
+
+    $invitation = TeamInvitation::factory()->create([
+        'team_id' => $team->id,
+        'email' => 'other@example.com',
+        'invited_by' => $owner->id,
+    ]);
+
+    $this->withSession(['team_invitation_token' => $invitation->token])
+        ->post('/register', [
+            'name' => 'New Player',
+            'email' => 'different@example.com',
+            'password' => 'password123!',
+            'password_confirmation' => 'password123!',
+        ]);
+
+    $newUser = User::query()->where('email', 'different@example.com')->first();
+
+    expect($newUser)->not->toBeNull();
+    expect($invitation->fresh()->status)->toBe(InvitationStatus::Pending);
+    expect($newUser->ownedTeam)->not->toBeNull();
+});
+
+test('send invitation request validator handles user without team gracefully', function (): void {
+    $user = User::factory()->create()->assignRole(Role::Player->value);
+
+    $request = SendInvitationRequest::create(
+        route('team.invitations.store'),
+        'POST',
+        ['email' => 'test@example.com']
+    );
+    $request->setUserResolver(fn () => $user);
+
+    $validator = validator($request->all(), $request->rules());
+    $request->withValidator($validator);
+    $validator->passes();
+
+    expect($validator->errors()->isEmpty())->toBeTrue();
 });
 
 test('existing team member cannot be invited', function (): void {

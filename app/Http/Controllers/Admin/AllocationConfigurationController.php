@@ -29,6 +29,7 @@ final class AllocationConfigurationController extends Controller
         /** @var User $user */
         $user = $request->user();
 
+        /** @var array{insurance_percentage: float|string, savings_percentage: float|string, pathway_percentage: float|string, administration_percentage: float|string, court_fees_percentage: float|string} $validated */
         $validated = $request->validated();
 
         $action->handle(
