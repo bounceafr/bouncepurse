@@ -45,7 +45,10 @@ final class TeamController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $action->handle($user->ownedTeam, $request->validated());
+        $team = $user->ownedTeam;
+        abort_unless($team !== null, 403);
+
+        $action->handle($team, $request->validated());
 
         return back();
     }

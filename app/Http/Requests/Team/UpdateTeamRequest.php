@@ -11,7 +11,9 @@ final class UpdateTeamRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->id === $this->user()->ownedTeam?->user_id;
+        $user = $this->user();
+
+        return $user !== null && $user->ownedTeam !== null && $user->id === $user->ownedTeam->user_id;
     }
 
     /** @return array<string, array<int, ValidationRule|array<mixed>|string>> */

@@ -3,7 +3,11 @@
 declare(strict_types=1);
 
 use App\Enums\Role;
+use App\Models\Allocation;
+use App\Models\Country;
+use App\Models\PlayerRanking;
 use App\Models\Profile;
+use App\Models\RankingConfiguration;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Inertia\Testing\AssertableInertia;
@@ -81,14 +85,14 @@ test('csv export returns correct headers and data', function (): void {
     $player = User::factory()->create(['name' => 'Test Player'])->assignRole(Role::Player->value);
     Profile::factory()->create(['player_id' => $player->id, 'is_pathway_candidate' => true]);
 
-    $config = App\Models\RankingConfiguration::query()->create([
+    $config = RankingConfiguration::query()->create([
         'win_weight' => 3.0,
         'loss_weight' => 1.0,
         'game_count_weight' => 0.5,
         'frequency_weight' => 2.0,
     ]);
 
-    App\Models\PlayerRanking::query()->create([
+    PlayerRanking::query()->create([
         'player_id' => $player->id,
         'format' => '1v1',
         'wins' => 5,
@@ -111,4 +115,143 @@ test('csv export returns correct headers and data', function (): void {
         ->toContain('Name,Country,Best Rank,Approved Games,Savings Credits,Pathway Credits')
         ->toContain('"Test Player"')
         ->toContain('3');
+});
+
+test('moderator cannot access pathway eligible players', function (): void {
+    $moderator = User::factory()->create()->assignRole(Role::Moderator->value);
+    $this->actingAs($moderator);
+
+    $this->get(route('admin.pathway-eligible.index'))
+        ->assertForbidden();
+});
+
+test('moderator cannot access pathway eligible players export', function (): void {
+    $moderator = User::factory()->create()->assignRole(Role::Moderator->value);
+    $this->actingAs($moderator);
+
+    $this->get(route('admin.pathway-eligible.export'))
+        ->assertForbidden();
+});
+
+test('guest is redirected from pathway eligible players export', function (): void {
+    $this->get(route('admin.pathway-eligible.export'))
+        ->assertRedirect(route('login'));
+});
+
+test('player cannot access pathway eligible players export', function (): void {
+    $player = User::factory()->create()->assignRole(Role::Player->value);
+    $this->actingAs($player);
+
+    $this->get(route('admin.pathway-eligible.export'))
+        ->assertForbidden();
+});
+
+test('csv export shows best rank across multiple formats', function (): void {
+    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $this->actingAs($admin);
+
+    $player = User::factory()->create(['name' => 'Multi Format Player'])->assignRole(Role::Player->value);
+    Profile::factory()->create(['player_id' => $player->id, 'is_pathway_candidate' => true]);
+
+    $config = RankingConfiguration::query()->create([
+        'win_weight' => 3.0,
+        'loss_weight' => 1.0,
+        'game_count_weight' => 0.5,
+        'frequency_weight' => 2.0,
+    ]);
+
+    PlayerRanking::query()->create([
+        'player_id' => $player->id,
+        'format' => '1v1',
+        'wins' => 5,
+        'losses' => 2,
+        'total_games' => 7,
+        'recent_games' => 3,
+        'score' => 20.5,
+        'rank' => 5,
+        'ranking_configuration_id' => $config->id,
+        'calculated_at' => now(),
+    ]);
+
+    PlayerRanking::query()->create([
+        'player_id' => $player->id,
+        'format' => '2v2',
+        'wins' => 8,
+        'losses' => 1,
+        'total_games' => 9,
+        'recent_games' => 5,
+        'score' => 30.0,
+        'rank' => 3,
+        'ranking_configuration_id' => $config->id,
+        'calculated_at' => now(),
+    ]);
+
+    $response = $this->get(route('admin.pathway-eligible.export'));
+    $content = $response->getContent();
+
+    $lines = explode("\n", mb_trim($content));
+    $dataLine = $lines[1];
+
+    expect($dataLine)->toContain('"Multi Format Player"')
+        ->and($dataLine)->toContain(',3,');
+});
+
+test('csv export shows N/A for players with no rankings', function (): void {
+    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $this->actingAs($admin);
+
+    $player = User::factory()->create(['name' => 'Unranked Player'])->assignRole(Role::Player->value);
+    Profile::factory()->create(['player_id' => $player->id, 'is_pathway_candidate' => true]);
+
+    $response = $this->get(route('admin.pathway-eligible.export'));
+    $content = $response->getContent();
+
+    expect($content)->toContain('N/A');
+});
+
+test('csv export includes allocation savings and pathway credits', function (): void {
+    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $this->actingAs($admin);
+
+    $player = User::factory()->create(['name' => 'Allocation Player'])->assignRole(Role::Player->value);
+    Profile::factory()->create(['player_id' => $player->id, 'is_pathway_candidate' => true]);
+
+    Allocation::factory()->create([
+        'player_id' => $player->id,
+        'savings_amount' => 10.5000,
+        'pathway_amount' => 5.2500,
+    ]);
+
+    Allocation::factory()->create([
+        'player_id' => $player->id,
+        'savings_amount' => 4.5000,
+        'pathway_amount' => 2.7500,
+    ]);
+
+    $response = $this->get(route('admin.pathway-eligible.export'));
+    $content = $response->getContent();
+
+    expect($content)
+        ->toContain('"Allocation Player"')
+        ->toContain('15.0000')
+        ->toContain('8.0000');
+});
+
+test('csv export includes country name for players', function (): void {
+    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $this->actingAs($admin);
+
+    $country = Country::factory()->create(['name' => 'Testland']);
+    $player = User::factory()->create(['name' => 'Country Player'])->assignRole(Role::Player->value);
+    Profile::factory()->create([
+        'player_id' => $player->id,
+        'is_pathway_candidate' => true,
+        'country_id' => $country->id,
+    ]);
+
+    $response = $this->get(route('admin.pathway-eligible.export'));
+    $content = $response->getContent();
+
+    expect($content)->toContain('"Country Player"')
+        ->and($content)->toContain('"Testland"');
 });

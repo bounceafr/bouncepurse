@@ -22,22 +22,25 @@ final class TeamInvitationController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $action->handle($user->ownedTeam, $request->validated()['email'], $user);
+        $team = $user->ownedTeam;
+        abort_unless($team !== null, 403);
+
+        $validated = $request->validated();
+        /** @var array{email: string} $validated */
+        $action->handle($team, $validated['email'], $user);
 
         return back();
     }
 
     public function accept(Request $request, string $token, AcceptTeamInvitation $action): RedirectResponse
     {
-        if (! $request->user()) {
-            $invitation = TeamInvitation::query()->where('token', $token)->firstOrFail();
+        $invitation = TeamInvitation::query()->with('team')->where('token', $token)->firstOrFail();
 
+        if (! $request->user()) {
             $request->session()->put('team_invitation_token', $token);
 
-            return redirect()->route('register', ['email' => $invitation->email]);
+            return to_route('register', ['email' => $invitation->email]);
         }
-
-        $invitation = TeamInvitation::query()->where('token', $token)->firstOrFail();
 
         /** @var User $user */
         $user = $request->user();
@@ -56,8 +59,13 @@ final class TeamInvitationController extends Controller
         return to_route('home');
     }
 
-    public function destroy(TeamInvitation $invitation, CancelTeamInvitation $action): RedirectResponse
+    public function destroy(Request $request, TeamInvitation $invitation, CancelTeamInvitation $action): RedirectResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_if($invitation->team->user_id !== $user->id, 403);
+
         $action->handle($invitation);
 
         return back();

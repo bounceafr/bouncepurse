@@ -39,8 +39,6 @@ final class Game extends Model
     /** @use HasFactory<GameFactory> */
     use HasFactory;
 
-    protected $guarded = [];
-
     /** @return BelongsTo<Court, self> */
     public function court(): BelongsTo
     {

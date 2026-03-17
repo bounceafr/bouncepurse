@@ -68,8 +68,7 @@ export default function ModeratorsIndex({ moderators, filters }: Props) {
         {
             accessorKey: 'total_reviews',
             header: 'Total reviews',
-            cell: ({ row }) =>
-                row.original.total_reviews.toLocaleString(),
+            cell: ({ row }) => row.original.total_reviews.toLocaleString(),
         },
         {
             accessorKey: 'approval_rate',
@@ -102,11 +101,7 @@ export default function ModeratorsIndex({ moderators, filters }: Props) {
                                   name="email"
                                   value={row.original.email}
                               />
-                              <input
-                                  type="hidden"
-                                  name="role"
-                                  value="player"
-                              />
+                              <input type="hidden" name="role" value="player" />
                               <Button
                                   type="submit"
                                   variant="outline"
@@ -180,12 +175,8 @@ export default function ModeratorsIndex({ moderators, filters }: Props) {
                     </CardContent>
                 </Card>
 
-                <DataTable
-                    columns={columns}
-                    data={moderators}
-                />
+                <DataTable columns={columns} data={moderators} />
             </div>
         </AppLayout>
     );
 }
-

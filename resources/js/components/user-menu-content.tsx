@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
-import { show as teamShow } from '@/actions/App/Http/Controllers/Team/TeamController';
 import { LogOut, Settings, Users } from 'lucide-react';
+import { show as teamShow } from '@/actions/App/Http/Controllers/Team/TeamController';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,

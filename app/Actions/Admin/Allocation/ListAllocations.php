@@ -16,23 +16,19 @@ final class ListAllocations
      */
     public function handle(array $filters = []): LengthAwarePaginator
     {
+        $from = $filters['from'] ?? null;
+        $to = $filters['to'] ?? null;
+        $playerId = $filters['player_id'] ?? null;
+        $format = $filters['format'] ?? null;
+
         return Allocation::query()
             ->with(['game', 'player'])
+            ->when($from !== null, fn (Builder $q) => $q->where('created_at', '>=', $from))
+            ->when($to !== null, fn (Builder $q) => $q->where('created_at', '<=', $to))
+            ->when($playerId !== null, fn (Builder $q) => $q->where('player_id', $playerId))
             ->when(
-                isset($filters['from']),
-                fn (Builder $q) => $q->where('created_at', '>=', $filters['from'])
-            )
-            ->when(
-                isset($filters['to']),
-                fn (Builder $q) => $q->where('created_at', '<=', $filters['to'])
-            )
-            ->when(
-                isset($filters['player_id']),
-                fn (Builder $q) => $q->where('player_id', $filters['player_id'])
-            )
-            ->when(
-                isset($filters['format']),
-                fn (Builder $q) => $q->whereHas('game', fn (Builder $gq) => $gq->where('format', $filters['format']))
+                $format !== null,
+                fn (Builder $q) => $q->whereHas('game', fn (Builder $gq) => $gq->where('format', $format))
             )
             ->latest()
             ->paginate(15)

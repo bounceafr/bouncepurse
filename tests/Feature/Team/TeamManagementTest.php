@@ -20,7 +20,7 @@ test('owner can view team page', function (): void {
     $this->actingAs($owner)
         ->get(route('team.show'))
         ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('team/show')
             ->has('team')
             ->has('members')

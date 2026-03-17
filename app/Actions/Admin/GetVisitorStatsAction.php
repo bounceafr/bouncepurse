@@ -11,6 +11,9 @@ final readonly class GetVisitorStatsAction
 {
     private const string MOBILE_PATTERN = 'Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone';
 
+    /**
+     * @return array<int, array{date: string, desktop: int, mobile: int}>
+     */
     public function handle(int $days = 90): array
     {
         $since = now()->subDays($days - 1)->startOfDay()->timestamp;
@@ -24,14 +27,16 @@ final readonly class GetVisitorStatsAction
             ->where('last_activity', '>=', $since)
             ->get();
 
+        /** @var array<string, array{desktop: int, mobile: int}> $grouped */
         $grouped = [];
         foreach ($rows as $row) {
-            $date = $row->date;
+            /** @var object{date: string|int, user_agent: string|null} $row */
+            $date = (string) $row->date;
             if (! isset($grouped[$date])) {
                 $grouped[$date] = ['desktop' => 0, 'mobile' => 0];
             }
 
-            if ($row->user_agent && preg_match('/'.self::MOBILE_PATTERN.'/i', (string) $row->user_agent)) {
+            if ($row->user_agent !== null && preg_match('/'.self::MOBILE_PATTERN.'/i', (string) $row->user_agent)) {
                 $grouped[$date]['mobile']++;
             } else {
                 $grouped[$date]['desktop']++;

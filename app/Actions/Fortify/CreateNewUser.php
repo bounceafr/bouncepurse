@@ -41,7 +41,7 @@ final class CreateNewUser implements CreatesNewUsers
         $user->assignRole(Role::Player);
 
         if (! $this->acceptPendingInvitation($user)) {
-            app(CreateTeamForUser::class)->handle($user);
+            resolve(CreateTeamForUser::class)->handle($user);
         }
 
         return $user;
@@ -56,6 +56,7 @@ final class CreateNewUser implements CreatesNewUsers
         }
 
         $invitation = TeamInvitation::query()
+            ->with('team')
             ->where('token', $token)
             ->where('email', $user->email)
             ->where('status', InvitationStatus::Pending)
@@ -65,7 +66,7 @@ final class CreateNewUser implements CreatesNewUsers
             return false;
         }
 
-        app(AcceptTeamInvitation::class)->handle($invitation, $user);
+        resolve(AcceptTeamInvitation::class)->handle($invitation, $user);
 
         return true;
     }

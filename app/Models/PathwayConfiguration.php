@@ -25,8 +25,6 @@ final class PathwayConfiguration extends Model
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
-    protected $guarded = [];
-
     /** @return BelongsTo<User,self> */
     public function updatedBy(): BelongsTo
     {

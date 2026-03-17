@@ -1,8 +1,15 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head, router } from '@inertiajs/react';
 import { Trash2, UserPlus } from 'lucide-react';
-import { show as teamShow, update as teamUpdate } from '@/actions/App/Http/Controllers/Team/TeamController';
-import { store as invitationStore } from '@/actions/App/Http/Controllers/Team/TeamInvitationController';
+import {
+    show as teamShow,
+    update as teamUpdate,
+} from '@/actions/App/Http/Controllers/Team/TeamController';
+import {
+    store as invitationStore,
+    destroy as invitationDestroy,
+} from '@/actions/App/Http/Controllers/Team/TeamInvitationController';
+import { destroy as memberDestroy } from '@/actions/App/Http/Controllers/Team/TeamMemberController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -105,7 +112,9 @@ export default function Show({
                     description="Manage your team details, members, and invitations."
                 />
 
-                <div className={`grid gap-6 ${isOwner ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
+                <div
+                    className={`grid gap-6 ${isOwner ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}
+                >
                     {isOwner && (
                         <Card>
                             <CardHeader>
@@ -283,74 +292,78 @@ export default function Show({
                     )}
 
                     <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle>Members</CardTitle>
-                                <CardDescription>
-                                    Team members and their roles.
-                                </CardDescription>
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Members</CardTitle>
+                                    <CardDescription>
+                                        Team members and their roles.
+                                    </CardDescription>
+                                </div>
+                                <Badge variant="secondary">
+                                    {members.length}/10
+                                </Badge>
                             </div>
-                            <Badge variant="secondary">
-                                {members.length}/10
-                            </Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead>Joined</TableHead>
-                                    {isOwner && (
-                                        <TableHead className="w-[80px]" />
-                                    )}
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {members.map((member) => (
-                                    <TableRow key={member.id}>
-                                        <TableCell className="font-medium">
-                                            {member.name}
-                                            {member.id === team.user_id && (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="ml-2"
-                                                >
-                                                    Owner
-                                                </Badge>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>{member.email}</TableCell>
-                                        <TableCell>
-                                            {new Date(
-                                                member.pivot.joined_at,
-                                            ).toLocaleDateString()}
-                                        </TableCell>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>Joined</TableHead>
                                         {isOwner && (
-                                            <TableCell>
-                                                {member.id !==
-                                                    team.user_id && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() =>
-                                                            router.delete(
-                                                                `/team/members/${member.uuid}`,
-                                                            )
-                                                        }
-                                                    >
-                                                        <Trash2 className="size-4 text-destructive" />
-                                                    </Button>
-                                                )}
-                                            </TableCell>
+                                            <TableHead className="w-[80px]" />
                                         )}
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
+                                </TableHeader>
+                                <TableBody>
+                                    {members.map((member) => (
+                                        <TableRow key={member.id}>
+                                            <TableCell className="font-medium">
+                                                {member.name}
+                                                {member.id === team.user_id && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="ml-2"
+                                                    >
+                                                        Owner
+                                                    </Badge>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {member.email}
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Date(
+                                                    member.pivot.joined_at,
+                                                ).toLocaleDateString()}
+                                            </TableCell>
+                                            {isOwner && (
+                                                <TableCell>
+                                                    {member.id !==
+                                                        team.user_id && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() =>
+                                                                router.delete(
+                                                                    memberDestroy(
+                                                                        member,
+                                                                    ).url,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="size-4 text-destructive" />
+                                                        </Button>
+                                                    )}
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
                     </Card>
                 </div>
 
@@ -410,10 +423,7 @@ export default function Show({
                                                     {invitation.email}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {
-                                                        invitation.invited_by
-                                                            .name
-                                                    }
+                                                    {invitation.invited_by.name}
                                                 </TableCell>
                                                 <TableCell>
                                                     {new Date(
@@ -426,7 +436,9 @@ export default function Show({
                                                         size="icon"
                                                         onClick={() =>
                                                             router.delete(
-                                                                `/team/invitations/${invitation.uuid}`,
+                                                                invitationDestroy(
+                                                                    invitation,
+                                                                ).url,
                                                             )
                                                         }
                                                     >

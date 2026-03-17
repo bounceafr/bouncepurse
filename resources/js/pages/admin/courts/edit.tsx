@@ -148,9 +148,7 @@ export default function EditCourt({
                                         id="contact_email"
                                         name="contact_email"
                                         type="email"
-                                        defaultValue={
-                                            court.contact_email ?? ''
-                                        }
+                                        defaultValue={court.contact_email ?? ''}
                                         placeholder="email@example.com"
                                     />
                                     <InputError
@@ -166,9 +164,7 @@ export default function EditCourt({
                                         id="contact_phone"
                                         name="contact_phone"
                                         type="tel"
-                                        defaultValue={
-                                            court.contact_phone ?? ''
-                                        }
+                                        defaultValue={court.contact_phone ?? ''}
                                         placeholder="+1 234 567 890"
                                     />
                                     <InputError

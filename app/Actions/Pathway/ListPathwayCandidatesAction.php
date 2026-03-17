@@ -17,13 +17,12 @@ final class ListPathwayCandidatesAction
      */
     public function handle(array $filters = []): LengthAwarePaginator
     {
+        $search = $filters['search'] ?? '';
+
         return User::query()->role(Role::Player->value)
             ->whereHas('profile', fn (Builder $q) => $q->where('is_pathway_candidate', true))
             ->with(['profile.country', 'rankings'])
-            ->when(
-                isset($filters['search']),
-                fn (Builder $q) => $q->where('name', 'like', '%'.$filters['search'].'%')
-            )
+            ->when($search !== '', fn (Builder $q) => $q->where('name', 'like', '%'.$search.'%'))
             ->latest()
             ->paginate(15)
             ->withQueryString();

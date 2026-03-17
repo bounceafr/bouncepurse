@@ -1,7 +1,13 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, UserCheck, UserX } from 'lucide-react';
 import { useState } from 'react';
-import { deactivate, index, reactivate, show, update } from '@/actions/App/Http/Controllers/Admin/UserController';
+import {
+    deactivate,
+    index,
+    reactivate,
+    show,
+    update,
+} from '@/actions/App/Http/Controllers/Admin/UserController';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -137,17 +143,13 @@ export default function UserShow({ user, roles }: Props) {
                             </p>
                             {user.deactivated_by && (
                                 <p>
-                                    <span className="font-medium">
-                                        By:
-                                    </span>{' '}
+                                    <span className="font-medium">By:</span>{' '}
                                     {user.deactivated_by}
                                 </p>
                             )}
                             {user.deactivation_reason && (
                                 <p>
-                                    <span className="font-medium">
-                                        Reason:
-                                    </span>{' '}
+                                    <span className="font-medium">Reason:</span>{' '}
                                     {user.deactivation_reason}
                                 </p>
                             )}
@@ -269,16 +271,8 @@ export default function UserShow({ user, roles }: Props) {
 
                 <div className="flex gap-2">
                     <Form {...update.form(user.id)}>
-                        <input
-                            type="hidden"
-                            name="name"
-                            value={user.name}
-                        />
-                        <input
-                            type="hidden"
-                            name="email"
-                            value={user.email}
-                        />
+                        <input type="hidden" name="name" value={user.name} />
+                        <input type="hidden" name="email" value={user.email} />
                         <input
                             type="hidden"
                             name="role"
@@ -365,4 +359,3 @@ function DeactivateButton({ user }: { user: UserData }) {
         </>
     );
 }
-

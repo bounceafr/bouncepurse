@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Team\AcceptTeamInvitation;
 use App\Enums\Role;
 use App\Exceptions\TeamFullException;
 use App\Models\Team;
@@ -55,6 +56,16 @@ test('non-owner cannot remove members', function (): void {
     expect($team->hasMember($member))->toBeTrue();
 });
 
+test('user without owned team cannot remove a member', function (): void {
+    $member = User::factory()->create()->assignRole(Role::Player->value);
+
+    $userWithoutTeam = User::factory()->create()->assignRole(Role::Player->value);
+
+    $this->actingAs($userWithoutTeam)
+        ->delete(route('team.members.destroy', $member->uuid))
+        ->assertForbidden();
+});
+
 test('10-member max is enforced on accept', function (): void {
     $owner = User::factory()->create()->assignRole(Role::Player->value);
     $team = Team::factory()->create(['user_id' => $owner->id]);
@@ -72,6 +83,6 @@ test('10-member max is enforced on accept', function (): void {
 
     $invitee = User::factory()->create();
 
-    expect(fn () => app(App\Actions\Team\AcceptTeamInvitation::class)->handle($invitation, $invitee))
+    expect(fn () => resolve(AcceptTeamInvitation::class)->handle($invitation, $invitee))
         ->toThrow(TeamFullException::class);
 });

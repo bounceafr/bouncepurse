@@ -72,6 +72,7 @@ final class EvaluatePathwayEligibilityAction
         $bestRank = null;
 
         foreach ($latestPerFormat as $row) {
+            /** @var object{format: string, max_calculated_at: mixed} $row */
             $ranking = PlayerRanking::query()
                 ->where('player_id', $playerId)
                 ->where('format', $row->format)

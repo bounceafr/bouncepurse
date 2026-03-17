@@ -25,9 +25,9 @@ final class TeamInvitationNotification extends Notification
         $inviter = $invitation->invitedBy;
 
         return (new MailMessage)
-            ->subject("You've been invited to join {$team->name}")
+            ->subject("You've been invited to join ".$team->name)
             ->greeting('Hello!')
-            ->line("{$inviter->name} has invited you to join their team **{$team->name}**.")
+            ->line(sprintf('%s has invited you to join their team **%s**.', $inviter->name, $team->name))
             ->action('Accept Invitation', route('team.invitations.accept', $invitation->token))
             ->line('Or [decline this invitation]('.route('team.invitations.decline', $invitation->token).').')
             ->line('This invitation expires in 7 days.');

@@ -25,7 +25,7 @@ final class ListAction
                         ->orWhere('email', 'like', sprintf('%%%s%%', $search));
                 });
             })
-            ->when($hasRoleFilter, fn (Builder $q) => $q->role($role))
+            ->when($hasRoleFilter, fn (Builder $q) => $q->role((string) $role))
             ->latest()
             ->paginate(15)
             ->withQueryString();

@@ -21,16 +21,13 @@ final class ListModeratorPerformanceAction
     {
         $moderators = User::query()->role(Role::Moderator->value)->orderBy('name')->get();
 
+        $from = $filters['from'] ?? null;
+        $to = $filters['to'] ?? null;
+
         $query = GameModeration::query()
             ->where('is_override', false)
-            ->when(
-                isset($filters['from']),
-                fn (Builder $q) => $q->where('created_at', '>=', $filters['from'])
-            )
-            ->when(
-                isset($filters['to']),
-                fn (Builder $q) => $q->where('created_at', '<=', $filters['to'])
-            );
+            ->when($from !== null, fn (Builder $q) => $q->where('created_at', '>=', $from))
+            ->when($to !== null, fn (Builder $q) => $q->where('created_at', '<=', $to));
 
         $approved = GameStatus::Approved->value;
         $rejected = GameStatus::Rejected->value;
@@ -47,9 +44,13 @@ final class ListModeratorPerformanceAction
 
         return $moderators->map(function (User $user) use ($stats): array {
             $row = $stats->get($user->id);
-            $total = (int) ($row?->total ?? 0);
-            $approvedCount = (int) ($row?->approved ?? 0);
-            $rejectedOrFlaggedCount = (int) ($row?->rejected_or_flagged ?? 0);
+
+            /** @var array<string, float|int|string> $arr */
+            $arr = $row !== null ? $row->toArray() : [];
+
+            $total = (int) ($arr['total'] ?? 0);
+            $approvedCount = (int) ($arr['approved'] ?? 0);
+            $rejectedOrFlaggedCount = (int) ($arr['rejected_or_flagged'] ?? 0);
 
             $approvalRate = $total > 0 ? round($approvedCount / $total * 100, 1) : 0.0;
             $flagRate = $total > 0 ? round($rejectedOrFlaggedCount / $total * 100, 1) : 0.0;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Carbon\CarbonInterface;
+use Database\Factories\AllocationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,9 +29,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 final class Allocation extends Model
 {
+    /** @use HasFactory<AllocationFactory> */
     use HasFactory;
-
-    protected $guarded = [];
 
     /** @return BelongsTo<Game, self> */
     public function game(): BelongsTo

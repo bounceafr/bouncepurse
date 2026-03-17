@@ -208,10 +208,14 @@ export default function UsersIndex({
         }
 
         const timeout = setTimeout(() => {
-            router.get(index().url, {
-                search: search || undefined,
-                role: roleFilter === 'all' ? undefined : roleFilter,
-            }, { preserveState: true, replace: true });
+            router.get(
+                index().url,
+                {
+                    search: search || undefined,
+                    role: roleFilter === 'all' ? undefined : roleFilter,
+                },
+                { preserveState: true, replace: true },
+            );
         }, 300);
 
         return () => clearTimeout(timeout);
@@ -276,9 +280,7 @@ export default function UsersIndex({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem asChild>
-                                    <Link href={show(user.id).url}>
-                                        View
-                                    </Link>
+                                    <Link href={show(user.id).url}>View</Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={() => setEditUser(user)}
@@ -322,10 +324,7 @@ export default function UsersIndex({
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-64"
             />
-            <Select
-                value={roleFilter}
-                onValueChange={setRoleFilter}
-            >
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
                 <SelectTrigger className="w-40">
                     <SelectValue placeholder="All roles" />
                 </SelectTrigger>

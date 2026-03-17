@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\PathwayConfiguration;
 use App\Models\PlayerRanking;
 use App\Models\RankingConfiguration;
 use App\Models\User;
@@ -36,7 +37,7 @@ test('pathway_eligibility is returned when pathway configuration exists', functi
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    App\Models\PathwayConfiguration::factory()->create([
+    PathwayConfiguration::factory()->create([
         'min_approved_games' => 3,
         'max_rank' => 10,
         'max_conduct_flags' => 5,

@@ -41,24 +41,21 @@ final class AllocationController extends Controller
             'player_id' => $request->query('player_id') ? (int) $request->query('player_id') : null,
         ]);
 
+        $from = $filters['from'] ?? null;
+        $to = $filters['to'] ?? null;
+        $playerId = $filters['player_id'] ?? null;
+        $format = $filters['format'] ?? null;
+
         $query = Allocation::query()
             ->with(['game', 'player'])
+            ->when($from !== null, fn (Builder $q) => $q->where('created_at', '>=', $from))
+            ->when($to !== null, fn (Builder $q) => $q->where('created_at', '<=', $to))
+            ->when($playerId !== null, fn (Builder $q) => $q->where('player_id', $playerId))
             ->when(
-                isset($filters['from']),
-                fn (Builder $q) => $q->where('created_at', '>=', $filters['from'])
+                $format !== null,
+                fn (Builder $q) => $q->whereHas('game', fn (Builder $gq) => $gq->where('format', $format))
             )
-            ->when(
-                isset($filters['to']),
-                fn (Builder $q) => $q->where('created_at', '<=', $filters['to'])
-            )
-            ->when(
-                isset($filters['player_id']),
-                fn (Builder $q) => $q->where('player_id', $filters['player_id'])
-            )
-            ->when(
-                isset($filters['format']),
-                fn (Builder $q) => $q->whereHas('game', fn (Builder $gq) => $gq->where('format', $filters['format']))
-            )->oldest();
+            ->oldest();
 
         $rows = $query->get();
 
