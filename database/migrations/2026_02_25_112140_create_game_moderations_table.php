@@ -14,6 +14,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
             $table->foreignId('moderator_id')->references('id')->on('users');
+            $table->timestamp('verified_at')->nullable();
             $table->string('status');
             $table->text('reason');
             $table->timestamps();

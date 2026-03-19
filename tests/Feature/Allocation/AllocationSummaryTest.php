@@ -158,8 +158,8 @@ test('summary filters by date range', function (): void {
 
 test('summary filters by game format', function (): void {
     $config = AllocationConfiguration::query()->latest()->first();
-    $singlesGame = Game::factory()->create(['format' => 'singles']);
-    $doublesGame = Game::factory()->create(['format' => 'doubles']);
+    $singlesGame = Game::factory()->create(['format' => '1v1']);
+    $doublesGame = Game::factory()->create(['format' => '3v3']);
 
     foreach ([$singlesGame, $doublesGame] as $game) {
         Allocation::query()->create([
@@ -176,7 +176,7 @@ test('summary filters by game format', function (): void {
     }
 
     $action = resolve(GetAllocationSummary::class);
-    $result = $action->handle(['format' => 'singles']);
+    $result = $action->handle(['format' => '1v1']);
 
     expect($result['count'])->toBe(1);
 });
@@ -234,7 +234,7 @@ test('csv export includes data row with correct format', function (): void {
     $this->actingAs($admin);
 
     $config = AllocationConfiguration::query()->latest()->first();
-    $game = Game::factory()->create(['format' => 'singles']);
+    $game = Game::factory()->create(['format' => '1v1']);
     $player = User::query()->find($game->player_id);
 
     $allocation = Allocation::query()->create([
@@ -256,7 +256,7 @@ test('csv export includes data row with correct format', function (): void {
         ->toContain('"'.$player->name.'"')
         ->toContain('2.00')
         ->toContain('0.5000')
-        ->toContain('"singles"')
+        ->toContain('"1v1"')
         ->toContain($allocation->created_at->toDateString());
 });
 
@@ -333,8 +333,8 @@ test('csv export filters by game format', function (): void {
     $this->actingAs($admin);
 
     $config = AllocationConfiguration::query()->latest()->first();
-    $singlesGame = Game::factory()->create(['format' => 'singles']);
-    $doublesGame = Game::factory()->create(['format' => 'doubles']);
+    $singlesGame = Game::factory()->create(['format' => '1v1']);
+    $doublesGame = Game::factory()->create(['format' => '3v3']);
 
     foreach ([$singlesGame, $doublesGame] as $game) {
         Allocation::query()->create([
@@ -350,21 +350,21 @@ test('csv export filters by game format', function (): void {
         ]);
     }
 
-    $response = $this->get(route('admin.allocation.export', ['format' => 'singles']));
+    $response = $this->get(route('admin.allocation.export', ['format' => '1v1']));
     $content = $response->getContent();
 
     expect($content)
-        ->toContain('"singles"')
-        ->not->toContain('"doubles"');
+        ->toContain('"1v1"')
+        ->not->toContain('"3v3"');
 });
 
 test('allocation index passes filters in page props', function (): void {
     $admin = User::factory()->create()->assignRole(Role::Administrator->value);
     $this->actingAs($admin);
 
-    $this->get(route('admin.allocation.index', ['from' => '2026-01-01', 'format' => 'singles']))
+    $this->get(route('admin.allocation.index', ['from' => '2026-01-01', 'format' => '1v1']))
         ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->where('filters.from', '2026-01-01')
-            ->where('filters.format', 'singles')
+            ->where('filters.format', '1v1')
         );
 });

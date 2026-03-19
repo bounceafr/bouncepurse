@@ -42,21 +42,6 @@ final class CourtController extends Controller
         ]);
     }
 
-    public function create(): Response
-    {
-        return Inertia::render('admin/courts/create', [
-            'countries' => Country::query()->orderBy('name')->get(['id', 'name', 'iso_alpha2']),
-            'statuses' => array_map(
-                fn (CourtStatus $status): array => [
-                    'value' => $status->value,
-                    'label' => $status->label(),
-                    'color' => $status->color(),
-                ],
-                CourtStatus::cases()
-            ),
-        ]);
-    }
-
     public function store(StoreCourtRequest $request, StoreAction $action): RedirectResponse
     {
         /** @var User $user */
@@ -64,22 +49,6 @@ final class CourtController extends Controller
         $action->handle($request->validated(), $user);
 
         return to_route('admin.courts.index')->with('success', 'Court created successfully.');
-    }
-
-    public function edit(Court $court): Response
-    {
-        return Inertia::render('admin/courts/edit', [
-            'court' => $court->load('country'),
-            'countries' => Country::query()->orderBy('name')->get(['id', 'name', 'iso_alpha2']),
-            'statuses' => array_map(
-                fn (CourtStatus $status): array => [
-                    'value' => $status->value,
-                    'label' => $status->label(),
-                    'color' => $status->color(),
-                ],
-                CourtStatus::cases()
-            ),
-        ]);
     }
 
     public function update(UpdateCourtRequest $request, UpdateAction $action, Court $court): RedirectResponse

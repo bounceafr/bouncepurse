@@ -51,7 +51,7 @@ final class DashboardController extends Controller
                     'uuid' => $game->uuid,
                     'title' => $game->title,
                     'status' => $game->status->value,
-                    'played_at' => $game->played_at->toISOString(),
+                    'played_at' => $game->played_at?->toISOString() ?? '',
                     'court' => $game->court ? ['name' => $game->court->name] : null,
                     'player' => ['name' => $game->player->name],
                 ]),

@@ -28,7 +28,7 @@ final class CalculateRankingsAction
         $grouped = [];
 
         foreach ($games as $game) {
-            $format = $game->format;
+            $format = $game->format->value;
             $playerId = $game->player_id;
 
             if (! isset($grouped[$format][$playerId])) {

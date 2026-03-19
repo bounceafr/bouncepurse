@@ -56,7 +56,7 @@ final class UserController extends Controller
                 'uuid' => $game->uuid,
                 'title' => $game->title,
                 'status' => $game->status->value,
-                'played_at' => $game->played_at->toISOString(),
+                'played_at' => $game->played_at?->toISOString() ?? '',
                 'created_at' => $game->created_at?->toISOString() ?? '',
             ]);
 

@@ -30,18 +30,23 @@ final class GameController extends Controller
     public function index(Request $request, ListAction $action): Response
     {
         $search = $request->string('search')->toString() ?: null;
+        $filter = $request->string('filter')->toString() ?: null;
 
         return Inertia::render('admin/games/index', [
-            'games' => $action->handle($search),
-            'filters' => ['search' => $search],
+            'games' => $action->handle($search, $filter),
+            'filters' => ['search' => $search, 'filter' => $filter],
             'courts' => Court::query()->select(['id', 'name'])->orderBy('name')->get(),
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        /** @var User $user */
+        $user = $request->user();
+
         return Inertia::render('admin/games/create', [
             'courts' => Court::query()->select(['id', 'name'])->orderBy('name')->get(),
+            'teams' => $user->teams()->select(['teams.id', 'teams.name'])->get(),
         ]);
     }
 
@@ -54,6 +59,15 @@ final class GameController extends Controller
         ]));
 
         return to_route('admin.games.index')->with('success', 'Game created successfully.');
+    }
+
+    public function show(Game $game): Response
+    {
+        $game->load(['court', 'gameResult', 'team']);
+
+        return Inertia::render('admin/games/show', [
+            'game' => $game,
+        ]);
     }
 
     public function edit(Game $game): Response

@@ -63,7 +63,7 @@ test('moderators index shows performance stats filtered by date', function (): v
         'uuid' => Str::uuid()->toString(),
         'player_id' => User::factory()->create()->id,
         'title' => 'Test',
-        'format' => 'singles',
+        'format' => '1v1',
         'status' => GameStatus::Approved,
         'played_at' => now(),
     ]);

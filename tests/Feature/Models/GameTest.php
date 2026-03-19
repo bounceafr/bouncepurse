@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Enums\Role;
 use App\Models\Game;
+use App\Models\GameResult;
+use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 
@@ -70,4 +72,20 @@ test('unauthenticated user sees all games', function (): void {
     Game::factory()->create(['player_id' => $player2->id]);
 
     expect(Game::query()->count())->toBe(2);
+});
+
+test('game belongs to a team', function (): void {
+    $team = Team::factory()->create();
+    $game = Game::factory()->create(['team_id' => $team->id]);
+
+    expect($game->team)->toBeInstanceOf(Team::class)
+        ->and($game->team->id)->toBe($team->id);
+});
+
+test('game has one game result', function (): void {
+    $game = Game::factory()->create();
+    $result = GameResult::factory()->create(['game_id' => $game->id]);
+
+    expect($game->gameResult)->toBeInstanceOf(GameResult::class)
+        ->and($game->gameResult->id)->toBe($result->id);
 });
