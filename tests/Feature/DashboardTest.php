@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Enums\Role;
 use App\Models\PathwayConfiguration;
 use App\Models\PlayerRanking;
 use App\Models\RankingConfiguration;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
 
 test('guests are redirected to the login page', function (): void {
@@ -30,6 +33,53 @@ test('authenticated users can visit the dashboard', function (): void {
         ->has('recent_games')
         ->has('games_per_month')
         ->has('player_rankings')
+    );
+});
+
+test('non-administrator users do not receive visitor stats', function (): void {
+    $this->seed(RolesAndPermissionsSeeder::class);
+
+    $user = User::factory()->create()->assignRole(Role::Moderator->value);
+    $this->actingAs($user);
+
+    DB::table('sessions')->insert([
+        'id' => 'test-desktop',
+        'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0',
+        'last_activity' => now()->timestamp,
+        'payload' => '',
+    ]);
+
+    $response = $this->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+        ->component('dashboard')
+        ->has('visitor_stats')
+        ->where('visitor_stats', [])
+    );
+});
+
+test('administrator receives visitor stats on the dashboard', function (): void {
+    $this->seed(RolesAndPermissionsSeeder::class);
+
+    $user = User::factory()->create()->assignRole(Role::Administrator->value);
+    $this->actingAs($user);
+
+    DB::table('sessions')->insert([
+        'id' => 'test-desktop',
+        'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0',
+        'last_activity' => now()->timestamp,
+        'payload' => '',
+    ]);
+
+    $response = $this->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+        ->component('dashboard')
+        ->has('visitor_stats.89')
+        ->where('visitor_stats.89.desktop', 1)
+        ->where('visitor_stats.89.mobile', 0)
     );
 });
 

@@ -29,22 +29,14 @@ final class GameController extends Controller
 {
     public function index(Request $request, ListAction $action): Response
     {
+        /** @var User $user */
+        $user = $request->user();
         $search = $request->string('search')->toString() ?: null;
         $filter = $request->string('filter')->toString() ?: null;
 
         return Inertia::render('admin/games/index', [
             'games' => $action->handle($search, $filter),
             'filters' => ['search' => $search, 'filter' => $filter],
-            'courts' => Court::query()->select(['id', 'name'])->orderBy('name')->get(),
-        ]);
-    }
-
-    public function create(Request $request): Response
-    {
-        /** @var User $user */
-        $user = $request->user();
-
-        return Inertia::render('admin/games/create', [
             'courts' => Court::query()->select(['id', 'name'])->orderBy('name')->get(),
             'teams' => $user->teams()->select(['teams.id', 'teams.name'])->get(),
         ]);
@@ -70,14 +62,6 @@ final class GameController extends Controller
         ]);
     }
 
-    public function edit(Game $game): Response
-    {
-        return Inertia::render('admin/games/edit', [
-            'game' => $game,
-            'courts' => Court::query()->select(['id', 'name'])->orderBy('name')->get(),
-        ]);
-    }
-
     public function update(UpdateGameRequest $request, UpdateAction $action, Game $game): RedirectResponse
     {
         $action->handle($game, $request->validated());
@@ -94,6 +78,8 @@ final class GameController extends Controller
 
     public function showUpload(Game $game): Response
     {
+        $game->load(['court', 'gameResult', 'team']);
+
         return Inertia::render('admin/games/upload', [
             'game' => $game,
         ]);

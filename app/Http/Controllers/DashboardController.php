@@ -8,6 +8,7 @@ use App\Actions\Admin\GetVisitorStatsAction;
 use App\Actions\Pathway\EvaluatePathwayEligibilityAction;
 use App\Actions\Ranking\GetPlayerRankingsAction;
 use App\Enums\GameStatus;
+use App\Enums\Role;
 use App\Models\Court;
 use App\Models\Game;
 use App\Models\PathwayConfiguration;
@@ -25,7 +26,11 @@ final class DashboardController extends Controller
         $user = $request->user();
 
         $gamesPerMonth = $this->buildGamesPerMonth();
-        $visitorStats = $visitorStatsAction->handle(90);
+        $canSeeVisitorStats = $user->hasRole(Role::Administrator)
+            || $user->hasRole(Role::SuperAdmin);
+        $visitorStats = $canSeeVisitorStats
+            ? $visitorStatsAction->handle(90)
+            : [];
         $statsSparklines = $this->buildStatsSparklines();
 
         $pathwayConfig = PathwayConfiguration::query()->latest()->first();

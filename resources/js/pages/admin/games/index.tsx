@@ -2,7 +2,6 @@ import { Form, Head, Link, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import {
     CalendarIcon,
-    CalendarPlus,
     CirclePlusIcon,
     MoreHorizontal,
     Search,
@@ -51,12 +50,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 type User = { id: number; name: string };
 type Court = { id: number; name: string };
+type Team = { id: number; name: string };
 
 type GameResult = {
     your_score: number;
@@ -92,8 +93,6 @@ type PaginatedGames = {
     last_page: number;
     total: number;
 };
-
-const formats = ['1v1', '2v2', '3v3', '4v4', '5v5'];
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Games', href: index().url }];
 
@@ -132,17 +131,17 @@ function vimeoStatusBadge(status: string | null) {
     );
 }
 
-function GameFormFields({
+function EditGameFormFields({
     game,
     courts,
     errors,
 }: {
-    game?: Game;
+    game: Game;
     courts: Court[];
     errors: Record<string, string>;
 }) {
     const [date, setDate] = useState<Date | undefined>(
-        game?.played_at ? new Date(game.played_at) : undefined,
+        game.played_at ? new Date(game.played_at) : undefined,
     );
     const [calendarOpen, setCalendarOpen] = useState(false);
 
@@ -153,11 +152,11 @@ function GameFormFields({
     return (
         <>
             <div className="grid gap-2">
-                <Label htmlFor="title">Title</Label>
+                <Label htmlFor="edit-title">Title</Label>
                 <Input
-                    id="title"
+                    id="edit-title"
                     name="title"
-                    defaultValue={game?.title}
+                    defaultValue={game.title}
                     placeholder="Game title"
                     required
                 />
@@ -165,17 +164,17 @@ function GameFormFields({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="format">Format</Label>
+                <Label htmlFor="edit-format">Format</Label>
                 <Select
                     name="format"
-                    defaultValue={game?.format ?? '5v5'}
+                    defaultValue={game.format ?? '5v5'}
                     required
                 >
-                    <SelectTrigger id="format">
+                    <SelectTrigger id="edit-format">
                         <SelectValue placeholder="Select format" />
                     </SelectTrigger>
                     <SelectContent>
-                        {formats.map((f) => (
+                        {['1v1', '2v2', '3v3', '4v4', '5v5'].map((f) => (
                             <SelectItem key={f} value={f}>
                                 {f}
                             </SelectItem>
@@ -186,12 +185,12 @@ function GameFormFields({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="court_id">Court</Label>
+                <Label htmlFor="edit-court_id">Court</Label>
                 <Select
                     name="court_id"
-                    defaultValue={game?.court_id ? String(game.court_id) : ''}
+                    defaultValue={game.court_id ? String(game.court_id) : ''}
                 >
-                    <SelectTrigger id="court_id">
+                    <SelectTrigger id="edit-court_id">
                         <SelectValue placeholder="Select a court (optional)" />
                     </SelectTrigger>
                     <SelectContent>
@@ -243,9 +242,9 @@ function GameFormFields({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="result">Result</Label>
-                <Select name="result" defaultValue={game?.result ?? ''}>
-                    <SelectTrigger id="result">
+                <Label htmlFor="edit-result">Result</Label>
+                <Select name="result" defaultValue={game.result ?? ''}>
+                    <SelectTrigger id="edit-result">
                         <SelectValue placeholder="Select result (optional)" />
                     </SelectTrigger>
                     <SelectContent>
@@ -257,28 +256,325 @@ function GameFormFields({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="points">Points</Label>
+                <Label htmlFor="edit-points">Points</Label>
                 <Input
-                    id="points"
+                    id="edit-points"
                     name="points"
                     type="number"
                     min={0}
-                    defaultValue={game?.points ?? ''}
+                    defaultValue={game.points ?? ''}
                     placeholder="Points scored (optional)"
                 />
                 <InputError message={errors.points} />
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="comments">Comments</Label>
+                <Label htmlFor="edit-comments">Comments</Label>
                 <Input
-                    id="comments"
+                    id="edit-comments"
                     name="comments"
-                    defaultValue={game?.comments ?? ''}
+                    defaultValue={game.comments ?? ''}
                     placeholder="Comments (optional)"
                 />
                 <InputError message={errors.comments} />
             </div>
+        </>
+    );
+}
+
+function CreateGameFormFields({
+    courts,
+    teams,
+    errors,
+}: {
+    courts: Court[];
+    teams: Team[];
+    errors: Record<string, string>;
+}) {
+    const [mode, setMode] = useState<'played' | 'scheduled'>('played');
+    const [participant, setParticipant] = useState<string>('');
+    const [date, setDate] = useState<Date | undefined>(undefined);
+    const [time, setTime] = useState<string>('');
+    const [calendarOpen, setCalendarOpen] = useState(false);
+
+    const playerFormats = ['1v1'];
+    const teamFormats = ['3v3', '5v5'];
+    const allFormats = ['1v1', '2v2', '3v3', '4v4', '5v5'];
+
+    const formats =
+        participant === 'team'
+            ? teamFormats
+            : participant === 'player'
+              ? playerFormats
+              : allFormats;
+
+    const playedAtValue =
+        mode === 'played' && date
+            ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+            : '';
+
+    const scheduledAtValue =
+        mode === 'scheduled' && date && time
+            ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${time}`
+            : '';
+
+    return (
+        <>
+            <div className="grid gap-2">
+                <Label htmlFor="create-title">Title</Label>
+                <Input
+                    id="create-title"
+                    name="title"
+                    placeholder="Game title"
+                    required
+                />
+                <InputError message={errors.title} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label>Game Type</Label>
+                <div className="flex gap-2">
+                    <Button
+                        type="button"
+                        variant={mode === 'played' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => {
+                            setMode('played');
+                            setDate(undefined);
+                            setTime('');
+                        }}
+                    >
+                        Played
+                    </Button>
+                    <Button
+                        type="button"
+                        variant={mode === 'scheduled' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => {
+                            setMode('scheduled');
+                            setDate(undefined);
+                            setTime('');
+                        }}
+                    >
+                        Schedule
+                    </Button>
+                </div>
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="create-participant">Participant Type</Label>
+                <Select name="participant" onValueChange={setParticipant}>
+                    <SelectTrigger id="create-participant">
+                        <SelectValue placeholder="Select type (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="player">
+                            Player (Individual)
+                        </SelectItem>
+                        <SelectItem value="team">Team</SelectItem>
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.participant} />
+            </div>
+
+            {participant === 'team' && (
+                <div className="grid gap-2">
+                    <Label htmlFor="create-team_id">Team</Label>
+                    <Select name="team_id" required>
+                        <SelectTrigger id="create-team_id">
+                            <SelectValue placeholder="Select your team" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {teams.map((team) => (
+                                <SelectItem
+                                    key={team.id}
+                                    value={String(team.id)}
+                                >
+                                    {team.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <InputError message={errors.team_id} />
+                </div>
+            )}
+
+            <div className="grid gap-2">
+                <Label htmlFor="create-format">Format</Label>
+                <Select
+                    name="format"
+                    defaultValue={formats[0]}
+                    key={participant}
+                    required
+                >
+                    <SelectTrigger id="create-format">
+                        <SelectValue placeholder="Select format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {formats.map((f) => (
+                            <SelectItem key={f} value={f}>
+                                {f}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.format} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="create-court_id">Court</Label>
+                <Select name="court_id">
+                    <SelectTrigger id="create-court_id">
+                        <SelectValue placeholder="Select a court (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {courts.map((court) => (
+                            <SelectItem key={court.id} value={String(court.id)}>
+                                {court.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.court_id} />
+            </div>
+
+            {mode === 'played' ? (
+                <>
+                    <div className="grid gap-2">
+                        <Label>Played At</Label>
+                        <Popover
+                            open={calendarOpen}
+                            onOpenChange={setCalendarOpen}
+                        >
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    type="button"
+                                    className={cn(
+                                        'justify-start font-normal',
+                                        !date && 'text-muted-foreground',
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-2 size-4" />
+                                    {date
+                                        ? date.toLocaleDateString('default', {
+                                              year: 'numeric',
+                                              month: 'long',
+                                              day: 'numeric',
+                                          })
+                                        : 'Pick a date'}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={date}
+                                    onSelect={(d) => {
+                                        setDate(d);
+                                        setCalendarOpen(false);
+                                    }}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        <input
+                            type="hidden"
+                            name="played_at"
+                            value={playedAtValue}
+                        />
+                        <InputError message={errors.played_at} />
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="create-result">Result</Label>
+                        <Select name="result">
+                            <SelectTrigger id="create-result">
+                                <SelectValue placeholder="Select result (optional)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="win">Win</SelectItem>
+                                <SelectItem value="lost">Lost</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <InputError message={errors.result} />
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="create-points">Points</Label>
+                        <Input
+                            id="create-points"
+                            name="points"
+                            type="number"
+                            min={0}
+                            placeholder="Points scored (optional)"
+                        />
+                        <InputError message={errors.points} />
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="create-comments">Comments</Label>
+                        <Textarea
+                            id="create-comments"
+                            name="comments"
+                            placeholder="Comments (optional)"
+                        />
+                        <InputError message={errors.comments} />
+                    </div>
+                </>
+            ) : (
+                <div className="grid gap-2">
+                    <Label>Scheduled Date & Time</Label>
+                    <div className="flex gap-2">
+                        <Popover
+                            open={calendarOpen}
+                            onOpenChange={setCalendarOpen}
+                        >
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    type="button"
+                                    className={cn(
+                                        'flex-1 justify-start font-normal',
+                                        !date && 'text-muted-foreground',
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-2 size-4" />
+                                    {date
+                                        ? date.toLocaleDateString('default', {
+                                              year: 'numeric',
+                                              month: 'long',
+                                              day: 'numeric',
+                                          })
+                                        : 'Pick a date'}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={date}
+                                    onSelect={(d) => {
+                                        setDate(d);
+                                        setCalendarOpen(false);
+                                    }}
+                                    disabled={(d) => d < new Date()}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        <Input
+                            type="time"
+                            value={time}
+                            onChange={(e) => setTime(e.target.value)}
+                            className="w-32"
+                            required
+                        />
+                    </div>
+                    <input
+                        type="hidden"
+                        name="scheduled_at"
+                        value={scheduledAtValue}
+                    />
+                    <InputError message={errors.scheduled_at} />
+                </div>
+            )}
         </>
     );
 }
@@ -293,10 +589,12 @@ export default function GamesIndex({
     games,
     filters,
     courts,
+    teams,
 }: {
     games: PaginatedGames;
     filters: { search: string | null; filter: string | null };
     courts: Court[];
+    teams: Team[];
 }) {
     const [createOpen, setCreateOpen] = useState(false);
     const [editGame, setEditGame] = useState<Game | null>(null);
@@ -500,12 +798,6 @@ export default function GamesIndex({
                 </div>
             </div>
             <div className="flex gap-2">
-                <Button asChild variant="outline">
-                    <Link href={GameController.create().url}>
-                        <CalendarPlus className="mr-2 size-4" />
-                        Schedule Game
-                    </Link>
-                </Button>
                 <Button onClick={() => setCreateOpen(true)}>
                     <CirclePlusIcon />
                     Add Game
@@ -540,11 +832,11 @@ export default function GamesIndex({
 
             {/* Create Game Modal */}
             <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-                <DialogContent>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Create Game</DialogTitle>
                         <DialogDescription>
-                            Add a new game record.
+                            Add a new game record or schedule a future game.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -557,8 +849,9 @@ export default function GamesIndex({
                     >
                         {({ processing, errors }) => (
                             <>
-                                <GameFormFields
+                                <CreateGameFormFields
                                     courts={courts}
+                                    teams={teams}
                                     errors={errors}
                                 />
 
@@ -589,7 +882,7 @@ export default function GamesIndex({
                     }
                 }}
             >
-                <DialogContent>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Edit Game</DialogTitle>
                         <DialogDescription>
@@ -606,7 +899,7 @@ export default function GamesIndex({
                         >
                             {({ processing, errors }) => (
                                 <>
-                                    <GameFormFields
+                                    <EditGameFormFields
                                         game={editGame}
                                         courts={courts}
                                         errors={errors}

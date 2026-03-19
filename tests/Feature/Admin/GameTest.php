@@ -197,30 +197,6 @@ test('complete upload sets vimeo status to complete', function (): void {
     ]);
 });
 
-test('authenticated users can view the create game form', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
-    $this->actingAs($user);
-
-    $response = $this->get(route('admin.games.create'));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->component('admin/games/create'));
-});
-
-test('authenticated users can view the edit game form', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
-    $game = Game::factory()->create();
-    $this->actingAs($user);
-
-    $response = $this->get(route('admin.games.edit', $game));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('admin/games/edit')
-        ->where('game.id', $game->id)
-    );
-});
-
 test('authenticated users can view the upload game page', function (): void {
     $user = User::factory()->create()->givePermissionTo('view-games');
     $game = Game::factory()->create();
