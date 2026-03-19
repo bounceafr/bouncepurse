@@ -50,7 +50,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
@@ -70,16 +69,13 @@ type Game = {
     title: string;
     format: string;
     participant: string;
-    court_id: number | null;
+    court_id: number;
     player_id: number;
     scheduled_at: string | null;
     played_at: string | null;
     status: string;
     result: 'win' | 'lost' | null;
-    points: number | null;
-    comments: string | null;
-    vimeo_status: string | null;
-    court: Court | null;
+    court: Court;
     player: User | null;
     game_result: GameResult | null;
 };
@@ -108,23 +104,6 @@ function statusBadge(status: string) {
     return (
         <span
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white capitalize ${statusColors[status] ?? 'bg-gray-400'}`}
-        >
-            {status}
-        </span>
-    );
-}
-
-function vimeoStatusBadge(status: string | null) {
-    if (!status) {
-        return <span className="text-xs text-muted-foreground">No video</span>;
-    }
-    const colors: Record<string, string> = {
-        pending: 'bg-yellow-500',
-        complete: 'bg-green-500',
-    };
-    return (
-        <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${colors[status] ?? 'bg-gray-400'}`}
         >
             {status}
         </span>
@@ -188,10 +167,11 @@ function EditGameFormFields({
                 <Label htmlFor="edit-court_id">Court</Label>
                 <Select
                     name="court_id"
-                    defaultValue={game.court_id ? String(game.court_id) : ''}
+                    defaultValue={String(game.court_id)}
+                    required
                 >
                     <SelectTrigger id="edit-court_id">
-                        <SelectValue placeholder="Select a court (optional)" />
+                        <SelectValue placeholder="Select a court" />
                     </SelectTrigger>
                     <SelectContent>
                         {courts.map((court) => (
@@ -255,29 +235,6 @@ function EditGameFormFields({
                 <InputError message={errors.result} />
             </div>
 
-            <div className="grid gap-2">
-                <Label htmlFor="edit-points">Points</Label>
-                <Input
-                    id="edit-points"
-                    name="points"
-                    type="number"
-                    min={0}
-                    defaultValue={game.points ?? ''}
-                    placeholder="Points scored (optional)"
-                />
-                <InputError message={errors.points} />
-            </div>
-
-            <div className="grid gap-2">
-                <Label htmlFor="edit-comments">Comments</Label>
-                <Input
-                    id="edit-comments"
-                    name="comments"
-                    defaultValue={game.comments ?? ''}
-                    placeholder="Comments (optional)"
-                />
-                <InputError message={errors.comments} />
-            </div>
         </>
     );
 }
@@ -423,9 +380,9 @@ function CreateGameFormFields({
 
             <div className="grid gap-2">
                 <Label htmlFor="create-court_id">Court</Label>
-                <Select name="court_id">
+                <Select name="court_id" required>
                     <SelectTrigger id="create-court_id">
-                        <SelectValue placeholder="Select a court (optional)" />
+                        <SelectValue placeholder="Select a court" />
                     </SelectTrigger>
                     <SelectContent>
                         {courts.map((court) => (
@@ -498,27 +455,6 @@ function CreateGameFormFields({
                         <InputError message={errors.result} />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="create-points">Points</Label>
-                        <Input
-                            id="create-points"
-                            name="points"
-                            type="number"
-                            min={0}
-                            placeholder="Points scored (optional)"
-                        />
-                        <InputError message={errors.points} />
-                    </div>
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="create-comments">Comments</Label>
-                        <Textarea
-                            id="create-comments"
-                            name="comments"
-                            placeholder="Comments (optional)"
-                        />
-                        <InputError message={errors.comments} />
-                    </div>
                 </>
             ) : (
                 <div className="grid gap-2">
@@ -697,12 +633,6 @@ export default function GamesIndex({
                 }
                 return <span className="text-xs text-muted-foreground">—</span>;
             },
-        },
-        {
-            id: 'video',
-            header: 'Video',
-            enableSorting: false,
-            cell: ({ row }) => vimeoStatusBadge(row.original.vimeo_status),
         },
         {
             id: 'actions',
