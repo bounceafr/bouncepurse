@@ -16,7 +16,6 @@ beforeEach(function (): void {
 
 test('guests are redirected from games routes', function (): void {
     $this->get(route('admin.games.index'))->assertRedirect(route('login'));
-    $this->get(route('admin.games.create'))->assertRedirect(route('login'));
     $this->post(route('admin.games.store'))->assertRedirect(route('login'));
 });
 
@@ -34,15 +33,15 @@ test('player can view games index', function (): void {
     );
 });
 
-test('player can view create form with teams', function (): void {
+test('games index includes teams data', function (): void {
     $user = User::factory()->create()->givePermissionTo('view-games');
     $this->actingAs($user);
 
-    $response = $this->get(route('admin.games.create'));
+    $response = $this->get(route('admin.games.index'));
 
     $response->assertOk();
     $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
-        ->component('admin/games/create')
+        ->component('admin/games/index')
         ->has('courts')
         ->has('teams')
     );

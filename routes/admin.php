@@ -24,7 +24,8 @@ Route::middleware(['auth', 'verified', 'permission:edit-courts'])->group(functio
 
 Route::middleware(['auth', 'verified', 'permission:view-games'])->group(function (): void {
     Route::resource('admin/games', GameController::class)
-        ->names('admin.games');
+        ->names('admin.games')
+        ->except(['create', 'edit']);
 
     Route::post('admin/games/{game}/result', [GameResultController::class, 'store'])
         ->name('admin.games.result.store');
