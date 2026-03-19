@@ -66,7 +66,7 @@ final class AllocationController extends Controller
                 $row->id,
                 $row->game_id,
                 '"'.$row->player->name.'"',
-                '"'.($row->game->format ?? '').'"',
+                '"'.$row->game->format->value.'"',
                 number_format($row->total_amount, 2),
                 number_format($row->insurance_amount, 4),
                 number_format($row->savings_amount, 4),

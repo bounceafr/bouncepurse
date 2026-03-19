@@ -16,17 +16,20 @@ return new class extends Migration
         Schema::create('games', function (Blueprint $table): void {
             $table->id();
             $table->uuid();
+            $table->string('participant')->default('player');
             $table->string('format')->default('5v5');
             $table->foreignId('court_id')->nullable()->constrained();
-            $table->foreignId('player_id')->references('id')->on('users');
+            $table->foreignId('team_id')->nullable()->constrained();
+            $table->foreignId('player_id')->nullable()->references('id')->on('users');
             $table->string('title');
             $table->string('vimeo_uri')->nullable();
             $table->string('vimeo_status')->nullable();
-            $table->dateTime('played_at');
+            $table->timestamp('scheduled_at')->nullable();
+            $table->timestamp('played_at');
             $table->string('status')->default('pending');
             $table->string('result')->nullable();
-            $table->unsignedInteger('points')->nullable();
-            $table->longText('comments')->nullable();
+            $table->integer('points')->nullable();
+            $table->string('comments', 500)->nullable();
             $table->timestamps();
         });
     }

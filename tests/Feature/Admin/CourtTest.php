@@ -135,16 +135,6 @@ test('authenticated users can delete a court', function (): void {
     ]);
 });
 
-test('authenticated users can view the create court form', function (): void {
-    $user = User::factory()->create()->givePermissionTo('edit-courts');
-    $this->actingAs($user);
-
-    $response = $this->get(route('admin.courts.create'));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->component('admin/courts/create'));
-});
-
 test('court_code is generated with correct format', function (): void {
     $country = Country::factory()->create(['iso_alpha2' => 'RW']);
 
@@ -153,7 +143,7 @@ test('court_code is generated with correct format', function (): void {
     expect($code)->toMatch('/^RW-KIG-\d{6}$/');
 });
 
-test('court_code sequence increments globally', function (): void {
+test('court_code sequence increments for the same location prefix', function (): void {
     $rwanda = Country::factory()->create(['iso_alpha2' => 'RW']);
 
     Court::factory()->create([
@@ -186,7 +176,9 @@ test('court_code is unique per court', function (): void {
         'status' => CourtStatus::ACTIVE->value,
     ]);
 
-    $codes = Court::query()->pluck('court_code');
+    $codes = Court::query()
+        ->orderBy('court_code')
+        ->pluck('court_code');
 
     expect($codes)->toHaveCount(2)
         ->and($codes[0])->toBe('RW-KIG-000001')
@@ -223,18 +215,4 @@ test('court belongs to creator via createdBy relationship', function (): void {
 
     expect($court->createdBy)->toBeInstanceOf(User::class)
         ->and($court->createdBy->id)->toBe($user->id);
-});
-
-test('authenticated users can view the edit court form', function (): void {
-    $user = User::factory()->create()->givePermissionTo('edit-courts');
-    $court = Court::factory()->create(['created_by' => $user->id]);
-    $this->actingAs($user);
-
-    $response = $this->get(route('admin.courts.edit', $court));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('admin/courts/edit')
-        ->where('court.id', $court->id)
-    );
 });

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AllocationConfigurationController;
 use App\Http\Controllers\Admin\AllocationController;
 use App\Http\Controllers\Admin\CourtController;
 use App\Http\Controllers\Admin\GameController;
+use App\Http\Controllers\Admin\GameResultController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\ModeratorController;
 use App\Http\Controllers\Admin\OverrideController;
@@ -18,14 +19,15 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth', 'verified', 'permission:edit-courts'])->group(function (): void {
     Route::resource('admin/courts', CourtController::class)
         ->names('admin.courts')
-        ->except(['show']);
+        ->except(['show', 'create', 'edit']);
 });
 
 Route::middleware(['auth', 'verified', 'permission:view-games'])->group(function (): void {
     Route::resource('admin/games', GameController::class)
-        ->names('admin.games')
-        ->except(['show']);
+        ->names('admin.games');
 
+    Route::post('admin/games/{game}/result', [GameResultController::class, 'store'])
+        ->name('admin.games.result.store');
     Route::get('admin/games/{game}/upload', [GameController::class, 'showUpload'])
         ->name('admin.games.upload');
     Route::post('admin/games/{game}/upload-url', [GameController::class, 'initiateUpload'])

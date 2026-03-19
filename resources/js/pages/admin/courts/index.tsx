@@ -38,6 +38,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import UseMyLocationButton from '@/components/use-my-location-button';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -97,11 +98,15 @@ function CourtFormFields({
     countries,
     statuses,
     errors,
+    latRef,
+    lngRef,
 }: {
     court?: Court;
     countries: CountryOption[];
     statuses: StatusOption[];
     errors: Record<string, string>;
+    latRef: React.RefObject<HTMLInputElement | null>;
+    lngRef: React.RefObject<HTMLInputElement | null>;
 }) {
     return (
         <>
@@ -196,6 +201,7 @@ function CourtFormFields({
                 <div className="grid gap-2">
                     <Label htmlFor="latitude">Latitude</Label>
                     <Input
+                        ref={latRef}
                         id="latitude"
                         name="latitude"
                         type="number"
@@ -209,6 +215,7 @@ function CourtFormFields({
                 <div className="grid gap-2">
                     <Label htmlFor="longitude">Longitude</Label>
                     <Input
+                        ref={lngRef}
                         id="longitude"
                         name="longitude"
                         type="number"
@@ -219,6 +226,8 @@ function CourtFormFields({
                     <InputError message={errors.longitude} />
                 </div>
             </div>
+
+            <UseMyLocationButton latRef={latRef} lngRef={lngRef} />
 
             <div className="grid gap-2">
                 <Label htmlFor="status">Status</Label>
@@ -256,6 +265,10 @@ export default function CourtsIndex({
     const [deleteCourt, setDeleteCourt] = useState<Court | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
     const isInitialMount = useRef(true);
+    const createLatRef = useRef<HTMLInputElement>(null);
+    const createLngRef = useRef<HTMLInputElement>(null);
+    const editLatRef = useRef<HTMLInputElement>(null);
+    const editLngRef = useRef<HTMLInputElement>(null);
 
     const statusMap = Object.fromEntries(statuses.map((s) => [s.value, s]));
 
@@ -417,6 +430,8 @@ export default function CourtsIndex({
                                     countries={countries}
                                     statuses={statuses}
                                     errors={errors}
+                                    latRef={createLatRef}
+                                    lngRef={createLngRef}
                                 />
 
                                 <DialogFooter className="gap-2">
@@ -469,6 +484,8 @@ export default function CourtsIndex({
                                         countries={countries}
                                         statuses={statuses}
                                         errors={errors}
+                                        latRef={editLatRef}
+                                        lngRef={editLngRef}
                                     />
 
                                     <DialogFooter className="gap-2">

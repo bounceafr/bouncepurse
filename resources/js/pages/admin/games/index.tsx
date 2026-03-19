@@ -2,6 +2,7 @@ import { Form, Head, Link, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import {
     CalendarIcon,
+    CalendarPlus,
     CirclePlusIcon,
     MoreHorizontal,
     Search,
@@ -11,6 +12,7 @@ import GameController, {
     index,
 } from '@/actions/App/Http/Controllers/Admin/GameController';
 import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -56,14 +58,21 @@ import type { BreadcrumbItem } from '@/types';
 type User = { id: number; name: string };
 type Court = { id: number; name: string };
 
+type GameResult = {
+    your_score: number;
+    opponent_score: number;
+};
+
 type Game = {
     id: number;
     uuid: string;
     title: string;
     format: string;
+    participant: string;
     court_id: number | null;
     player_id: number;
-    played_at: string;
+    scheduled_at: string | null;
+    played_at: string | null;
     status: string;
     result: 'win' | 'lost' | null;
     points: number | null;
@@ -71,6 +80,7 @@ type Game = {
     vimeo_status: string | null;
     court: Court | null;
     player: User | null;
+    game_result: GameResult | null;
 };
 
 type PaginationLink = { url: string | null; label: string; active: boolean };
@@ -87,16 +97,18 @@ const formats = ['1v1', '2v2', '3v3', '4v4', '5v5'];
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Games', href: index().url }];
 
+const statusColors: Record<string, string> = {
+    scheduled: 'bg-blue-500',
+    pending: 'bg-yellow-500',
+    approved: 'bg-green-500',
+    rejected: 'bg-red-500',
+    flagged: 'bg-orange-500',
+};
+
 function statusBadge(status: string) {
-    const colors: Record<string, string> = {
-        pending: 'bg-yellow-500',
-        approved: 'bg-green-500',
-        rejected: 'bg-red-500',
-        flagged: 'bg-orange-500',
-    };
     return (
         <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white capitalize ${colors[status] ?? 'bg-gray-400'}`}
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white capitalize ${statusColors[status] ?? 'bg-gray-400'}`}
         >
             {status}
         </span>
@@ -271,13 +283,19 @@ function GameFormFields({
     );
 }
 
+const filterOptions = [
+    { label: 'All', value: '' },
+    { label: 'Upcoming', value: 'upcoming' },
+    { label: 'Played', value: 'played' },
+];
+
 export default function GamesIndex({
     games,
     filters,
     courts,
 }: {
     games: PaginatedGames;
-    filters: { search: string | null };
+    filters: { search: string | null; filter: string | null };
     courts: Court[];
 }) {
     const [createOpen, setCreateOpen] = useState(false);
@@ -295,13 +313,16 @@ export default function GamesIndex({
         const timeout = setTimeout(() => {
             router.get(
                 index().url,
-                { search: search || undefined },
+                {
+                    search: search || undefined,
+                    filter: filters.filter || undefined,
+                },
                 { preserveState: true, replace: true },
             );
         }, 300);
 
         return () => clearTimeout(timeout);
-    }, [search]);
+    }, [search, filters.filter]);
 
     const columns: ColumnDef<Game, unknown>[] = [
         selectionColumn<Game>(),
@@ -309,7 +330,12 @@ export default function GamesIndex({
             accessorKey: 'title',
             header: sortableHeader('Title'),
             cell: ({ row }) => (
-                <span className="font-medium">{row.getValue('title')}</span>
+                <Link
+                    href={GameController.show(row.original.uuid).url}
+                    className="font-medium hover:underline"
+                >
+                    {row.getValue('title')}
+                </Link>
             ),
         },
         {
@@ -320,12 +346,27 @@ export default function GamesIndex({
         {
             accessorKey: 'format',
             header: sortableHeader('Format'),
+            cell: ({ row }) => (
+                <Badge variant="secondary">{row.getValue('format')}</Badge>
+            ),
         },
         {
-            accessorKey: 'played_at',
-            header: sortableHeader('Played At'),
-            cell: ({ row }) =>
-                new Date(row.getValue('played_at')).toLocaleDateString(),
+            accessorKey: 'participant',
+            header: 'Type',
+            cell: ({ row }) => (
+                <Badge variant="outline" className="capitalize">
+                    {row.getValue('participant')}
+                </Badge>
+            ),
+        },
+        {
+            id: 'date',
+            header: sortableHeader('Date'),
+            cell: ({ row }) => {
+                const date =
+                    row.original.scheduled_at ?? row.original.played_at;
+                return date ? new Date(date).toLocaleDateString() : '—';
+            },
         },
         {
             accessorKey: 'status',
@@ -337,28 +378,26 @@ export default function GamesIndex({
             header: 'Result',
             enableSorting: false,
             cell: ({ row }) => {
+                const gameResult = row.original.game_result;
+                if (gameResult) {
+                    return (
+                        <span className="text-sm font-medium">
+                            {gameResult.your_score} –{' '}
+                            {gameResult.opponent_score}
+                        </span>
+                    );
+                }
                 const result = row.original.result;
-                return result ? (
-                    <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${result === 'win' ? 'bg-green-500' : 'bg-red-500'}`}
-                    >
-                        {result === 'win' ? 'Win' : 'Lost'}
-                    </span>
-                ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                );
-            },
-        },
-        {
-            accessorKey: 'points',
-            header: sortableHeader('Points'),
-            cell: ({ row }) => {
-                const points = row.getValue('points');
-                return points !== null ? (
-                    points
-                ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                );
+                if (result) {
+                    return (
+                        <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${result === 'win' ? 'bg-green-500' : 'bg-red-500'}`}
+                        >
+                            {result === 'win' ? 'Win' : 'Lost'}
+                        </span>
+                    );
+                }
+                return <span className="text-xs text-muted-foreground">—</span>;
             },
         },
         {
@@ -383,6 +422,15 @@ export default function GamesIndex({
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                    <Link
+                                        href={
+                                            GameController.show(game.uuid).url
+                                        }
+                                    >
+                                        View
+                                    </Link>
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={() => setEditGame(game)}
                                 >
@@ -415,19 +463,54 @@ export default function GamesIndex({
 
     const toolbar = (
         <>
-            <div className="relative w-64">
-                <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    placeholder="Search games..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-8"
-                />
+            <div className="flex items-center gap-2">
+                <div className="relative w-64">
+                    <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        placeholder="Search games..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-8"
+                    />
+                </div>
+                <div className="flex gap-1">
+                    {filterOptions.map((f) => (
+                        <Button
+                            key={f.value}
+                            variant={
+                                (filters.filter ?? '') === f.value
+                                    ? 'default'
+                                    : 'outline'
+                            }
+                            size="sm"
+                            onClick={() =>
+                                router.get(
+                                    index().url,
+                                    {
+                                        search: search || undefined,
+                                        filter: f.value || undefined,
+                                    },
+                                    { preserveState: true, replace: true },
+                                )
+                            }
+                        >
+                            {f.label}
+                        </Button>
+                    ))}
+                </div>
             </div>
-            <Button onClick={() => setCreateOpen(true)}>
-                <CirclePlusIcon />
-                Add Game
-            </Button>
+            <div className="flex gap-2">
+                <Button asChild variant="outline">
+                    <Link href={GameController.create().url}>
+                        <CalendarPlus className="mr-2 size-4" />
+                        Schedule Game
+                    </Link>
+                </Button>
+                <Button onClick={() => setCreateOpen(true)}>
+                    <CirclePlusIcon />
+                    Add Game
+                </Button>
+            </div>
         </>
     );
 

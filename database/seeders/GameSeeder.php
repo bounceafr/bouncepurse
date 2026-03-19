@@ -34,7 +34,7 @@ final class GameSeeder extends Seeder
         $courts = Court::query()->get();
         $config = RankingConfiguration::query()->latest('id')->firstOrFail();
         $createAllocation = resolve(CreateAllocation::class);
-        $formats = ['1v1', '2v2', '3v3', '4v4', '5v5'];
+        $formats = ['1v1', '3v3', '5v5'];
 
         // Pick 5 players to be pathway-eligible (they'll get concentrated approved games)
         $pathwayPlayers = $players->random(min(5, $players->count()));
@@ -109,7 +109,6 @@ final class GameSeeder extends Seeder
                     'player_id' => $players->random()->id,
                     'format' => $format,
                     'status' => GameStatus::Rejected->value,
-                    'result' => null,
                     'court_id' => random_int(1, 10) > 3 ? $courts->random()->id : null,
                     'played_at' => fake()->dateTimeBetween('-1 year', 'now'),
                 ]);
@@ -133,7 +132,6 @@ final class GameSeeder extends Seeder
                     'player_id' => $players->random()->id,
                     'format' => $format,
                     'status' => GameStatus::Flagged->value,
-                    'result' => null,
                     'court_id' => random_int(1, 10) > 3 ? $courts->random()->id : null,
                     'played_at' => fake()->dateTimeBetween('-1 year', 'now'),
                 ]);
