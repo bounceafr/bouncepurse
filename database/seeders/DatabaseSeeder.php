@@ -21,15 +21,11 @@ final class DatabaseSeeder extends Seeder
             RankingConfigurationSeeder::class,
             AllocationConfigurationSeeder::class,
             PathwayConfigurationSeeder::class,
-            UserSeeder::class,
-            PlayerSeeder::class,
-            CourtSeeder::class,
-            GameSeeder::class,
         ]);
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Jacques MBABAZI',
+            'email' => 'mbabazijacques@gmail.com',
         ])->assignRole(Role::SuperAdmin->value);
     }
 }
