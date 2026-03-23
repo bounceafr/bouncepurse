@@ -11,7 +11,6 @@ import {
 import * as React from 'react';
 import PlayerProfileController from '@/actions/App/Http/Controllers/Settings/PlayerProfileController';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -513,7 +512,6 @@ export default function Profile({
                     </div>
                 )}
 
-                <DeleteUser />
             </SettingsLayout>
         </AppLayout>
     );
