@@ -30,6 +30,7 @@ yarn-error.log
 /.ai
 /.agents
 /docs
+report.md
 AGENTS.md
 Blueprint.md
 CLAUDE.md
