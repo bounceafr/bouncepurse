@@ -96,12 +96,38 @@ export default function Show({
     countries,
     isOwner,
 }: {
-    team: Team;
-    members: Member[];
-    invitations: Invitation[];
+    team: Team | null;
+    members: Member[] | null;
+    invitations: Invitation[] | null;
     countries: Country[];
     isOwner: boolean;
 }) {
+    if (!team) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="My Team" />
+
+                <div className="flex flex-col gap-6 p-6">
+                    <Heading
+                        title="My Team"
+                        description="Manage your team details, members, and invitations."
+                    />
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>No Team</CardTitle>
+                            <CardDescription>
+                                You are not currently part of a team. Join an
+                                existing team through an invitation to get
+                                started.
+                            </CardDescription>
+                        </CardHeader>
+                    </Card>
+                </div>
+            </AppLayout>
+        );
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="My Team" />
@@ -301,7 +327,7 @@ export default function Show({
                                     </CardDescription>
                                 </div>
                                 <Badge variant="secondary">
-                                    {members.length}/10
+                                    {(members ?? []).length}/10
                                 </Badge>
                             </div>
                         </CardHeader>
@@ -318,7 +344,7 @@ export default function Show({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {members.map((member) => (
+                                    {(members ?? []).map((member) => (
                                         <TableRow key={member.id}>
                                             <TableCell className="font-medium">
                                                 {member.name}
@@ -406,7 +432,7 @@ export default function Show({
                                 )}
                             </Form>
 
-                            {invitations.length > 0 && (
+                            {(invitations ?? []).length > 0 && (
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -417,7 +443,7 @@ export default function Show({
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {invitations.map((invitation) => (
+                                        {(invitations ?? []).map((invitation) => (
                                             <TableRow key={invitation.id}>
                                                 <TableCell>
                                                     {invitation.email}

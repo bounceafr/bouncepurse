@@ -7,6 +7,8 @@ use App\Http\Controllers\GuardianVerificationController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LedgerController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\PlayerProfileController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -18,6 +20,9 @@ Route::get('/', fn () => Inertia::render('auth/login', [
 Route::get('dashboard', DashboardController::class)->middleware(['auth', 'verified', 'player.profile'])->name('dashboard');
 Route::get('leaderboard', LeaderboardController::class)->middleware(['auth', 'verified', 'player.profile'])->name('leaderboard');
 Route::get('ledger', LedgerController::class)->middleware(['auth', 'verified', 'player.profile'])->name('ledger');
+
+Route::get('players/{user:uuid}', [PlayerProfileController::class, 'show'])->middleware(['auth', 'verified'])->name('players.show');
+Route::get('profile', fn (Request $request) => to_route('players.show', $request->user()))->middleware(['auth', 'verified'])->name('profile.show');
 
 // Onboarding (auth + verified, but NOT player.profile)
 Route::middleware(['auth', 'verified'])->group(function (): void {
