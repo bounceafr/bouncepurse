@@ -297,8 +297,8 @@
       "_app-logo-icon-BZDEkWdB.js"
     ]
   },
-  "_social-auth-buttons-DijpJWM6.js": {
-    "file": "assets/social-auth-buttons-DijpJWM6.js",
+  "_social-auth-buttons-DsYB6A-C.js": {
+    "file": "assets/social-auth-buttons-DsYB6A-C.js",
     "name": "social-auth-buttons",
     "imports": [
       "_jsx-runtime-9LAO9hrr.js",
@@ -381,7 +381,7 @@
     "isEntry": true
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-Cu0xcNPe.js",
+    "file": "assets/app-BTOtqZ2Z.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -726,7 +726,7 @@
     ]
   },
   "resources/js/pages/auth/login.tsx": {
-    "file": "assets/login-DmBkQ8GJ.js",
+    "file": "assets/login-CH0FQZuq.js",
     "name": "login",
     "src": "resources/js/pages/auth/login.tsx",
     "isDynamicEntry": true,
@@ -736,7 +736,7 @@
       "_app-logo-icon-BZDEkWdB.js",
       "_label-CO8z7UFD.js",
       "_auth-split-layout-Dfo6WC_G.js",
-      "_social-auth-buttons-DijpJWM6.js",
+      "_social-auth-buttons-DsYB6A-C.js",
       "_input-error-BGim6z2E.js",
       "_text-link-DjLTo0Ls.js",
       "_input-D_lwfFFg.js",
@@ -747,7 +747,7 @@
     ]
   },
   "resources/js/pages/auth/register.tsx": {
-    "file": "assets/register-Bd4ZI-x_.js",
+    "file": "assets/register-D0BoWjVg.js",
     "name": "register",
     "src": "resources/js/pages/auth/register.tsx",
     "isDynamicEntry": true,
@@ -756,7 +756,7 @@
       "_app-logo-icon-BZDEkWdB.js",
       "_label-CO8z7UFD.js",
       "_auth-split-layout-Dfo6WC_G.js",
-      "_social-auth-buttons-DijpJWM6.js",
+      "_social-auth-buttons-DsYB6A-C.js",
       "_input-error-BGim6z2E.js",
       "_text-link-DjLTo0Ls.js",
       "_input-D_lwfFFg.js",
