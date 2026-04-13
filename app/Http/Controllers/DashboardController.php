@@ -81,24 +81,16 @@ final class DashboardController extends Controller
         $since = now()->subDays(6)->startOfDay();
 
         $gamesByDay = Game::query()
-            ->selectRaw($dateExpr.' as date, COUNT(*) as count')
+            ->selectRaw(
+                $dateExpr.' as date, COUNT(*) as games,'
+                .' SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as approved,'
+                .' SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending',
+                [GameStatus::Approved->value, GameStatus::Pending->value]
+            )
             ->where('played_at', '>=', $since)
             ->groupBy('date')
-            ->pluck('count', 'date');
-
-        $approvedByDay = Game::query()
-            ->selectRaw($dateExpr.' as date, COUNT(*) as count')
-            ->where('status', GameStatus::Approved)
-            ->where('played_at', '>=', $since)
-            ->groupBy('date')
-            ->pluck('count', 'date');
-
-        $pendingByDay = Game::query()
-            ->selectRaw($dateExpr.' as date, COUNT(*) as count')
-            ->where('status', GameStatus::Pending)
-            ->where('played_at', '>=', $since)
-            ->groupBy('date')
-            ->pluck('count', 'date');
+            ->get()
+            ->keyBy('date');
 
         $courtsByDay = Court::query()
             ->selectRaw($courtDateExpr.' as date, COUNT(*) as count')
@@ -109,19 +101,14 @@ final class DashboardController extends Controller
         $result = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i)->toDateString();
-            /** @var int $games */
-            $games = $gamesByDay[$date] ?? 0;
-            /** @var int $approved */
-            $approved = $approvedByDay[$date] ?? 0;
-            /** @var int $pending */
-            $pending = $pendingByDay[$date] ?? 0;
+            $row = $gamesByDay[$date] ?? null;
             /** @var int $courts */
             $courts = $courtsByDay[$date] ?? 0;
             $result[] = [
                 'date' => $date,
-                'games' => $games,
-                'approved' => $approved,
-                'pending' => $pending,
+                'games' => (int) ($row?->games ?? 0),
+                'approved' => (int) ($row?->approved ?? 0),
+                'pending' => (int) ($row?->pending ?? 0),
                 'courts' => $courts,
             ];
         }

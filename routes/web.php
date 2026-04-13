@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuardianVerificationController;
 use App\Http\Controllers\LeaderboardController;
@@ -16,6 +17,9 @@ use Laravel\Fortify\Features;
 Route::get('/', fn () => Inertia::render('auth/login', [
     'canRegister' => Features::enabled(Features::registration()),
 ]))->name('home');
+
+Route::get('auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('auth.social.redirect');
+Route::get('auth/{provider}/callback', [SocialAuthController::class, 'callback'])->name('auth.social.callback');
 
 Route::get('dashboard', DashboardController::class)->middleware(['auth', 'verified', 'player.profile'])->name('dashboard');
 Route::get('leaderboard', LeaderboardController::class)->middleware(['auth', 'verified', 'player.profile'])->name('leaderboard');

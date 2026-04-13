@@ -1,5 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
+import SocialAuthButtons from '@/components/social-auth-buttons';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -97,6 +98,8 @@ export default function Login({
                                 Log in
                             </Button>
                         </div>
+
+                        <SocialAuthButtons />
 
                         {canRegister && (
                             <div className="text-center text-sm text-muted-foreground">

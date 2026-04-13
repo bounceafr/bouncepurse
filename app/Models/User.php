@@ -33,6 +33,8 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read ?string $remember_token
  * @property-read ?CarbonInterface $created_at
  * @property-read ?CarbonInterface $updated_at
+ * @property ?string $social_provider
+ * @property ?string $social_provider_id
  * @property ?CarbonInterface $deactivated_at
  * @property ?int $deactivated_by
  * @property ?string $deactivation_reason
