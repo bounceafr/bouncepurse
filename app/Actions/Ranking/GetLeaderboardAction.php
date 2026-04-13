@@ -27,8 +27,8 @@ final class GetLeaderboardAction
             ->where('player_rankings.calculated_at', $latestCalculatedAt)
             ->join('profiles', 'profiles.player_id', '=', 'player_rankings.player_id')
             ->join('countries', 'countries.id', '=', 'profiles.country_id')
-            ->with('player')
-            ->select('player_rankings.*')
+            ->join('users', 'users.id', '=', 'player_rankings.player_id')
+            ->select('player_rankings.*', 'users.name as player_name')
             ->orderBy('player_rankings.rank');
 
         $viewerProfile = $viewer->profile;
@@ -42,7 +42,7 @@ final class GetLeaderboardAction
         return $query->get()->map(fn (PlayerRanking $row): array => [
             'rank' => $row->rank,
             'player_id' => $row->player_id,
-            'player_name' => $row->player->name,
+            'player_name' => (string) $row->getAttribute('player_name'),
             'wins' => $row->wins,
             'losses' => $row->losses,
             'total_games' => $row->total_games,

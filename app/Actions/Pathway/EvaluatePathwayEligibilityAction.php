@@ -10,7 +10,6 @@ use App\Models\GameModeration;
 use App\Models\PathwayConfiguration;
 use App\Models\PlayerRanking;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
 
 final class EvaluatePathwayEligibilityAction
 {
@@ -59,31 +58,16 @@ final class EvaluatePathwayEligibilityAction
 
     private function getBestRank(int $playerId): ?int
     {
-        $latestPerFormat = PlayerRanking::query()
+        $result = PlayerRanking::query()
             ->where('player_id', $playerId)
-            ->select('format', DB::raw('MAX(calculated_at) as max_calculated_at'))
-            ->groupBy('format')
-            ->get();
+            ->where('calculated_at', function ($query): void {
+                $query->selectRaw('MAX(pr2.calculated_at)')
+                    ->from('player_rankings as pr2')
+                    ->whereColumn('pr2.player_id', 'player_rankings.player_id')
+                    ->whereColumn('pr2.format', 'player_rankings.format');
+            })
+            ->min('rank');
 
-        if ($latestPerFormat->isEmpty()) {
-            return null;
-        }
-
-        $bestRank = null;
-
-        foreach ($latestPerFormat as $row) {
-            /** @var object{format: string, max_calculated_at: mixed} $row */
-            $ranking = PlayerRanking::query()
-                ->where('player_id', $playerId)
-                ->where('format', $row->format)
-                ->where('calculated_at', $row->max_calculated_at)
-                ->first();
-
-            if ($ranking !== null && ($bestRank === null || $ranking->rank < $bestRank)) {
-                $bestRank = $ranking->rank;
-            }
-        }
-
-        return $bestRank;
+        return $result !== null ? (int) $result : null;
     }
 }

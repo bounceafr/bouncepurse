@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-9LAO9hrr.js";import{c as t}from"./app-logo-icon-BZDEkWdB.js";import{t as n}from"./loader-circle-C5WO5Swi.js";var r=e();function i({className:e,...i}){return(0,r.jsx)(n,{role:`status`,"aria-label":`Loading`,className:t(`size-4 animate-spin`,e),...i})}export{i as t};

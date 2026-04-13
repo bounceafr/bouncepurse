@@ -1,26 +1,23 @@
 {
     "agents": [
-        "claude_code",
-        "cursor"
+        "claude_code"
     ],
     "guidelines": true,
-    "herd_mcp": false,
     "mcp": true,
     "nightwatch_mcp": true,
     "packages": [
-        "laravel/fortify",
         "spatie/laravel-permission"
     ],
     "sail": false,
     "skills": [
+        "fortify-development",
+        "laravel-best-practices",
+        "configure-nightwatch",
+        "socialite-development",
         "wayfinder-development",
         "pest-testing",
         "inertia-react-development",
         "tailwindcss-development",
-        "developing-with-fortify",
-        "laravel-permission-development",
-        "laravel-specialist",
-        "php-mcp-server-generator",
-        "php-pro"
+        "laravel-permission-development"
     ]
 }
