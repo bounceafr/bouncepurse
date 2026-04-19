@@ -1,6 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
-import SocialAuthButtons from '@/components/social-auth-buttons';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -101,8 +100,6 @@ export default function Register({ email = '' }: { email?: string }) {
                                 Create account
                             </Button>
                         </div>
-
-                        <SocialAuthButtons />
 
                         <div className="text-center text-sm text-muted-foreground">
                             Already have an account?{' '}
