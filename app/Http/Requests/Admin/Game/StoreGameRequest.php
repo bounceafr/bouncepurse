@@ -30,7 +30,7 @@ final class StoreGameRequest extends FormRequest
             'format' => ['required', 'string', new Enum(GameFormat::class)],
             'court_id' => ['nullable', 'exists:courts,id'],
             'scheduled_at' => ['nullable', 'date', 'after:now'],
-            'played_at' => ['required_without:scheduled_at', 'nullable', 'date'],
+            'played_at' => ['required_without:scheduled_at', 'nullable', 'date', 'before_or_equal:now'],
             'team_id' => ['nullable', 'required_if:participant,team', 'exists:teams,id'],
             'result' => ['nullable', Rule::enum(ResultStatus::class)],
             'comments' => ['nullable', 'string', 'max:500'],
@@ -41,6 +41,10 @@ final class StoreGameRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            if (! $this->filled('scheduled_at') && ! $this->filled('played_at')) {
+                $validator->errors()->add('scheduled_at', 'A scheduled date or played date is required.');
+            }
+
             $participant = $this->input('participant');
             $format = $this->input('format');
 

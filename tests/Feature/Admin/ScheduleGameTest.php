@@ -151,6 +151,22 @@ test('player can view a game show page', function (): void {
     );
 });
 
+test('cannot create game with future played_at', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $court = Court::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->post(route('admin.games.store'), [
+        'title' => 'Future Played Game',
+        'participant' => 'player',
+        'format' => '1v1',
+        'court_id' => $court->id,
+        'played_at' => now()->addDay()->format('Y-m-d H:i:s'),
+    ]);
+
+    $response->assertSessionHasErrors('played_at');
+});
+
 test('scheduled game has status scheduled and null played_at', function (): void {
     $user = User::factory()->create()->givePermissionTo('view-games');
     $court = Court::factory()->create();
@@ -169,4 +185,38 @@ test('scheduled game has status scheduled and null played_at', function (): void
         'status' => GameStatus::Scheduled->value,
         'played_at' => null,
     ]);
+});
+
+test('played_at game has status scheduled awaiting result submission', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $court = Court::factory()->create();
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Already Played Game',
+        'participant' => 'player',
+        'format' => '1v1',
+        'court_id' => $court->id,
+        'played_at' => now()->subDay()->format('Y-m-d H:i:s'),
+    ]);
+
+    $this->assertDatabaseHas('games', [
+        'title' => 'Already Played Game',
+        'status' => GameStatus::Scheduled->value,
+    ]);
+});
+
+test('cannot create game without scheduled_at or played_at', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $court = Court::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->post(route('admin.games.store'), [
+        'title' => 'No Date Game',
+        'participant' => 'player',
+        'format' => '1v1',
+        'court_id' => $court->id,
+    ]);
+
+    $response->assertSessionHasErrors('scheduled_at');
 });
