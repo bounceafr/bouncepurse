@@ -10,6 +10,7 @@ use App\Actions\Admin\Game\InitiateVimeoUploadAction;
 use App\Actions\Admin\Game\ListAction;
 use App\Actions\Admin\Game\StoreAction;
 use App\Actions\Admin\Game\UpdateAction;
+use App\Enums\GameStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Game\CompleteUploadRequest;
 use App\Http\Requests\Admin\Game\DeleteGameRequest;
@@ -53,12 +54,22 @@ final class GameController extends Controller
         return to_route('admin.games.index')->with('success', 'Game created successfully.');
     }
 
-    public function show(Game $game): Response
+    public function show(Request $request, Game $game): Response
     {
         $game->load(['court', 'gameResult', 'team']);
 
+        /** @var User $user */
+        $user = $request->user();
+
+        $dispute = $game->disputes()->where('player_id', $user->id)->first();
+        $canDispute = $game->status === GameStatus::Flagged
+            && $game->gameResult?->submitter_id === $user->id
+            && $dispute === null;
+
         return Inertia::render('admin/games/show', [
             'game' => $game,
+            'canDispute' => $canDispute,
+            'dispute' => $dispute,
         ]);
     }
 

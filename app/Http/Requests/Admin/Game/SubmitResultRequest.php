@@ -30,8 +30,8 @@ final class SubmitResultRequest extends FormRequest
         return [
             'your_score' => ['required', 'integer', 'min:0'],
             'opponent_score' => ['required', 'integer', 'min:0'],
-            'started_at' => ['required', 'date'],
-            'finished_at' => ['required', 'date', 'after:started_at'],
+            'started_at' => ['required', 'date', 'before_or_equal:now'],
+            'finished_at' => ['required', 'date', 'after:started_at', 'before_or_equal:now'],
         ];
     }
 }

@@ -78,6 +78,26 @@ test('submitting result updates played_at on game', function (): void {
     expect($game->played_at)->not->toBeNull();
 });
 
+test('submitting result sets game status to pending', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = Game::factory()->scheduled()->create([
+        'player_id' => $user->id,
+        'court_id' => Court::factory(),
+        'scheduled_at' => now()->subDay(),
+    ]);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.result.store', $game), [
+        'your_score' => 10,
+        'opponent_score' => 8,
+        'started_at' => now()->subHours(2)->format('Y-m-d H:i:s'),
+        'finished_at' => now()->subHour()->format('Y-m-d H:i:s'),
+    ]);
+
+    $game->refresh();
+    expect($game->status->value)->toBe('pending');
+});
+
 test('cannot submit with finished_at before started_at', function (): void {
     $user = User::factory()->create()->givePermissionTo('view-games');
     $game = Game::factory()->scheduled()->create([
@@ -92,6 +112,44 @@ test('cannot submit with finished_at before started_at', function (): void {
         'opponent_score' => 5,
         'started_at' => now()->format('Y-m-d H:i:s'),
         'finished_at' => now()->subHour()->format('Y-m-d H:i:s'),
+    ]);
+
+    $response->assertSessionHasErrors('finished_at');
+});
+
+test('cannot submit result with future started_at', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = Game::factory()->scheduled()->create([
+        'player_id' => $user->id,
+        'court_id' => Court::factory(),
+        'scheduled_at' => now()->subDay(),
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->post(route('admin.games.result.store', $game), [
+        'your_score' => 10,
+        'opponent_score' => 5,
+        'started_at' => now()->addHour()->format('Y-m-d H:i:s'),
+        'finished_at' => now()->addHours(2)->format('Y-m-d H:i:s'),
+    ]);
+
+    $response->assertSessionHasErrors('started_at');
+});
+
+test('cannot submit result with future finished_at', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = Game::factory()->scheduled()->create([
+        'player_id' => $user->id,
+        'court_id' => Court::factory(),
+        'scheduled_at' => now()->subDay(),
+    ]);
+    $this->actingAs($user);
+
+    $response = $this->post(route('admin.games.result.store', $game), [
+        'your_score' => 10,
+        'opponent_score' => 5,
+        'started_at' => now()->subHour()->format('Y-m-d H:i:s'),
+        'finished_at' => now()->addHour()->format('Y-m-d H:i:s'),
     ]);
 
     $response->assertSessionHasErrors('finished_at');

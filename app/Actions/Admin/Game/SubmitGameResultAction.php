@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Admin\Game;
 
+use App\Enums\GameStatus;
 use App\Models\Game;
 use App\Models\GameResult;
 use App\Models\User;
@@ -28,7 +29,10 @@ final readonly class SubmitGameResultAction
                 'opponent_score' => $data['opponent_score'],
             ]);
 
-            $game->update(['played_at' => $data['finished_at']]);
+            $game->update([
+                'played_at' => $data['finished_at'],
+                'status' => GameStatus::Pending,
+            ]);
 
             return $result;
         });

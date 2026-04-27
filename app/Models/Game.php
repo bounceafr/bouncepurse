@@ -75,6 +75,12 @@ final class Game extends Model
         return $this->hasMany(GameModeration::class);
     }
 
+    /** @return HasMany<Dispute, Game> */
+    public function disputes(): HasMany
+    {
+        return $this->hasMany(Dispute::class);
+    }
+
     public function getRouteKeyName(): string
     {
         return 'uuid';
