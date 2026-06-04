@@ -6,6 +6,8 @@ namespace App\Models;
 
 use App\Enums\DisputeStatus;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,6 +25,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 final class Dispute extends Model
 {
+    /** @use HasFactory<Factory<static>> */
+    use HasFactory;
+
     public function getRouteKeyName(): string
     {
         return 'uuid';

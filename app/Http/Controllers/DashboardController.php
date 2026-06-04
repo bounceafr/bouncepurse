@@ -101,15 +101,14 @@ final class DashboardController extends Controller
         $result = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i)->toDateString();
-            $row = $gamesByDay[$date] ?? null;
-            /** @var int $courts */
-            $courts = $courtsByDay[$date] ?? 0;
+            $row = $gamesByDay->get($date);
+            $rawCourts = $courtsByDay[$date] ?? 0;
             $result[] = [
                 'date' => $date,
-                'games' => (int) ($row?->games ?? 0),
-                'approved' => (int) ($row?->approved ?? 0),
-                'pending' => (int) ($row?->pending ?? 0),
-                'courts' => $courts,
+                'games' => is_numeric($g = $row?->getAttribute('games')) ? (int) $g : 0,
+                'approved' => is_numeric($a = $row?->getAttribute('approved')) ? (int) $a : 0,
+                'pending' => is_numeric($p = $row?->getAttribute('pending')) ? (int) $p : 0,
+                'courts' => is_numeric($rawCourts) ? (int) $rawCourts : 0,
             ];
         }
 

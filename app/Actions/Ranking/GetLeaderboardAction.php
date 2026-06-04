@@ -42,7 +42,7 @@ final class GetLeaderboardAction
         return $query->get()->map(fn (PlayerRanking $row): array => [
             'rank' => $row->rank,
             'player_id' => $row->player_id,
-            'player_name' => (string) $row->getAttribute('player_name'),
+            'player_name' => $row->player_name,
             'wins' => $row->wins,
             'losses' => $row->losses,
             'total_games' => $row->total_games,

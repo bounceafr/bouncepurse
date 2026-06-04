@@ -15,13 +15,9 @@ final class StoreDisputeAction
 {
     public function handle(Game $game, User $player, string $reason): Dispute
     {
-        if ($game->status !== GameStatus::Flagged) {
-            throw new HttpException(403, 'Disputes can only be submitted for flagged games.');
-        }
+        throw_if($game->status !== GameStatus::Flagged, HttpException::class, 403, 'Disputes can only be submitted for flagged games.');
 
-        if ($game->gameResult?->submitter_id !== $player->id) {
-            throw new HttpException(403, 'Only the player who submitted the result may dispute this game.');
-        }
+        throw_if($game->gameResult?->submitter_id !== $player->id, HttpException::class, 403, 'Only the player who submitted the result may dispute this game.');
 
         $existing = $game->disputes()->where('player_id', $player->id)->first();
 
