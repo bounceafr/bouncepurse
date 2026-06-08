@@ -58,16 +58,17 @@ final class EvaluatePathwayEligibilityAction
 
     private function getBestRank(int $playerId): ?int
     {
-        $result = PlayerRanking::query()
+        $bestRow = PlayerRanking::query()
             ->where('player_id', $playerId)
-            ->where('calculated_at', function ($query): void {
+            ->where('calculated_at', function (\Illuminate\Database\Query\Builder $query): void {
                 $query->selectRaw('MAX(pr2.calculated_at)')
                     ->from('player_rankings as pr2')
                     ->whereColumn('pr2.player_id', 'player_rankings.player_id')
                     ->whereColumn('pr2.format', 'player_rankings.format');
             })
-            ->min('rank');
+            ->orderBy('rank')
+            ->first();
 
-        return $result !== null ? (int) $result : null;
+        return $bestRow instanceof PlayerRanking ? $bestRow->rank : null;
     }
 }

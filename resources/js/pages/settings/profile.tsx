@@ -91,22 +91,23 @@ export default function Profile({
             ? `/storage/${playerProfile.profile_image}`
             : null,
     );
-    const [toast, setToast] = React.useState<Toast | null>(null);
+    const [showToast, setShowToast] = React.useState(
+        status === 'player-profile-updated',
+    );
+
+    const toast: Toast | null =
+        showToast && status === 'player-profile-updated'
+            ? {
+                  type: 'success',
+                  message: 'Your player profile has been saved successfully.',
+              }
+            : null;
 
     React.useEffect(() => {
-        if (status === 'player-profile-updated') {
-            setToast({
-                type: 'success',
-                message: 'Your player profile has been saved successfully.',
-            });
-        }
-    }, [status]);
-
-    React.useEffect(() => {
-        if (!toast) return;
-        const timer = setTimeout(() => setToast(null), 4000);
+        if (!showToast) return;
+        const timer = setTimeout(() => setShowToast(false), 4000);
         return () => clearTimeout(timer);
-    }, [toast]);
+    }, [showToast]);
 
     function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -146,7 +147,7 @@ export default function Profile({
                         </AlertTitle>
                         <AlertDescription>{toast.message}</AlertDescription>
                         <button
-                            onClick={() => setToast(null)}
+                            onClick={() => setShowToast(false)}
                             className="absolute top-3 right-3 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
                             aria-label="Dismiss"
                         >

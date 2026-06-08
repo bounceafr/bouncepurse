@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read ?CarbonInterface $updated_at
  * @property-read User $player
  * @property-read RankingConfiguration $configuration
+ * @property-read string $player_name
  */
 final class PlayerRanking extends Model
 {

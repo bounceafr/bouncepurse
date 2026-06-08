@@ -28,7 +28,7 @@ final class PlayerProfileController extends Controller
                 'city' => $user->profile?->city,
                 'position' => $user->profile?->position,
                 'bio' => $user->profile?->bio,
-                'is_pathway_candidate' => $user->profile?->is_pathway_candidate ?? false,
+                'is_pathway_candidate' => (bool) $user->profile?->is_pathway_candidate,
                 'member_since' => $user->created_at?->toISOString(),
             ],
             'rankings' => $rankingsAction->handle($user->id),

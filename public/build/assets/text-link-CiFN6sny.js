@@ -1,0 +1,1 @@
+import{a as e,t}from"./app-C36LwoQI.js";import{c as n}from"./app-logo-icon-B4cbqKr5.js";var r=t();function i({className:t=``,children:i,...a}){return(0,r.jsx)(e,{className:n(`text-chart-1 decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500`,t),...a,children:i})}export{i as t};

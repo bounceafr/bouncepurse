@@ -28,7 +28,7 @@ final class TeamController extends Controller
             'team' => $team?->load('owner'),
             'members' => $team?->members()->get(['users.id', 'users.uuid', 'users.name', 'users.email', 'team_members.joined_at']),
             'invitations' => $isOwner
-                ? $team?->invitations()
+                ? $team->invitations()
                     ->where('status', InvitationStatus::Pending)
                     ->with('invitedBy:id,name')
                     ->get()

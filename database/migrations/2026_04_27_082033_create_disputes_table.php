@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('disputes', function (Blueprint $table) {
+        Schema::create('disputes', function (Blueprint $table): void {
             $table->id();
             $table->uuid()->unique();
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
