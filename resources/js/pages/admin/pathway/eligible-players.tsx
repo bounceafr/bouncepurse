@@ -1,13 +1,13 @@
 import { Head, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
-import { DownloadIcon } from 'lucide-react';
+import { DownloadIcon, SearchIcon, XIcon } from 'lucide-react';
+import { type FormEvent } from 'react';
 import { useState } from 'react';
 import {
     exportMethod,
     index,
 } from '@/actions/App/Http/Controllers/Admin/PathwayEligiblePlayersController';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     DataTable,
     LaravelPagination,
@@ -15,7 +15,6 @@ import {
     sortableHeader,
 } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -83,32 +82,77 @@ const columns: ColumnDef<Candidate, unknown>[] = [
 export default function EligiblePlayers({ candidates, filters }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
 
-    function applyFilters() {
+    function applyFilters(event?: FormEvent<HTMLFormElement>) {
+        event?.preventDefault();
+
         const params: Record<string, string> = {};
-        if (search) {
-            params.search = search;
+        const searchTerm = search.trim();
+
+        if (searchTerm) {
+            params.search = searchTerm;
         }
-        router.get(index().url, params, { preserveState: true });
+
+        router.get(index().url, params, { preserveState: true, replace: true });
     }
 
     function clearFilters() {
         setSearch('');
-        router.get(index().url, {}, { preserveState: true });
+        router.get(index().url, {}, { preserveState: true, replace: true });
     }
 
     const exportUrl = (() => {
         const params = new URLSearchParams();
+        const searchTerm = search.trim();
+
+        if (searchTerm) {
+            params.set('search', searchTerm);
+        }
+
         const qs = params.toString();
         return exportMethod.url() + (qs ? `?${qs}` : '');
     })();
 
     const toolbar = (
-        <Button asChild variant="outline" size="sm">
-            <a href={exportUrl}>
-                <DownloadIcon className="mr-2 h-4 w-4" />
-                Export CSV
-            </a>
-        </Button>
+        <>
+            <form
+                className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center"
+                onSubmit={applyFilters}
+            >
+                <div className="relative w-full sm:w-80">
+                    <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        id="search"
+                        type="search"
+                        className="pl-8"
+                        placeholder="Search players..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+                <div className="flex gap-2">
+                    <Button size="sm" type="submit">
+                        Search
+                    </Button>
+                    {filters.search ? (
+                        <Button
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                            onClick={clearFilters}
+                        >
+                            <XIcon className="mr-2 size-4" />
+                            Clear
+                        </Button>
+                    ) : null}
+                </div>
+            </form>
+            <Button asChild variant="outline" size="sm">
+                <a href={exportUrl}>
+                    <DownloadIcon className="mr-2 size-4" />
+                    Export CSV
+                </a>
+            </Button>
+        </>
     );
 
     return (
@@ -124,36 +168,6 @@ export default function EligiblePlayers({ candidates, filters }: Props) {
                         Players who meet all pathway eligibility criteria.
                     </p>
                 </div>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Search</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid max-w-sm gap-1.5">
-                            <Label htmlFor="search">Player Name</Label>
-                            <Input
-                                id="search"
-                                placeholder="Search by name..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                            />
-                        </div>
-                        <div className="mt-4 flex gap-2">
-                            <Button size="sm" onClick={applyFilters}>
-                                Search
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={clearFilters}
-                            >
-                                Clear
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-
                 <DataTable
                     columns={columns}
                     data={candidates.data}
