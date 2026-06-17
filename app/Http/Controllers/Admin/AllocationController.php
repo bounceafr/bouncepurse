@@ -59,14 +59,16 @@ final class AllocationController extends Controller
 
         $rows = $query->get();
 
+        $escape = fn (string $value): string => '"'.str_replace('"', '""', $value).'"';
+
         $csv = implode(',', ['ID', 'Game ID', 'Player', 'Format', 'Total', 'Insurance', 'Savings', 'Pathway', 'Administration', 'Court Fees', 'Date'])."\n";
 
         foreach ($rows as $row) {
             $csv .= implode(',', [
                 $row->id,
                 $row->game_id,
-                '"'.$row->player->name.'"',
-                '"'.$row->game->format->value.'"',
+                $escape($row->player->name),
+                $escape($row->game->format->value),
                 number_format($row->total_amount, 2),
                 number_format($row->insurance_amount, 4),
                 number_format($row->savings_amount, 4),

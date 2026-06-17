@@ -9,13 +9,11 @@ use App\Actions\Pathway\ListPathwayCandidatesAction;
 use App\Enums\GameStatus;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
-use App\Models\Game;
 use App\Models\PlayerRanking;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -37,24 +35,36 @@ final class PathwayEligiblePlayersController extends Controller
     {
         $candidates = User::query()->role(Role::Player->value)
             ->whereHas('profile', fn (Builder $q) => $q->where('is_pathway_candidate', true))
-            ->with(['profile.country', 'rankings'])
+            ->with(['profile.country'])
+            ->withCount(['games as approved_games_count' => fn (Builder $q) => $q
+                ->withoutGlobalScopes()
+                ->where('status', GameStatus::Approved),
+            ])
+            ->addSelect([
+                'best_rank' => PlayerRanking::query()
+                    ->selectRaw('MIN(rank)')
+                    ->whereColumn('player_id', 'users.id')
+                    ->whereIn('calculated_at', function ($q) {
+                        $q->selectRaw('MAX(calculated_at)')
+                            ->from('player_rankings')
+                            ->whereColumn('player_id', 'users.id')
+                            ->groupBy('format');
+                    }),
+            ])
             ->get();
+
+        $escape = fn (string $value): string => '"'.str_replace('"', '""', $value).'"';
 
         $csv = implode(',', ['Name', 'Country', 'Best Rank', 'Approved Games', 'Savings Credits', 'Pathway Credits'])."\n";
 
         foreach ($candidates as $candidate) {
-            $bestRank = $this->getBestRank($candidate->id);
-            $approvedGames = Game::query()->withoutGlobalScopes()
-                ->where('player_id', $candidate->id)
-                ->where('status', GameStatus::Approved)
-                ->count();
             $summary = $allocationSummary->handle(['player_id' => $candidate->id]);
 
             $csv .= implode(',', [
-                '"'.$candidate->name.'"',
-                '"'.($candidate->profile?->country->name ?? '').'"',
-                $bestRank ?? 'N/A',
-                $approvedGames,
+                $escape($candidate->name),
+                $escape($candidate->profile?->country->name ?? ''),
+                $candidate->best_rank ?? 'N/A',
+                $candidate->approved_games_count,
                 number_format($summary['savings'], 4),
                 number_format($summary['pathway'], 4),
             ])."\n";
@@ -64,35 +74,5 @@ final class PathwayEligiblePlayersController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="pathway-candidates.csv"',
         ]);
-    }
-
-    private function getBestRank(int $playerId): ?int
-    {
-        $latestPerFormat = PlayerRanking::query()
-            ->where('player_id', $playerId)
-            ->select('format', DB::raw('MAX(calculated_at) as max_calculated_at'))
-            ->groupBy('format')
-            ->get();
-
-        if ($latestPerFormat->isEmpty()) {
-            return null;
-        }
-
-        $bestRank = null;
-
-        foreach ($latestPerFormat as $row) {
-            /** @var object{format: string, max_calculated_at: mixed} $row */
-            $ranking = PlayerRanking::query()
-                ->where('player_id', $playerId)
-                ->where('format', $row->format)
-                ->where('calculated_at', $row->max_calculated_at)
-                ->first();
-
-            if ($ranking !== null && ($bestRank === null || $ranking->rank < $bestRank)) {
-                $bestRank = $ranking->rank;
-            }
-        }
-
-        return $bestRank;
     }
 }

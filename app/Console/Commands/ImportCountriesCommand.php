@@ -5,26 +5,16 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\Country;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
+#[Description('Command description')]
+#[Signature('app:import-countries-command')]
 final class ImportCountriesCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:import-countries-command';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Command description';
-
     /**
      * Execute the console command.
      *

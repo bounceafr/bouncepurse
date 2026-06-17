@@ -1,4 +1,3 @@
-"use client"
 
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 import { Select as SelectPrimitive } from "radix-ui"
