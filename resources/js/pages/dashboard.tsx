@@ -2,13 +2,10 @@ import { Head, usePage } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import {
     Activity,
-    CheckCircle2,
     CircleCheck,
     CircleX,
-    Clock,
-    Gamepad2,
-    MapPin,
     Route,
+    TrendingUp,
     Trophy,
 } from 'lucide-react';
 import { Fragment } from 'react';
@@ -20,7 +17,6 @@ import {
     YAxis,
 } from 'recharts';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
-import { SectionCards } from '@/components/section-cards';
 import { Badge } from '@/components/ui/badge';
 import {
     Card,
@@ -215,37 +211,10 @@ export default function Dashboard({
 
     const rankingEntries = Object.values(player_rankings);
 
-    const sectionCards = [
-        {
-            label: 'Total Games',
-            value: stats.total_games,
-            icon: <Gamepad2 />,
-            trend: stats.total_games > 0 ? 12 : undefined,
-            trendLabel: `${stats.total_games > 0 ? 'Active' : 'No'} games recorded`,
-            description: 'All games across all courts',
-        },
-        {
-            label: 'Total Courts',
-            value: stats.total_courts,
-            icon: <MapPin />,
-            trendLabel: `${stats.total_courts > 0 ? 'Available' : 'No'} courts registered`,
-            description: 'Courts available for play',
-        },
-        {
-            label: 'Pending Review',
-            value: stats.pending_games,
-            icon: <Clock />,
-            trendLabel: `${stats.pending_games > 0 ? 'Awaiting' : 'No'} pending reviews`,
-            description: 'Games awaiting approval',
-        },
-        {
-            label: 'Approved Games',
-            value: stats.approved_games,
-            icon: <CheckCircle2 />,
-            trendLabel: `${stats.approved_games > 0 ? 'Successfully' : 'No'} approved games`,
-            description: 'Games that passed review',
-        },
-    ];
+    const pendingPercent = stats.total_games > 0 ? (stats.pending_games / stats.total_games) * 100 : 0;
+    const approvedPercent = stats.total_games > 0 ? (stats.approved_games / stats.total_games) * 100 : 0;
+    const activeDots = Math.min(stats.total_courts, 5);
+    const totalDots = 5;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -262,9 +231,72 @@ export default function Dashboard({
                         </p>
                     </div>
 
-                    <SectionCards cards={sectionCards} />
+                    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-8">
+                        <Card className="@container/card">
+                            <CardHeader>
+                                <CardDescription className="font-label-md mb-2">Pending Verification</CardDescription>
+                                <CardTitle className="text-display font-display text-orange-500 tabular-nums">
+                                    {stats.pending_games}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                                <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-orange-500 rounded-full transition-all"
+                                        style={{ width: `${pendingPercent}%` }}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                    <div className="grid gap-4 px-4 lg:px-6 lg:grid-cols-2 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs">
+                        <Card className="@container/card">
+                            <CardHeader>
+                                <CardDescription className="font-label-md mb-2">Verified This Week</CardDescription>
+                                <CardTitle className="text-display font-display text-foreground tabular-nums">
+                                    {stats.approved_games}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                                <p className="text-xs text-green-400 mt-1 flex items-center gap-1">
+                                    <TrendingUp className="size-3.5" />
+                                    {approvedPercent.toFixed(0)}% approval rate
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="@container/card border-destructive/30">
+                            <CardHeader>
+                                <CardDescription className="font-label-md mb-2">Contested Games</CardDescription>
+                                <CardTitle className="text-display font-display text-destructive tabular-nums">
+                                    0
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                                <p className="text-xs text-destructive mt-1 font-bold">Action Required</p>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="@container/card">
+                            <CardHeader>
+                                <CardDescription className="font-label-md mb-2">Active Courts</CardDescription>
+                                <CardTitle className="text-display font-display text-chart-2 tabular-nums">
+                                    {stats.total_courts}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                                <div className="flex gap-1 mt-2">
+                                    {Array.from({ length: totalDots }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className={`size-2 rounded-full ${i < activeDots ? 'bg-chart-2' : 'bg-muted'}`}
+                                        />
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="grid gap-4 px-4 lg:px-6 lg:grid-cols-2 *:data-[slot=card]:shadow-xs">
                         <Card className="@container/card">
                             <CardHeader>
                                 <div className="flex items-center gap-2">
@@ -328,7 +360,7 @@ export default function Dashboard({
                     </div>
 
                     {(rankingEntries.length > 0 || pathway_eligibility) && (
-                        <div className="grid gap-4 px-4 lg:px-6 md:grid-cols-2 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs">
+                        <div className="grid gap-4 px-4 lg:px-6 md:grid-cols-2 *:data-[slot=card]:shadow-xs">
                             {rankingEntries.length > 0 && (
                                 <Card className="@container/card">
                                     <CardHeader>
