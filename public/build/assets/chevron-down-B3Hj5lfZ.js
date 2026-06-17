@@ -1,1 +1,0 @@
-import{n as e}from"./app-logo-icon-B_1Htv4m.js";var t=e(`chevron-down`,[[`path`,{d:`m6 9 6 6 6-6`,key:`qrunsl`}]]);export{t};

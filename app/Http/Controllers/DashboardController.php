@@ -70,19 +70,11 @@ final class DashboardController extends Controller
     /** @return list<array{date: string, games: int, approved: int, pending: int, courts: int}> */
     private function buildStatsSparklines(): array
     {
-        $dateExpr = DB::getDriverName() === 'sqlite'
-            ? 'date(played_at)'
-            : 'DATE(played_at)'; // @codeCoverageIgnore
-
-        $courtDateExpr = DB::getDriverName() === 'sqlite'
-            ? 'date(created_at)'
-            : 'DATE(created_at)'; // @codeCoverageIgnore
-
         $since = now()->subDays(6)->startOfDay();
 
         $gamesByDay = Game::query()
             ->selectRaw(
-                $dateExpr.' as date, COUNT(*) as games,'
+                $this->dateExpression('played_at').' as date, COUNT(*) as games,'
                 .' SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as approved,'
                 .' SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending',
                 [GameStatus::Approved->value, GameStatus::Pending->value]
@@ -93,7 +85,7 @@ final class DashboardController extends Controller
             ->keyBy('date');
 
         $courtsByDay = Court::query()
-            ->selectRaw($courtDateExpr.' as date, COUNT(*) as count')
+            ->selectRaw($this->dateExpression('created_at').' as date, COUNT(*) as count')
             ->where('created_at', '>=', $since)
             ->groupBy('date')
             ->pluck('count', 'date');
@@ -102,43 +94,61 @@ final class DashboardController extends Controller
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i)->toDateString();
             $row = $gamesByDay->get($date);
-            $rawCourts = $courtsByDay[$date] ?? 0;
             $result[] = [
                 'date' => $date,
-                'games' => is_numeric($g = $row?->getAttribute('games')) ? (int) $g : 0,
-                'approved' => is_numeric($a = $row?->getAttribute('approved')) ? (int) $a : 0,
-                'pending' => is_numeric($p = $row?->getAttribute('pending')) ? (int) $p : 0,
-                'courts' => is_numeric($rawCourts) ? (int) $rawCourts : 0,
+                'games' => (int) ($row?->getAttribute('games') ?? 0),
+                'approved' => (int) ($row?->getAttribute('approved') ?? 0),
+                'pending' => (int) ($row?->getAttribute('pending') ?? 0),
+                'courts' => (int) ($courtsByDay[$date] ?? 0),
             ];
         }
 
         return $result;
     }
 
-    /** @return list<array{month: string, count: int}> */
+    /** @return list<array{month: string, games: int, courts: int}> */
     private function buildGamesPerMonth(): array
     {
-        $formatExpr = DB::getDriverName() === 'sqlite'
-            ? "strftime('%Y-%m', played_at)"
-            : "DATE_FORMAT(played_at, '%Y-%m')"; // @codeCoverageIgnore
+        $currentYear = now()->year;
 
-        $counts = Game::query()->selectRaw($formatExpr.' as month, COUNT(*) as count')
-            ->where('played_at', '>=', now()->subMonths(5)->startOfMonth())
+        $gamesByMonth = Game::query()
+            ->selectRaw($this->monthExpression('played_at').' as month, COUNT(*) as count')
+            ->whereYear('played_at', $currentYear)
+            ->groupBy('month')
+            ->orderBy('month')
+            ->pluck('count', 'month');
+
+        $courtsByMonth = Court::query()
+            ->selectRaw($this->monthExpression('created_at').' as month, COUNT(*) as count')
+            ->whereYear('created_at', $currentYear)
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('count', 'month');
 
         $result = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $month = now()->subMonths($i)->format('Y-m');
-            /** @var int $count */
-            $count = $counts[$month] ?? 0;
+        for ($i = 1; $i <= 12; $i++) {
+            $month = sprintf('%s-%02d', $currentYear, $i);
             $result[] = [
                 'month' => $month,
-                'count' => $count,
+                'games' => (int) ($gamesByMonth[$month] ?? 0),
+                'courts' => (int) ($courtsByMonth[$month] ?? 0),
             ];
         }
 
         return $result;
+    }
+
+    private function dateExpression(string $column): string
+    {
+        return DB::getDriverName() === 'sqlite'
+            ? sprintf('date(%s)', $column)
+            : sprintf('DATE(%s)', $column); // @codeCoverageIgnore
+    }
+
+    private function monthExpression(string $column): string
+    {
+        return DB::getDriverName() === 'sqlite'
+            ? sprintf("strftime('%%Y-%%m', %s)", $column)
+            : sprintf("DATE_FORMAT(%s, '%%Y-%%m')", $column); // @codeCoverageIgnore
     }
 }

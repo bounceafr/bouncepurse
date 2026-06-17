@@ -23,7 +23,7 @@ final class LeaderboardController extends Controller
         return Inertia::render('leaderboard/index', [
             'entries' => $action->handle($format, $geo, $user),
             'filters' => ['format' => $format, 'geo' => $geo],
-            'formats' => ['1v1','3v3','5v5'],
+            'formats' => ['1v1', '3v3', '5v5'],
         ]);
     }
 }

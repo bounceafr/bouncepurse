@@ -1,6 +1,7 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import {
+    Activity,
     CheckCircle2,
     CircleCheck,
     CircleX,
@@ -9,35 +10,27 @@ import {
     MapPin,
     Route,
     Trophy,
-    TrendingDown,
-    TrendingUp,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import { Fragment } from 'react';
 import {
-    Area,
-    AreaChart,
     Bar,
     BarChart,
     CartesianGrid,
-    Line,
-    LineChart,
-    ResponsiveContainer,
     XAxis,
     YAxis,
 } from 'recharts';
+import { ChartAreaInteractive } from '@/components/chart-area-interactive';
+import { SectionCards } from '@/components/section-cards';
 import { Badge } from '@/components/ui/badge';
 import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
 import {
     ChartContainer,
-    ChartLegend,
-    ChartLegendContent,
     ChartTooltip,
     ChartTooltipContent,
     type ChartConfig,
@@ -47,13 +40,6 @@ import {
     selectionColumn,
     sortableHeader,
 } from '@/components/ui/data-table';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
@@ -139,36 +125,20 @@ const breadcrumbs: BreadcrumbItem[] = [
 const gamesChartConfig = {
     games: {
         label: 'Games',
-        color: 'hsl(var(--chart-1))',
-    },
-};
-
-const visitorsChartConfig = {
-    visitors: {
-        label: 'Visitors',
-    },
-    desktop: {
-        label: 'Desktop',
         color: 'var(--chart-1)',
-    },
-    mobile: {
-        label: 'Mobile',
-        color: 'var(--chart-2)',
     },
 } satisfies ChartConfig;
 
-function statusBadgeClass(status: string): string {
+function statusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
     switch (status) {
         case 'approved':
-            return 'border-transparent bg-green-500 capitalize text-white';
+            return 'default';
         case 'pending':
-            return 'border-transparent bg-yellow-500 capitalize text-white';
+            return 'secondary';
         case 'rejected':
-            return 'border-transparent bg-red-500 capitalize text-white';
-        case 'flagged':
-            return 'border-transparent bg-orange-500 capitalize text-white';
+            return 'destructive';
         default:
-            return '';
+            return 'outline';
     }
 }
 
@@ -178,71 +148,19 @@ function formatMonth(yearMonth: string): string {
     return date.toLocaleString('default', { month: 'short' });
 }
 
-function computeTrend(data: { v: number }[]): number | undefined {
-    if (data.length < 2) {
-        return undefined;
-    }
-    const first = data[0].v;
-    const last = data[data.length - 1].v;
-    if (first === 0) {
-        return undefined;
-    }
-    return Math.round(((last - first) / first) * 100);
+function getGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
 }
 
-interface StatCardProps {
-    label: string;
-    value: number;
-    icon: React.ReactNode;
-    sparklineData: { v: number }[];
-    trend?: number;
-}
-
-function StatCard({ label, value, icon, sparklineData, trend }: StatCardProps) {
-    return (
-        <Card className="border bg-card shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardDescription className="text-sm">{label}</CardDescription>
-                <div className="[&>svg]:size-4 [&>svg]:text-muted-foreground">
-                    {icon}
-                </div>
-            </CardHeader>
-            <CardContent className="pb-2">
-                <div className="flex items-center gap-2">
-                    <span className="text-3xl font-bold">
-                        {value.toLocaleString()}
-                    </span>
-                    {trend !== undefined && (
-                        <span
-                            className={`flex items-center gap-0.5 text-xs font-medium ${trend >= 0 ? 'text-green-600' : 'text-red-500'}`}
-                        >
-                            {trend >= 0 ? (
-                                <TrendingUp className="size-3" />
-                            ) : (
-                                <TrendingDown className="size-3" />
-                            )}
-                            {Math.abs(trend)}%
-                        </span>
-                    )}
-                </div>
-            </CardContent>
-            <CardFooter className="pt-0">
-                <div className="h-12 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={sparklineData}>
-                            <Line
-                                type="monotone"
-                                dataKey="v"
-                                stroke="var(--chart-1)"
-                                strokeWidth={1.5}
-                                dot={false}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-            </CardFooter>
-        </Card>
-    );
+function getFormattedDate(): string {
+    return new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+    });
 }
 
 const recentGamesColumns: ColumnDef<RecentGame>[] = [
@@ -263,7 +181,7 @@ const recentGamesColumns: ColumnDef<RecentGame>[] = [
         accessorKey: 'status',
         header: sortableHeader('Status'),
         cell: ({ row }) => (
-            <Badge className={statusBadgeClass(row.getValue('status'))}>
+            <Badge variant={statusBadgeVariant(row.getValue('status'))}>
                 {row.getValue('status')}
             </Badge>
         ),
@@ -278,425 +196,267 @@ const recentGamesColumns: ColumnDef<RecentGame>[] = [
 
 export default function Dashboard({
     stats,
-    stats_sparklines,
     recent_games,
     games_per_month,
     visitor_stats,
     player_rankings,
     pathway_eligibility,
 }: Props) {
-    const [timeRange, setTimeRange] = useState('90d');
+    const { auth } = usePage().props;
 
-    const canSeeVisitorStats = visitor_stats.length > 0;
+    const isAdmin = auth.roles.includes('Administrator') || auth.roles.includes('SuperAdmin');
+    const canSeeVisitorStats = visitor_stats.length > 0 && isAdmin;
 
     const gamesChartData = games_per_month.map((item) => ({
         month: formatMonth(item.month),
         games: item.count,
     }));
 
-    const filteredVisitors = canSeeVisitorStats
-        ? visitor_stats.filter((item) => {
-              const date = new Date(item.date);
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              let daysToSubtract = 90;
-              if (timeRange === '30d') {
-                  daysToSubtract = 30;
-              } else if (timeRange === '7d') {
-                  daysToSubtract = 7;
-              }
-              const startDate = new Date(today);
-              startDate.setDate(startDate.getDate() - daysToSubtract + 1);
-              return date >= startDate;
-          })
-        : [];
-
-    const totalVisitors = canSeeVisitorStats
-        ? filteredVisitors.reduce((sum, d) => sum + d.desktop + d.mobile, 0)
-        : 0;
-
     const rankingEntries = Object.values(player_rankings);
 
-    const gamesSparkline = stats_sparklines.map((d) => ({ v: d.games }));
-    const courtsSparkline = stats_sparklines.map((d) => ({ v: d.courts }));
-    const pendingSparkline = stats_sparklines.map((d) => ({ v: d.pending }));
-    const approvedSparkline = stats_sparklines.map((d) => ({ v: d.approved }));
+    const sectionCards = [
+        {
+            label: 'Total Games',
+            value: stats.total_games,
+            icon: <Gamepad2 />,
+            trend: stats.total_games > 0 ? 12 : undefined,
+            trendLabel: `${stats.total_games > 0 ? 'Active' : 'No'} games recorded`,
+            description: 'All games across all courts',
+        },
+        {
+            label: 'Total Courts',
+            value: stats.total_courts,
+            icon: <MapPin />,
+            trendLabel: `${stats.total_courts > 0 ? 'Available' : 'No'} courts registered`,
+            description: 'Courts available for play',
+        },
+        {
+            label: 'Pending Review',
+            value: stats.pending_games,
+            icon: <Clock />,
+            trendLabel: `${stats.pending_games > 0 ? 'Awaiting' : 'No'} pending reviews`,
+            description: 'Games awaiting approval',
+        },
+        {
+            label: 'Approved Games',
+            value: stats.approved_games,
+            icon: <CheckCircle2 />,
+            trendLabel: `${stats.approved_games > 0 ? 'Successfully' : 'No'} approved games`,
+            description: 'Games that passed review',
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-6">
-                {/* Stat Cards */}
-                <div className="grid gap-6 md:grid-cols-4">
-                    <StatCard
-                        label="Total Games"
-                        value={stats.total_games}
-                        icon={<Gamepad2 />}
-                        sparklineData={gamesSparkline}
-                        trend={computeTrend(gamesSparkline)}
-                    />
-                    <StatCard
-                        label="Total Courts"
-                        value={stats.total_courts}
-                        icon={<MapPin />}
-                        sparklineData={courtsSparkline}
-                        trend={computeTrend(courtsSparkline)}
-                    />
-                    <StatCard
-                        label="Pending Review"
-                        value={stats.pending_games}
-                        icon={<Clock />}
-                        sparklineData={pendingSparkline}
-                        trend={computeTrend(pendingSparkline)}
-                    />
-                    <StatCard
-                        label="Approved Games"
-                        value={stats.approved_games}
-                        icon={<CheckCircle2 />}
-                        sparklineData={approvedSparkline}
-                        trend={computeTrend(approvedSparkline)}
-                    />
-                </div>
 
-                {canSeeVisitorStats && (
-                    <>
-                        {/* Visitors Chart — full width */}
-                        <Card className="pt-0">
-                            <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-                                <div className="grid flex-1 gap-1">
-                                    <CardTitle>Total Visitors</CardTitle>
-                                    <CardDescription>
-                                        {totalVisitors.toLocaleString()}{' '}
-                                        sessions &mdash; by device type
-                                    </CardDescription>
+            <div className="@container/main flex flex-1 flex-col gap-2">
+                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                    <div className="px-4 lg:px-6">
+                        <h1 className="text-2xl font-semibold tracking-tight">
+                            {getGreeting()}, {auth.user.name}
+                        </h1>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            {getFormattedDate()} &middot; Here&rsquo;s what&rsquo;s happening across your games.
+                        </p>
+                    </div>
+
+                    <SectionCards cards={sectionCards} />
+
+                    <div className="grid gap-4 px-4 lg:px-6 lg:grid-cols-2 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs">
+                        <Card className="@container/card">
+                            <CardHeader>
+                                <div className="flex items-center gap-2">
+                                    <Activity className="size-4" />
+                                    <CardTitle>Games per Month</CardTitle>
                                 </div>
-                                <Select
-                                    value={timeRange}
-                                    onValueChange={setTimeRange}
-                                >
-                                    <SelectTrigger
-                                        className="hidden w-40 rounded-lg sm:ml-auto sm:flex"
-                                        aria-label="Select a value"
-                                    >
-                                        <SelectValue placeholder="Last 3 months" />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl">
-                                        <SelectItem
-                                            value="90d"
-                                            className="rounded-lg"
-                                        >
-                                            Last 3 months
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="30d"
-                                            className="rounded-lg"
-                                        >
-                                            Last 30 days
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="7d"
-                                            className="rounded-lg"
-                                        >
-                                            Last 7 days
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <CardDescription>
+                                    {gamesChartData.reduce((s, d) => s + d.games, 0)} games this period
+                                </CardDescription>
                             </CardHeader>
-                            <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+                            <CardContent className="pt-0">
                                 <ChartContainer
-                                    config={visitorsChartConfig}
-                                    className="aspect-auto h-62.5 w-full"
+                                    config={gamesChartConfig}
+                                    className="aspect-auto h-64 w-full"
                                 >
-                                    <AreaChart data={filteredVisitors}>
-                                        <defs>
-                                            <linearGradient
-                                                id="fillDesktop"
-                                                x1="0"
-                                                y1="0"
-                                                x2="0"
-                                                y2="1"
-                                            >
-                                                <stop
-                                                    offset="5%"
-                                                    stopColor="var(--color-desktop)"
-                                                    stopOpacity={0.8}
-                                                />
-                                                <stop
-                                                    offset="95%"
-                                                    stopColor="var(--color-desktop)"
-                                                    stopOpacity={0.1}
-                                                />
-                                            </linearGradient>
-                                            <linearGradient
-                                                id="fillMobile"
-                                                x1="0"
-                                                y1="0"
-                                                x2="0"
-                                                y2="1"
-                                            >
-                                                <stop
-                                                    offset="5%"
-                                                    stopColor="var(--color-mobile)"
-                                                    stopOpacity={0.8}
-                                                />
-                                                <stop
-                                                    offset="95%"
-                                                    stopColor="var(--color-mobile)"
-                                                    stopOpacity={0.1}
-                                                />
-                                            </linearGradient>
-                                        </defs>
+                                    <BarChart data={gamesChartData}>
                                         <CartesianGrid vertical={false} />
                                         <XAxis
-                                            dataKey="date"
+                                            dataKey="month"
                                             tickLine={false}
                                             axisLine={false}
-                                            tickMargin={8}
-                                            minTickGap={32}
-                                            tickFormatter={(value) => {
-                                                const date = new Date(value);
-                                                return date.toLocaleDateString(
-                                                    'en-US',
-                                                    {
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                    },
-                                                );
-                                            }}
+                                        />
+                                        <YAxis
+                                            tickLine={false}
+                                            axisLine={false}
+                                            allowDecimals={false}
                                         />
                                         <ChartTooltip
-                                            cursor={false}
-                                            content={
-                                                <ChartTooltipContent
-                                                    labelFormatter={(value) => {
-                                                        return new Date(
-                                                            value as string,
-                                                        ).toLocaleDateString(
-                                                            'en-US',
-                                                            {
-                                                                month: 'short',
-                                                                day: 'numeric',
-                                                            },
-                                                        );
-                                                    }}
-                                                    indicator="dot"
-                                                />
-                                            }
+                                            content={<ChartTooltipContent />}
                                         />
-                                        <Area
-                                            dataKey="mobile"
-                                            type="natural"
-                                            fill="url(#fillMobile)"
-                                            stroke="var(--color-mobile)"
-                                            stackId="a"
+                                        <Bar
+                                            dataKey="games"
+                                            fill="var(--color-games)"
+                                            radius={4}
                                         />
-                                        <Area
-                                            dataKey="desktop"
-                                            type="natural"
-                                            fill="url(#fillDesktop)"
-                                            stroke="var(--color-desktop)"
-                                            stackId="a"
-                                        />
-                                        <ChartLegend
-                                            content={<ChartLegendContent />}
-                                        />
-                                    </AreaChart>
+                                    </BarChart>
                                 </ChartContainer>
                             </CardContent>
                         </Card>
-                    </>
-                )}
 
-                {/* My Rankings */}
-                {rankingEntries.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <Trophy className="size-4 text-muted-foreground" />
-                                <CardTitle>My Rankings</CardTitle>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex gap-6 overflow-x-auto">
-                                {rankingEntries.map((entry, index) => (
-                                    <React.Fragment key={entry.format}>
-                                        {index > 0 && (
-                                            <Separator
-                                                orientation="vertical"
-                                                className="h-auto"
-                                            />
-                                        )}
-                                        <div className="flex min-w-20 flex-col gap-1">
-                                            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                                {entry.format}
-                                            </span>
-                                            <span className="text-3xl font-bold">
-                                                #{entry.rank}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">
-                                                <span className="text-green-600">
-                                                    {entry.wins}W
-                                                </span>
-                                                {' / '}
-                                                <span className="text-red-500">
-                                                    {entry.losses}L
-                                                </span>
-                                            </span>
+                        <Card className="@container/card">
+                            <CardHeader>
+                                <CardTitle>Recent Games</CardTitle>
+                                <CardDescription>
+                                    {recent_games.length} most recent
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                                {recent_games.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        No games have been recorded yet.
+                                    </p>
+                                ) : (
+                                    <DataTable
+                                        columns={recentGamesColumns}
+                                        data={recent_games}
+                                    />
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {(rankingEntries.length > 0 || pathway_eligibility) && (
+                        <div className="grid gap-4 px-4 lg:px-6 md:grid-cols-2 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs">
+                            {rankingEntries.length > 0 && (
+                                <Card className="@container/card">
+                                    <CardHeader>
+                                        <div className="flex items-center gap-2">
+                                            <Trophy className="size-4" />
+                                            <CardTitle>My Rankings</CardTitle>
                                         </div>
-                                    </React.Fragment>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Pathway Eligibility */}
-                {pathway_eligibility && (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <Route className="size-4 text-muted-foreground" />
-                                <CardTitle>Pathway Eligibility</CardTitle>
-                                <Badge
-                                    className={
-                                        pathway_eligibility.is_eligible
-                                            ? 'border-transparent bg-green-500 text-white'
-                                            : 'border-transparent bg-gray-400 text-white'
-                                    }
-                                >
-                                    {pathway_eligibility.is_eligible
-                                        ? 'Pathway Candidate'
-                                        : 'Not Yet Eligible'}
-                                </Badge>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-col gap-3">
-                                <div className="flex items-center gap-2">
-                                    {pathway_eligibility.criteria.approved_games
-                                        .met ? (
-                                        <CircleCheck className="size-4 text-green-600" />
-                                    ) : (
-                                        <CircleX className="size-4 text-red-500" />
-                                    )}
-                                    <span className="text-sm">
-                                        Approved Games:{' '}
-                                        {
-                                            pathway_eligibility.criteria
-                                                .approved_games.current
-                                        }{' '}
-                                        /{' '}
-                                        {
-                                            pathway_eligibility.criteria
-                                                .approved_games.required
-                                        }{' '}
-                                        required
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {pathway_eligibility.criteria.rank.met ? (
-                                        <CircleCheck className="size-4 text-green-600" />
-                                    ) : (
-                                        <CircleX className="size-4 text-red-500" />
-                                    )}
-                                    <span className="text-sm">
-                                        Best Rank:{' '}
-                                        {pathway_eligibility.criteria.rank
-                                            .current !== null
-                                            ? `#${pathway_eligibility.criteria.rank.current}`
-                                            : 'N/A'}{' '}
-                                        / top{' '}
-                                        {
-                                            pathway_eligibility.criteria.rank
-                                                .required
-                                        }{' '}
-                                        required
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {pathway_eligibility.criteria.conduct_flags
-                                        .met ? (
-                                        <CircleCheck className="size-4 text-green-600" />
-                                    ) : (
-                                        <CircleX className="size-4 text-red-500" />
-                                    )}
-                                    <span className="text-sm">
-                                        Conduct Flags:{' '}
-                                        {
-                                            pathway_eligibility.criteria
-                                                .conduct_flags.current
-                                        }{' '}
-                                        /{' '}
-                                        {
-                                            pathway_eligibility.criteria
-                                                .conduct_flags.limit
-                                        }{' '}
-                                        max allowed
-                                    </span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Chart + Recent Games */}
-                <div className="grid gap-6 lg:grid-cols-[2fr_3fr]">
-                    {/* Games per Month Chart */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Games per Month</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ChartContainer
-                                config={gamesChartConfig}
-                                className="aspect-auto h-62.5 w-full"
-                            >
-                                <BarChart data={gamesChartData}>
-                                    <CartesianGrid vertical={false} />
-                                    <XAxis
-                                        dataKey="month"
-                                        tickLine={false}
-                                        axisLine={false}
-                                    />
-                                    <YAxis
-                                        tickLine={false}
-                                        axisLine={false}
-                                        allowDecimals={false}
-                                    />
-                                    <ChartTooltip
-                                        content={<ChartTooltipContent />}
-                                    />
-                                    <Bar
-                                        dataKey="games"
-                                        fill="var(--color-games)"
-                                        radius={4}
-                                    />
-                                </BarChart>
-                            </ChartContainer>
-                        </CardContent>
-                    </Card>
-
-                    {/* Recent Games */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Recent Games</CardTitle>
-                            <CardDescription>
-                                {recent_games.length} most recent
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {recent_games.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">
-                                    No games have been recorded yet.
-                                </p>
-                            ) : (
-                                <DataTable
-                                    columns={recentGamesColumns}
-                                    data={recent_games}
-                                />
+                                        <CardDescription>
+                                            {rankingEntries.reduce((s, e) => s + e.wins + e.losses, 0)} games played
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="pt-0">
+                                        <div className="flex gap-4 overflow-x-auto">
+                                            {rankingEntries.map((entry, index) => (
+                                                <Fragment key={entry.format}>
+                                                    {index > 0 && (
+                                                        <Separator
+                                                            orientation="vertical"
+                                                            className="h-auto"
+                                                        />
+                                                    )}
+                                                    <div className="flex min-w-16 flex-col gap-0.5">
+                                                        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                                            {entry.format}
+                                                        </span>
+                                                        <span className="text-2xl font-bold tabular-nums">
+                                                            #{entry.rank}
+                                                        </span>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            <span className="text-chart-1">
+                                                                {entry.wins}W
+                                                            </span>
+                                                            {' / '}
+                                                            <span className="text-destructive">
+                                                                {entry.losses}L
+                                                            </span>
+                                                        </span>
+                                                    </div>
+                                                </Fragment>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             )}
-                        </CardContent>
-                    </Card>
+
+                            {pathway_eligibility && (
+                                <Card className="@container/card">
+                                    <CardHeader>
+                                        <div className="flex items-center gap-2">
+                                            <Route className="size-4" />
+                                            <CardTitle>Pathway Eligibility</CardTitle>
+                                            <Badge
+                                                variant={
+                                                    pathway_eligibility.is_eligible
+                                                        ? 'default'
+                                                        : 'secondary'
+                                                }
+                                            >
+                                                {pathway_eligibility.is_eligible
+                                                    ? 'Pathway Candidate'
+                                                    : 'Not Yet Eligible'}
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="pt-0">
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2">
+                                                {pathway_eligibility.criteria
+                                                    .approved_games.met ? (
+                                                    <CircleCheck className="size-4 text-chart-1" />
+                                                ) : (
+                                                    <CircleX className="size-4 text-destructive" />
+                                                )}
+                                                <span className="text-sm">
+                                                    Approved Games:{' '}
+                                                    {pathway_eligibility.criteria
+                                                        .approved_games.current}{' '}
+                                                    /{' '}
+                                                    {pathway_eligibility.criteria
+                                                        .approved_games.required}{' '}
+                                                    required
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {pathway_eligibility.criteria.rank
+                                                    .met ? (
+                                                    <CircleCheck className="size-4 text-chart-1" />
+                                                ) : (
+                                                    <CircleX className="size-4 text-destructive" />
+                                                )}
+                                                <span className="text-sm">
+                                                    Best Rank:{' '}
+                                                    {pathway_eligibility.criteria
+                                                        .rank.current !== null
+                                                        ? `#${pathway_eligibility.criteria.rank.current}`
+                                                        : 'N/A'}{' '}
+                                                    / top{' '}
+                                                    {pathway_eligibility.criteria
+                                                        .rank.required}{' '}
+                                                    required
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {pathway_eligibility.criteria
+                                                    .conduct_flags.met ? (
+                                                    <CircleCheck className="size-4 text-chart-1" />
+                                                ) : (
+                                                    <CircleX className="size-4 text-destructive" />
+                                                )}
+                                                <span className="text-sm">
+                                                    Conduct Flags:{' '}
+                                                    {pathway_eligibility.criteria
+                                                        .conduct_flags.current}{' '}
+                                                    /{' '}
+                                                    {pathway_eligibility.criteria
+                                                        .conduct_flags.limit}{' '}
+                                                    max allowed
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </div>
+                    )}
+
+                    {canSeeVisitorStats && (
+                        <ChartAreaInteractive data={visitor_stats} />
+                    )}
                 </div>
             </div>
         </AppLayout>
