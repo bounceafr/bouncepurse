@@ -44,7 +44,7 @@ final class PathwayEligiblePlayersController extends Controller
                 'best_rank' => PlayerRanking::query()
                     ->selectRaw('MIN(rank)')
                     ->whereColumn('player_id', 'users.id')
-                    ->whereIn('calculated_at', function ($q) {
+                    ->whereIn('calculated_at', function ($q): void {
                         $q->selectRaw('MAX(calculated_at)')
                             ->from('player_rankings')
                             ->whereColumn('player_id', 'users.id')
