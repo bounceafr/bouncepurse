@@ -59,12 +59,13 @@ interface RecentGame {
     status: string;
     played_at: string;
     court: { name: string } | null;
-    player: { name: string };
+    player: { name: string } | null;
 }
 
 interface MonthlyData {
     month: string;
-    count: number;
+    games: number;
+    courts: number;
 }
 
 interface SparklineDay {
@@ -209,7 +210,7 @@ export default function Dashboard({
 
     const gamesChartData = games_per_month.map((item) => ({
         month: formatMonth(item.month),
-        games: item.count,
+        games: item.games,
     }));
 
     const rankingEntries = Object.values(player_rankings);
