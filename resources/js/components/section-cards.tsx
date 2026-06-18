@@ -8,24 +8,34 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
-interface SectionCardData {
+export interface SectionCardData {
   label: string
   value: number
   icon: React.ReactNode
   trend?: number
   trendLabel: string
   description: string
+  /** Gradient background classes for the card (literal strings for Tailwind JIT). */
+  cardClassName?: string
+  /** Accent classes for the icon chip (literal strings for Tailwind JIT). */
+  iconClassName?: string
 }
 
 export const SectionCards = ({ cards }: { cards: SectionCardData[] }) => {
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+    <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       {cards.map((card) => (
-        <Card key={card.label} className="@container/card">
+        <Card key={card.label} className={cn("@container/card", card.cardClassName)}>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary [&>svg]:size-5">
+              <span
+                className={cn(
+                  "flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary [&>svg]:size-5",
+                  card.iconClassName
+                )}
+              >
                 {card.icon}
               </span>
               <div className="flex flex-1 items-center justify-between gap-2">

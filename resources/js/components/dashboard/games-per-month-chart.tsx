@@ -1,5 +1,5 @@
 import { Activity } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 import {
     Card,
     CardContent,
@@ -51,7 +51,10 @@ export function GamesPerMonthChart({ data }: { data: MonthlyData[] }) {
                     config={chartConfig}
                     className="aspect-auto h-64 w-full"
                 >
-                    <BarChart data={chartData}>
+                    <LineChart
+                        data={chartData}
+                        margin={{ left: 12, right: 12 }}
+                    >
                         <CartesianGrid vertical={false} />
                         <XAxis
                             dataKey="month"
@@ -64,12 +67,15 @@ export function GamesPerMonthChart({ data }: { data: MonthlyData[] }) {
                             allowDecimals={false}
                         />
                         <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar
+                        <Line
                             dataKey="games"
-                            fill="var(--color-games)"
-                            radius={4}
+                            type="monotone"
+                            stroke="var(--color-games)"
+                            strokeWidth={2}
+                            dot={false}
+                            activeDot={{ r: 4 }}
                         />
-                    </BarChart>
+                    </LineChart>
                 </ChartContainer>
             </CardContent>
         </Card>
