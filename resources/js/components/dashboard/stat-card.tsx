@@ -75,7 +75,7 @@ export function StatCard({
     footer,
 }: StatCardProps) {
     return (
-        <Card className="@container/card">
+        <Card className={cn('@container/card', accent.card, accent.ring)}>
             <CardHeader>
                 <div className="flex items-center justify-between gap-2">
                     <CardDescription className="text-xs font-medium tracking-wider uppercase">
