@@ -1,5 +1,5 @@
 import { Activity } from 'lucide-react';
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
     Card,
     CardContent,
@@ -51,10 +51,30 @@ export function GamesPerMonthChart({ data }: { data: MonthlyData[] }) {
                     config={chartConfig}
                     className="aspect-auto h-64 w-full"
                 >
-                    <LineChart
+                    <AreaChart
                         data={chartData}
                         margin={{ left: 12, right: 12 }}
                     >
+                        <defs>
+                            <linearGradient
+                                id="fillGames"
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="1"
+                            >
+                                <stop
+                                    offset="5%"
+                                    stopColor="var(--color-games)"
+                                    stopOpacity={0.4}
+                                />
+                                <stop
+                                    offset="95%"
+                                    stopColor="var(--color-games)"
+                                    stopOpacity={0.05}
+                                />
+                            </linearGradient>
+                        </defs>
                         <CartesianGrid vertical={false} />
                         <XAxis
                             dataKey="month"
@@ -67,15 +87,16 @@ export function GamesPerMonthChart({ data }: { data: MonthlyData[] }) {
                             allowDecimals={false}
                         />
                         <ChartTooltip content={<ChartTooltipContent />} />
-                        <Line
+                        <Area
                             dataKey="games"
                             type="monotone"
                             stroke="var(--color-games)"
                             strokeWidth={2}
+                            fill="url(#fillGames)"
                             dot={false}
                             activeDot={{ r: 4 }}
                         />
-                    </LineChart>
+                    </AreaChart>
                 </ChartContainer>
             </CardContent>
         </Card>
