@@ -27,5 +27,13 @@ final class DatabaseSeeder extends Seeder
             'name' => 'Jacques MBABAZI',
             'email' => 'mbabazijacques@gmail.com',
         ])->assignRole(Role::SuperAdmin->value);
+
+        $this->call([
+            UserSeeder::class,
+            PlayerSeeder::class,
+            CourtSeeder::class,
+            TeamSeeder::class,
+            GameSeeder::class,
+        ]);
     }
 }
