@@ -44,13 +44,13 @@ final class GameSeeder extends Seeder
         /** @var Collection<int, Game> $rejectedGames */
         $rejectedGames = collect();
 
-        // A1 — Give each pathway player 10 approved games across formats
+        // A1 — Give each pathway player 12 approved games across formats
         foreach ($pathwayPlayers as $pathwayPlayer) {
             foreach ($formats as $format) {
-                for ($i = 0; $i < 2; $i++) {
-                    $playedAt = $i === 0
-                        ? fake()->dateTimeBetween('-30 days', 'now')
-                        : fake()->dateTimeBetween('-1 year', '-31 days');
+                for ($i = 0; $i < 4; $i++) {
+                    $playedAt = $i < 2
+                        ? fake()->dateTimeBetween('2026-03-01', '2026-06-19')
+                        : fake()->dateTimeBetween('2026-01-01', '2026-02-28');
 
                     $game = Game::factory()->create([
                         'player_id' => $pathwayPlayer->id,
@@ -76,10 +76,10 @@ final class GameSeeder extends Seeder
 
         // A2 — Spread remaining approved games across all players
         foreach ($formats as $format) {
-            for ($i = 0; $i < 12; $i++) {
-                $playedAt = $i < 6
-                    ? fake()->dateTimeBetween('-30 days', 'now')
-                    : fake()->dateTimeBetween('-1 year', '-31 days');
+            for ($i = 0; $i < 20; $i++) {
+                $playedAt = $i < 10
+                    ? fake()->dateTimeBetween('2026-03-01', '2026-06-19')
+                    : fake()->dateTimeBetween('2026-01-01', '2026-02-28');
 
                 $game = Game::factory()->create([
                     'player_id' => $players->random()->id,
@@ -102,15 +102,15 @@ final class GameSeeder extends Seeder
             }
         }
 
-        // Step B — Rejected games (15 total, 3 per format)
+        // Step B — Rejected games (18 total, 6 per format)
         foreach ($formats as $format) {
-            for ($i = 0; $i < 3; $i++) {
+            for ($i = 0; $i < 6; $i++) {
                 $game = Game::factory()->create([
                     'player_id' => $players->random()->id,
                     'format' => $format,
                     'status' => GameStatus::Rejected->value,
                     'court_id' => random_int(1, 10) > 3 ? $courts->random()->id : null,
-                    'played_at' => fake()->dateTimeBetween('-1 year', 'now'),
+                    'played_at' => fake()->dateTimeBetween('2026-01-01', '2026-06-19'),
                 ]);
 
                 GameModeration::query()->create([
@@ -125,15 +125,15 @@ final class GameSeeder extends Seeder
             }
         }
 
-        // Step C — Flagged games (10 total, 2 per format)
+        // Step C — Flagged games (12 total, 4 per format)
         foreach ($formats as $format) {
-            for ($i = 0; $i < 2; $i++) {
+            for ($i = 0; $i < 4; $i++) {
                 $game = Game::factory()->create([
                     'player_id' => $players->random()->id,
                     'format' => $format,
                     'status' => GameStatus::Flagged->value,
                     'court_id' => random_int(1, 10) > 3 ? $courts->random()->id : null,
-                    'played_at' => fake()->dateTimeBetween('-1 year', 'now'),
+                    'played_at' => fake()->dateTimeBetween('2026-01-01', '2026-06-19'),
                 ]);
 
                 GameModeration::query()->create([
@@ -146,16 +146,16 @@ final class GameSeeder extends Seeder
             }
         }
 
-        // Step D — Pending games (15 total, 3 per format)
+        // Step D — Pending games (18 total, 6 per format)
         foreach ($formats as $format) {
-            for ($i = 0; $i < 3; $i++) {
+            for ($i = 0; $i < 6; $i++) {
                 Game::factory()->create([
                     'player_id' => $players->random()->id,
                     'format' => $format,
                     'status' => GameStatus::Pending->value,
                     'result' => null,
                     'court_id' => random_int(1, 10) > 3 ? $courts->random()->id : null,
-                    'played_at' => fake()->dateTimeBetween('-1 year', 'now'),
+                    'played_at' => fake()->dateTimeBetween('2026-01-01', '2026-06-19'),
                 ]);
             }
         }
