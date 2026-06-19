@@ -48,29 +48,33 @@ final class DashboardController extends Controller
             ? $pathwayAction->handle($user->id, $pathwayConfig)
             : null;
 
+        $recentGamesQuery = Game::query()
+            ->with(['court', 'player'])
+            ->latest('played_at')
+            ->limit(15);
+
+        if ($isPlayer) {
+            $recentGamesQuery->where('player_id', $user->id);
+        }
+
         return Inertia::render('dashboard', [
             'stats' => $statsAction->handle(),
             'stats_sparklines' => $sparklinesAction->handle(),
-            'recent_games' => Game::query()
-                ->with(['court', 'player'])
-                ->latest('played_at')
-                ->limit(15)
-                ->get()
-                ->map(fn (Game $game): array => [
-                    'id' => $game->id,
-                    'uuid' => $game->uuid,
-                    'title' => $game->title,
-                    'status' => $game->status->value,
-                    'played_at' => $game->played_at?->toISOString() ?? '',
-                    'court' => $game->court ? ['name' => $game->court->name] : null,
-                    'player' => $game->player ? ['name' => $game->player->name] : null,
-                ]),
-            'games_per_month' => $gamesPerMonthAction->handle(),
+            'recent_games' => $recentGamesQuery->get()->map(fn (Game $game): array => [
+                'id' => $game->id,
+                'uuid' => $game->uuid,
+                'title' => $game->title,
+                'status' => $game->status->value,
+                'played_at' => $game->played_at?->toISOString() ?? '',
+                'court' => $game->court ? ['name' => $game->court->name] : null,
+                'player' => $game->player ? ['name' => $game->player->name] : null,
+            ]),
+            'games_per_month' => $canSeeVisitorStats ? $gamesPerMonthAction->handle() : [],
             'visitor_stats' => $canSeeVisitorStats ? $visitorStatsAction->handle(90) : [],
-            'player_rankings' => $rankingsAction->handle($user->id),
+            'player_rankings' => $isPlayer ? $rankingsAction->handle($user->id) : [],
             'pathway_eligibility' => $pathwayEligibility,
-            'game_status_distribution' => $statusDistributionAction->handle(),
-            'court_heatmap' => $courtHeatmapAction->handle(),
+            'game_status_distribution' => $canSeeVisitorStats ? $statusDistributionAction->handle() : [],
+            'court_heatmap' => $canSeeVisitorStats ? $courtHeatmapAction->handle() : [],
             'dispute_funnel' => $canSeeVisitorStats ? $disputeFunnelAction->handle() : null,
         ]);
     }

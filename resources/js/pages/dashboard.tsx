@@ -91,8 +91,9 @@ export default function Dashboard({
     const { auth } = usePage().props;
 
     const isAdmin =
-        auth.roles.includes('Administrator') ||
-        auth.roles.includes('SuperAdmin');
+        auth.roles.includes('administrator') ||
+        auth.roles.includes('super-admin');
+    const isPlayer = auth.roles.includes('player');
     const canSeeVisitorStats = visitor_stats.length > 0 && isAdmin;
 
     const rankingEntries = Object.values(player_rankings);
@@ -163,18 +164,24 @@ export default function Dashboard({
 
                     <SectionCards cards={sectionCards} />
 
-                    <div className="px-4 *:data-[slot=card]:shadow-xs lg:px-6">
-                        <GamesPerMonthChart data={games_per_month} />
-                    </div>
+                    {isAdmin && (
+                        <div className="px-4 *:data-[slot=card]:shadow-xs lg:px-6">
+                            <GamesPerMonthChart data={games_per_month} />
+                        </div>
+                    )}
 
-                    <div className="grid gap-4 px-4 *:data-[slot=card]:shadow-xs md:grid-cols-2 lg:px-6">
-                        <GameStatusChart data={game_status_distribution} />
-                        {dispute_funnel && <DisputeFunnelChart data={dispute_funnel} />}
-                    </div>
+                    {isAdmin && (
+                        <div className="grid gap-4 px-4 *:data-[slot=card]:shadow-xs md:grid-cols-2 lg:px-6">
+                            <GameStatusChart data={game_status_distribution} />
+                            {dispute_funnel && <DisputeFunnelChart data={dispute_funnel} />}
+                        </div>
+                    )}
 
-                    <div className="px-4 *:data-[slot=card]:shadow-xs lg:px-6">
-                        <CourtActivityHeatmap data={court_heatmap} />
-                    </div>
+                    {isAdmin && (
+                        <div className="px-4 *:data-[slot=card]:shadow-xs lg:px-6">
+                            <CourtActivityHeatmap data={court_heatmap} />
+                        </div>
+                    )}
 
                     {canSeeVisitorStats && (
                         <div className="px-4 *:data-[slot=card]:shadow-xs lg:px-6">
@@ -182,7 +189,7 @@ export default function Dashboard({
                         </div>
                     )}
 
-                    {(rankingEntries.length > 0 || pathway_eligibility) && (
+                    {isPlayer && (rankingEntries.length > 0 || pathway_eligibility) && (
                         <div className="grid gap-4 px-4 *:data-[slot=card]:shadow-xs md:grid-cols-2 lg:px-6">
                             {rankingEntries.length > 0 && (
                                 <RankingsCard entries={rankingEntries} />
