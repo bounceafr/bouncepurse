@@ -6,8 +6,8 @@ import { PathwayEligibilityCard } from '@/components/dashboard/pathway-eligibili
 import { RankingsCard } from '@/components/dashboard/rankings-card';
 import { RecentGamesCard } from '@/components/dashboard/recent-games-card';
 import {
+    type DailyGameData,
     type GameStats,
-    type MonthlyData,
     type PathwayEligibility,
     type PlayerRankingEntry,
     type RecentGame,
@@ -23,7 +23,7 @@ interface Props {
     stats: GameStats;
     stats_sparklines: SparklineDay[];
     recent_games: RecentGame[];
-    games_per_month: MonthlyData[];
+    games_per_month: DailyGameData[];
     visitor_stats: VisitorStat[];
     player_rankings: Record<string, PlayerRankingEntry>;
     pathway_eligibility: PathwayEligibility | null;

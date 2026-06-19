@@ -16,10 +16,10 @@ export interface RecentGame {
     player: { name: string } | null;
 }
 
-export interface MonthlyData {
-    month: string;
-    games: number;
-    courts: number;
+export interface DailyGameData {
+    date: string;
+    approved: number;
+    pending: number;
 }
 
 export interface SparklineDay {
