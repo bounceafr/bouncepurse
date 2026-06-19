@@ -44,6 +44,23 @@ export interface PlayerRankingEntry {
     losses: number;
 }
 
+export interface GameStatusSlice {
+    status: string;
+    label: string;
+    count: number;
+}
+
+export interface HeatmapCell {
+    dow: number;
+    hour: number;
+    count: number;
+}
+
+export interface FunnelStage {
+    stage: string;
+    count: number;
+}
+
 export interface CriterionDetail {
     required?: number;
     current: number | null;

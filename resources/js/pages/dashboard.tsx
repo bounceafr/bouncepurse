@@ -1,13 +1,19 @@
 import { Head, usePage } from '@inertiajs/react';
 import { CircleAlert, CircleCheck, Clock, MapPin } from 'lucide-react';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
+import { CourtActivityHeatmap } from '@/components/dashboard/court-activity-heatmap';
+import { DisputeFunnelChart } from '@/components/dashboard/dispute-funnel-chart';
+import { GameStatusChart } from '@/components/dashboard/game-status-chart';
 import { GamesPerMonthChart } from '@/components/dashboard/games-per-month-chart';
 import { PathwayEligibilityCard } from '@/components/dashboard/pathway-eligibility-card';
 import { RankingsCard } from '@/components/dashboard/rankings-card';
 import { RecentGamesCard } from '@/components/dashboard/recent-games-card';
 import {
     type DailyGameData,
+    type FunnelStage,
     type GameStats,
+    type GameStatusSlice,
+    type HeatmapCell,
     type PathwayEligibility,
     type PlayerRankingEntry,
     type RecentGame,
@@ -27,6 +33,9 @@ interface Props {
     visitor_stats: VisitorStat[];
     player_rankings: Record<string, PlayerRankingEntry>;
     pathway_eligibility: PathwayEligibility | null;
+    game_status_distribution: GameStatusSlice[];
+    court_heatmap: HeatmapCell[];
+    dispute_funnel: FunnelStage[] | null;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -75,6 +84,9 @@ export default function Dashboard({
     visitor_stats,
     player_rankings,
     pathway_eligibility,
+    game_status_distribution,
+    court_heatmap,
+    dispute_funnel,
 }: Props) {
     const { auth } = usePage().props;
 
@@ -153,6 +165,15 @@ export default function Dashboard({
 
                     <div className="px-4 *:data-[slot=card]:shadow-xs lg:px-6">
                         <GamesPerMonthChart data={games_per_month} />
+                    </div>
+
+                    <div className="grid gap-4 px-4 *:data-[slot=card]:shadow-xs md:grid-cols-2 lg:px-6">
+                        <GameStatusChart data={game_status_distribution} />
+                        {dispute_funnel && <DisputeFunnelChart data={dispute_funnel} />}
+                    </div>
+
+                    <div className="px-4 *:data-[slot=card]:shadow-xs lg:px-6">
+                        <CourtActivityHeatmap data={court_heatmap} />
                     </div>
 
                     {canSeeVisitorStats && (

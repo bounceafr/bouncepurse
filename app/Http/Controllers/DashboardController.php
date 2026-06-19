@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\Admin\GetVisitorStatsAction;
+use App\Actions\Dashboard\GetCourtActivityHeatmapAction;
 use App\Actions\Dashboard\GetDashboardStatsAction;
+use App\Actions\Dashboard\GetDisputeFunnelAction;
 use App\Actions\Dashboard\GetGamesPerMonthAction;
+use App\Actions\Dashboard\GetGameStatusDistributionAction;
 use App\Actions\Dashboard\GetStatsSparklinesAction;
 use App\Actions\Pathway\EvaluatePathwayEligibilityAction;
 use App\Actions\Ranking\GetPlayerRankingsAction;
@@ -28,6 +31,9 @@ final class DashboardController extends Controller
         GetPlayerRankingsAction $rankingsAction,
         GetVisitorStatsAction $visitorStatsAction,
         EvaluatePathwayEligibilityAction $pathwayAction,
+        GetGameStatusDistributionAction $statusDistributionAction,
+        GetCourtActivityHeatmapAction $courtHeatmapAction,
+        GetDisputeFunnelAction $disputeFunnelAction,
     ): Response {
         /** @var User $user */
         $user = $request->user();
@@ -61,6 +67,9 @@ final class DashboardController extends Controller
             'visitor_stats' => $canSeeVisitorStats ? $visitorStatsAction->handle(90) : [],
             'player_rankings' => $rankingsAction->handle($user->id),
             'pathway_eligibility' => $pathwayEligibility,
+            'game_status_distribution' => $statusDistributionAction->handle(),
+            'court_heatmap' => $courtHeatmapAction->handle(),
+            'dispute_funnel' => $canSeeVisitorStats ? $disputeFunnelAction->handle() : null,
         ]);
     }
 }
