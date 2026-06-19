@@ -38,10 +38,12 @@ final class DashboardController extends Controller
         /** @var User $user */
         $user = $request->user();
 
+        $isPlayer = $user->hasRole(Role::Player);
+
         $canSeeVisitorStats = $user->hasRole(Role::Administrator)
             || $user->hasRole(Role::SuperAdmin);
 
-        $pathwayConfig = PathwayConfiguration::query()->latest()->first();
+        $pathwayConfig = $isPlayer ? PathwayConfiguration::query()->latest()->first() : null;
         $pathwayEligibility = $pathwayConfig !== null
             ? $pathwayAction->handle($user->id, $pathwayConfig)
             : null;

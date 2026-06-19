@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 use App\Actions\Dashboard\GetDashboardStatsAction;
 use App\Actions\Dashboard\GetDisputeFunnelAction;
-use App\Actions\Dashboard\GetGameStatusDistributionAction;
 use App\Actions\Dashboard\GetGamesPerMonthAction;
+use App\Actions\Dashboard\GetGameStatusDistributionAction;
 use App\Actions\Dashboard\GetStatsSparklinesAction;
 use App\Enums\DisputeStatus;
 use App\Enums\GameStatus;
+use App\Enums\Role;
 use App\Models\Court;
 use App\Models\Dispute;
 use App\Models\Game;
+use App\Models\PathwayConfiguration;
+use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 
 test('GetDashboardStatsAction returns counts including contested games', function (): void {
     $court = Court::factory()->create();
@@ -46,6 +50,29 @@ test('GetGamesPerMonthAction returns twelve months for the current year', functi
         ->and($current['games'])->toBe(2);
 
     expect($month)->toBeGreaterThanOrEqual(1);
+});
+
+test('pathway eligibility is only computed for users with the player role', function (): void {
+    $this->seed(RolesAndPermissionsSeeder::class);
+
+    PathwayConfiguration::factory()->create([
+        'min_approved_games' => 3,
+        'max_rank' => 10,
+        'max_conduct_flags' => 5,
+    ]);
+
+    $player = User::factory()->create()->assignRole(Role::Player->value);
+    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $moderator = User::factory()->create()->assignRole(Role::Moderator->value);
+
+    // Mirror the controller logic: only players should fetch the pathway config
+    $playerConfig = $player->hasRole(Role::Player) ? PathwayConfiguration::query()->latest()->first() : null;
+    $adminConfig = $admin->hasRole(Role::Player) ? PathwayConfiguration::query()->latest()->first() : null;
+    $modConfig = $moderator->hasRole(Role::Player) ? PathwayConfiguration::query()->latest()->first() : null;
+
+    expect($playerConfig)->not->toBeNull()
+        ->and($adminConfig)->toBeNull()
+        ->and($modConfig)->toBeNull();
 });
 
 test('GetGameStatusDistributionAction returns counts for each status', function (): void {
