@@ -187,7 +187,7 @@ test('scheduled game has status scheduled and null played_at', function (): void
     ]);
 });
 
-test('played_at game has status scheduled awaiting result submission', function (): void {
+test('played_at game has status pending awaiting result submission', function (): void {
     $user = User::factory()->create()->givePermissionTo('view-games');
     $court = Court::factory()->create();
     $this->actingAs($user);
@@ -202,7 +202,7 @@ test('played_at game has status scheduled awaiting result submission', function 
 
     $this->assertDatabaseHas('games', [
         'title' => 'Already Played Game',
-        'status' => GameStatus::Scheduled->value,
+        'status' => GameStatus::Pending->value,
     ]);
 });
 

@@ -3,10 +3,15 @@ import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
 import PasswordController from '@/actions/App/Http/Controllers/Settings/PasswordController';
 import Heading from '@/components/heading';
-import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import {
+    Field,
+    FieldContent,
+    FieldError,
+    FieldGroup,
+    FieldLabel,
+} from '@/components/ui/field';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/user-password';
@@ -57,66 +62,61 @@ export default function Password() {
                                 currentPasswordInput.current?.focus();
                             }
                         }}
-                        className="space-y-6"
                     >
                         {({ errors, processing, recentlySuccessful }) => (
-                            <>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="current_password">
+                            <FieldGroup className="space-y-6">
+                                <Field data-invalid={!!errors.current_password}>
+                                    <FieldLabel htmlFor="current_password">
                                         Current password
-                                    </Label>
+                                    </FieldLabel>
+                                    <FieldContent>
+                                        <Input
+                                            id="current_password"
+                                            ref={currentPasswordInput}
+                                            name="current_password"
+                                            type="password"
+                                            autoComplete="current-password"
+                                            placeholder="Current password"
+                                            aria-invalid={!!errors.current_password}
+                                        />
+                                        <FieldError errors={errors.current_password ? [{ message: errors.current_password }] : undefined} />
+                                    </FieldContent>
+                                </Field>
 
-                                    <Input
-                                        id="current_password"
-                                        ref={currentPasswordInput}
-                                        name="current_password"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="current-password"
-                                        placeholder="Current password"
-                                    />
-
-                                    <InputError
-                                        message={errors.current_password}
-                                    />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password">
+                                <Field data-invalid={!!errors.password}>
+                                    <FieldLabel htmlFor="password">
                                         New password
-                                    </Label>
+                                    </FieldLabel>
+                                    <FieldContent>
+                                        <Input
+                                            id="password"
+                                            ref={passwordInput}
+                                            name="password"
+                                            type="password"
+                                            autoComplete="new-password"
+                                            placeholder="New password"
+                                            aria-invalid={!!errors.password}
+                                        />
+                                        <FieldError errors={errors.password ? [{ message: errors.password }] : undefined} />
+                                    </FieldContent>
+                                </Field>
 
-                                    <Input
-                                        id="password"
-                                        ref={passwordInput}
-                                        name="password"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="new-password"
-                                        placeholder="New password"
-                                    />
-
-                                    <InputError message={errors.password} />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password_confirmation">
+                                <Field data-invalid={!!errors.password_confirmation}>
+                                    <FieldLabel htmlFor="password_confirmation">
                                         Confirm password
-                                    </Label>
-
-                                    <Input
-                                        id="password_confirmation"
-                                        name="password_confirmation"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="new-password"
-                                        placeholder="Confirm password"
-                                    />
-
-                                    <InputError
-                                        message={errors.password_confirmation}
-                                    />
-                                </div>
+                                    </FieldLabel>
+                                    <FieldContent>
+                                        <Input
+                                            id="password_confirmation"
+                                            name="password_confirmation"
+                                            type="password"
+                                            autoComplete="new-password"
+                                            placeholder="Confirm password"
+                                            aria-invalid={!!errors.password_confirmation}
+                                        />
+                                        <FieldError errors={errors.password_confirmation ? [{ message: errors.password_confirmation }] : undefined} />
+                                    </FieldContent>
+                                </Field>
 
                                 <div className="flex items-center gap-4">
                                     <Button
@@ -138,7 +138,7 @@ export default function Password() {
                                         </p>
                                     </Transition>
                                 </div>
-                            </>
+                            </FieldGroup>
                         )}
                     </Form>
                 </div>

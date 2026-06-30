@@ -10,36 +10,46 @@ use App\Models\TeamInvitation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 final readonly class AcceptTeamInvitation
 {
     public function handle(TeamInvitation $invitation, User $user): void
     {
-        if ($invitation->status !== InvitationStatus::Pending) {
-            throw ValidationException::withMessages([
-                'invitation' => 'This invitation is no longer pending.',
-            ]);
-        }
+        /** @var Throwable|null $error */
+        $error = null;
 
-        if ($invitation->isExpired()) {
-            $invitation->update(['status' => InvitationStatus::Expired]);
+        DB::transaction(function () use ($invitation, $user, &$error): void {
+            /** @var TeamInvitation $invitation */
+            $invitation = TeamInvitation::query()->lockForUpdate()->findOrFail($invitation->id);
 
-            throw ValidationException::withMessages([
-                'invitation' => 'This invitation has expired.',
-            ]);
-        }
+            if ($invitation->status !== InvitationStatus::Pending) {
+                $error = ValidationException::withMessages(['invitation' => 'This invitation is no longer pending.']);
 
-        $team = $invitation->team;
+                return;
+            }
 
-        if ($team->hasMember($user)) {
-            throw ValidationException::withMessages([
-                'invitation' => 'You are already a member of this team.',
-            ]);
-        }
+            if ($invitation->isExpired()) {
+                $invitation->update(['status' => InvitationStatus::Expired]);
+                $error = ValidationException::withMessages(['invitation' => 'This invitation has expired.']);
 
-        throw_if($team->isFull(), TeamFullException::class);
+                return;
+            }
 
-        DB::transaction(function () use ($invitation, $team, $user): void {
+            $team = $invitation->team;
+
+            if ($team->hasMember($user)) {
+                $error = ValidationException::withMessages(['invitation' => 'You are already a member of this team.']);
+
+                return;
+            }
+
+            if ($team->isFull()) {
+                $error = new TeamFullException();
+
+                return;
+            }
+
             $invitation->update([
                 'status' => InvitationStatus::Accepted,
                 'accepted_at' => now(),
@@ -47,5 +57,9 @@ final readonly class AcceptTeamInvitation
 
             $team->members()->attach($user->id, ['joined_at' => now()]);
         });
+
+        if ($error !== null) {
+            throw $error;
+        }
     }
 }
