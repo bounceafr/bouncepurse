@@ -17,6 +17,8 @@ export interface SectionCardData {
   trend?: number
   trendLabel: string
   description: string
+  /** Custom formatter for the value (e.g., for currency). */
+  valueFormatter?: (value: number) => string
   /** Gradient background classes for the card (literal strings for Tailwind JIT). */
   cardClassName?: string
   /** Accent classes for the icon chip (literal strings for Tailwind JIT). */
@@ -44,7 +46,7 @@ export const SectionCards = ({ cards }: { cards: SectionCardData[] }) => {
                     {card.label}
                   </CardDescription>
                   <CardTitle className="mt-0.5 text-2xl font-bold tabular-nums @[250px]/card:text-3xl">
-                    {card.value.toLocaleString()}
+                    {card.valueFormatter ? card.valueFormatter(card.value) : card.value.toLocaleString()}
                   </CardTitle>
                 </div>
                 {card.trend !== undefined && (

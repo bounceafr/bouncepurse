@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Admin\Allocation\GetAllocationSummary;
 use App\Actions\Admin\Allocation\ListAllocations;
+use App\Enums\GameFormat;
 use App\Enums\GameStatus;
 use App\Models\Game;
 use App\Models\User;
@@ -40,6 +41,10 @@ final class LedgerController extends Controller
             ]),
             'total_games' => $totalGames,
             'approved_games' => $approvedGames,
+            'game_formats' => array_map(fn (GameFormat $format) => [
+                'value' => $format->value,
+                'label' => $format->label(),
+            ], GameFormat::cases()),
         ]);
     }
 }
