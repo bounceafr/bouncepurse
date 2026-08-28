@@ -1,0 +1,114 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Admin;
+
+use App\Actions\Admin\Game\CompleteUploadAction;
+use App\Actions\Admin\Game\DeleteAction;
+use App\Actions\Admin\Game\InitiateVimeoUploadAction;
+use App\Actions\Admin\Game\ListAction;
+use App\Actions\Admin\Game\StoreAction;
+use App\Actions\Admin\Game\UpdateAction;
+use App\Enums\GameStatus;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\Game\CompleteUploadRequest;
+use App\Http\Requests\Admin\Game\DeleteGameRequest;
+use App\Http\Requests\Admin\Game\StoreGameRequest;
+use App\Http\Requests\Admin\Game\UpdateGameRequest;
+use App\Http\Requests\Admin\Game\UploadGameRequest;
+use App\Models\Court;
+use App\Models\Game;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+final class GameController extends Controller
+{
+    public function index(Request $request, ListAction $action): Response
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $search = $request->string('search')->toString() ?: null;
+        $filter = $request->string('filter')->toString() ?: null;
+
+        return Inertia::render('admin/games/index', [
+            'games' => $action->handle($search, $filter),
+            'filters' => ['search' => $search, 'filter' => $filter],
+            'courts' => Court::query()->select(['id', 'name'])->orderBy('name')->get(),
+            'teams' => $user->teams()->select(['teams.id', 'teams.name'])->get(),
+        ]);
+    }
+
+    public function store(StoreGameRequest $request, StoreAction $action): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $action->handle(array_merge($request->validated(), [
+            'player_id' => $user->id,
+        ]));
+
+        return to_route('admin.games.index')->with('success', 'Game created successfully.');
+    }
+
+    public function show(Request $request, Game $game): Response
+    {
+        $game->load(['court', 'gameResult', 'team']);
+
+        /** @var User $user */
+        $user = $request->user();
+
+        $dispute = $game->disputes()->where('player_id', $user->id)->first();
+        $canDispute = $game->status === GameStatus::Flagged
+            && $game->gameResult?->submitter_id === $user->id
+            && $dispute === null;
+
+        return Inertia::render('admin/games/show', [
+            'game' => $game,
+            'canDispute' => $canDispute,
+            'dispute' => $dispute,
+        ]);
+    }
+
+    public function update(UpdateGameRequest $request, UpdateAction $action, Game $game): RedirectResponse
+    {
+        $action->handle($game, $request->validated());
+
+        return to_route('admin.games.index');
+    }
+
+    public function destroy(DeleteGameRequest $request, DeleteAction $action, Game $game): RedirectResponse
+    {
+        $action->handle($game);
+
+        return back();
+    }
+
+    public function showUpload(Game $game): Response
+    {
+        $game->load(['court', 'gameResult', 'team']);
+
+        return Inertia::render('admin/games/upload', [
+            'game' => $game,
+        ]);
+    }
+
+    public function initiateUpload(UploadGameRequest $request, InitiateVimeoUploadAction $action, Game $game): JsonResponse
+    {
+        /** @var int $fileSize */
+        $fileSize = $request->validated('file_size');
+        $result = $action->handle($game, $fileSize);
+
+        return response()->json($result);
+    }
+
+    public function completeUpload(CompleteUploadRequest $request, CompleteUploadAction $action, Game $game): RedirectResponse
+    {
+        $action->handle($game);
+
+        return to_route('admin.games.index');
+    }
+}

@@ -1,0 +1,74 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Actions\Pathway;
+
+use App\Enums\GameStatus;
+use App\Models\Game;
+use App\Models\GameModeration;
+use App\Models\PathwayConfiguration;
+use App\Models\PlayerRanking;
+use Illuminate\Database\Eloquent\Builder;
+
+final class EvaluatePathwayEligibilityAction
+{
+    /**
+     * @return array{is_eligible: bool, criteria: array{approved_games: array{required: int, current: int, met: bool}, rank: array{required: int, current: ?int, met: bool}, conduct_flags: array{limit: int, current: int, met: bool}}}
+     */
+    public function handle(int $playerId, PathwayConfiguration $config): array
+    {
+        $approvedGames = Game::query()->withoutGlobalScopes()
+            ->where('player_id', $playerId)
+            ->where('status', GameStatus::Approved)
+            ->count();
+
+        $bestRank = $this->getBestRank($playerId);
+
+        $conductFlags = GameModeration::query()
+            ->whereHas('game', fn (Builder $q) => $q->withoutGlobalScopes()->where('player_id', $playerId))
+            ->where('status', GameStatus::Flagged)
+            ->count();
+
+        $gamesMet = $approvedGames >= $config->min_approved_games;
+        $rankMet = $bestRank !== null && $bestRank <= $config->max_rank;
+        $conductMet = $conductFlags <= $config->max_conduct_flags;
+
+        return [
+            'is_eligible' => $gamesMet && $rankMet && $conductMet,
+            'criteria' => [
+                'approved_games' => [
+                    'required' => $config->min_approved_games,
+                    'current' => $approvedGames,
+                    'met' => $gamesMet,
+                ],
+                'rank' => [
+                    'required' => $config->max_rank,
+                    'current' => $bestRank,
+                    'met' => $rankMet,
+                ],
+                'conduct_flags' => [
+                    'limit' => $config->max_conduct_flags,
+                    'current' => $conductFlags,
+                    'met' => $conductMet,
+                ],
+            ],
+        ];
+    }
+
+    private function getBestRank(int $playerId): ?int
+    {
+        $bestRow = PlayerRanking::query()
+            ->where('player_id', $playerId)
+            ->where('calculated_at', function (\Illuminate\Database\Query\Builder $query): void {
+                $query->selectRaw('MAX(pr2.calculated_at)')
+                    ->from('player_rankings as pr2')
+                    ->whereColumn('pr2.player_id', 'player_rankings.player_id')
+                    ->whereColumn('pr2.format', 'player_rankings.format');
+            })
+            ->orderBy('rank')
+            ->first();
+
+        return $bestRow instanceof PlayerRanking ? $bestRow->rank : null;
+    }
+}

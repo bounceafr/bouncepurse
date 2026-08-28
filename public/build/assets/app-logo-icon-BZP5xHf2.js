@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-C1zBiY0X.js";var t=e();function n(e){return(0,t.jsx)(`img`,{src:`/logo2.png`,alt:`Bounce`,...e})}export{n as t};
