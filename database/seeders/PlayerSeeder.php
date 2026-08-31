@@ -9,25 +9,84 @@ use App\Models\Country;
 use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 
 final class PlayerSeeder extends Seeder
 {
     public function run(): void
     {
-        $countryIds = Country::query()->inRandomOrder()->limit(10)->pluck('id');
+        /** @var Collection<int, int> $countryIds */
+        $countryIds = Country::query()->pluck('id');
 
-        for ($i = 0; $i < 30; $i++) {
-            $user = User::factory()->create()->assignRole(Role::Player->value);
+        $adultPlayers = [
+            ['name' => 'Demo Player', 'email' => 'player@bouncepurse.test', 'password' => DemoCredentials::PASSWORD],
+            ['name' => 'Jordan Blake', 'email' => 'jordan@bouncepurse.test', 'password' => DemoCredentials::PASSWORD],
+            ['name' => 'Maya Okonkwo', 'email' => 'maya@bouncepurse.test', 'password' => DemoCredentials::PASSWORD],
+            ['name' => 'Luis Fernandez', 'email' => 'luis@bouncepurse.test', 'password' => DemoCredentials::PASSWORD],
+        ];
 
-            Profile::query()->create([
-                'player_id' => $user->id,
-                'country_id' => $countryIds->random(),
-                'date_of_birth' => fake()->dateTimeBetween('-45 years', '-18 years')->format('Y-m-d'),
-                'position' => fake()->randomElement(['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center']),
-                'city' => fake()->city(),
-                'phone_number' => fake()->phoneNumber(),
-                'bio' => fake()->paragraph(),
-            ]);
+        foreach ($adultPlayers as $data) {
+            $this->createPlayer($data, $countryIds, fake()->dateTimeBetween('-35 years', '-18 years')->format('Y-m-d'));
         }
+
+        $minorPlayers = [
+            ['name' => 'Alex Rivera', 'email' => 'minor@bouncepurse.test', 'password' => DemoCredentials::PASSWORD],
+            ['name' => 'Sam Chen', 'email' => 'minor2@bouncepurse.test', 'password' => DemoCredentials::PASSWORD],
+        ];
+
+        foreach ($minorPlayers as $data) {
+            $this->createPlayer($data, $countryIds, fake()->dateTimeBetween('-17 years', '-14 years')->format('Y-m-d'));
+        }
+
+        for ($i = 0; $i < 24; $i++) {
+            $this->createPlayer(
+                ['name' => fake()->name(), 'email' => fake()->unique()->safeEmail()],
+                $countryIds,
+                fake()->dateTimeBetween('-40 years', '-18 years')->format('Y-m-d'),
+            );
+        }
+
+        for ($i = 0; $i < 2; $i++) {
+            $this->createPlayer(
+                ['name' => fake()->name(), 'email' => fake()->unique()->safeEmail()],
+                $countryIds,
+                fake()->dateTimeBetween('-17 years', '-13 years')->format('Y-m-d'),
+            );
+        }
+
+        $admin = User::query()->role(Role::Administrator->value)->first();
+
+        $deactivated = $this->createPlayer(
+            [
+                'name' => 'Deactivated Player',
+                'email' => 'deactivated@bouncepurse.test',
+                'password' => DemoCredentials::PASSWORD,
+            ],
+            $countryIds,
+            fake()->dateTimeBetween('-30 years', '-18 years')->format('Y-m-d'),
+        );
+
+        $deactivated->update([
+            'deactivated_at' => now(),
+            'deactivated_by' => $admin?->id,
+            'deactivation_reason' => 'Sample account deactivated for local development.',
+        ]);
+    }
+
+    /**
+     * @param  array{name: string, email: string, password?: string}  $data
+     * @param  Collection<int, int>  $countryIds
+     */
+    private function createPlayer(array $data, Collection $countryIds, string $dateOfBirth): User
+    {
+        $user = User::factory()->create($data)->assignRole(Role::Player->value);
+
+        Profile::factory()->create([
+            'player_id' => $user->id,
+            'country_id' => $countryIds->random(),
+            'date_of_birth' => $dateOfBirth,
+        ]);
+
+        return $user;
     }
 }

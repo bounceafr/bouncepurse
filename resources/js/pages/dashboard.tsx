@@ -1,5 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
+import { motion } from 'framer-motion';
 import {
     Activity,
     CheckCircle2,
@@ -20,6 +21,7 @@ import {
     YAxis,
 } from 'recharts';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
+import { sportEase } from '@/components/motion';
 import { SectionCards } from '@/components/section-cards';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -130,10 +132,10 @@ const gamesChartConfig = {
     },
 } satisfies ChartConfig;
 
-function statusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+function statusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' | 'success' {
     switch (status) {
         case 'approved':
-            return 'default';
+            return 'success';
         case 'pending':
             return 'secondary';
         case 'rejected':
@@ -253,22 +255,30 @@ export default function Dashboard({
 
             <div className="@container/main flex flex-1 flex-col gap-2">
                 <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                    <div className="px-4 lg:px-6">
-                        <h1 className="text-2xl font-semibold tracking-tight">
-                            {getGreeting()}, {auth.user.name}
+                    <motion.div
+                        className="px-4 lg:px-6"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.45, ease: sportEase }}
+                    >
+                        <h1 className="font-heading text-3xl font-bold tracking-tight">
+                            {getGreeting()},{' '}
+                            <span className="text-primary">{auth.user.name}</span>
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {getFormattedDate()} &middot; Here&rsquo;s what&rsquo;s happening across your games.
                         </p>
-                    </div>
+                    </motion.div>
 
                     <SectionCards cards={sectionCards} />
 
-                    <div className="grid gap-4 px-4 lg:px-6 lg:grid-cols-2 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs">
-                        <Card className="@container/card">
+                    <div className="grid gap-4 px-4 lg:grid-cols-2 lg:px-6 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs dark:*:data-[slot=card]:from-primary/12">
+                        <Card className="sport-card-hover @container/card">
                             <CardHeader>
                                 <div className="flex items-center gap-2">
-                                    <Activity className="size-4" />
+                                    <span className="sport-icon-well">
+                                        <Activity className="size-4" />
+                                    </span>
                                     <CardTitle>Games per Month</CardTitle>
                                 </div>
                                 <CardDescription>
@@ -298,19 +308,28 @@ export default function Dashboard({
                                         <Bar
                                             dataKey="games"
                                             fill="var(--color-games)"
-                                            radius={4}
+                                            radius={[6, 6, 0, 0]}
+                                            animationDuration={800}
+                                            animationEasing="ease-out"
                                         />
                                     </BarChart>
                                 </ChartContainer>
                             </CardContent>
                         </Card>
 
-                        <Card className="@container/card">
+                        <Card className="sport-card-hover @container/card">
                             <CardHeader>
-                                <CardTitle>Recent Games</CardTitle>
-                                <CardDescription>
-                                    {recent_games.length} most recent
-                                </CardDescription>
+                                <div className="flex items-center gap-2">
+                                    <span className="sport-icon-well">
+                                        <Gamepad2 className="size-4" />
+                                    </span>
+                                    <div>
+                                        <CardTitle>Recent Games</CardTitle>
+                                        <CardDescription>
+                                            {recent_games.length} most recent
+                                        </CardDescription>
+                                    </div>
+                                </div>
                             </CardHeader>
                             <CardContent className="pt-0">
                                 {recent_games.length === 0 ? (
@@ -328,12 +347,14 @@ export default function Dashboard({
                     </div>
 
                     {(rankingEntries.length > 0 || pathway_eligibility) && (
-                        <div className="grid gap-4 px-4 lg:px-6 md:grid-cols-2 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs">
+                        <div className="grid gap-4 px-4 md:grid-cols-2 lg:px-6 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs dark:*:data-[slot=card]:from-primary/12">
                             {rankingEntries.length > 0 && (
-                                <Card className="@container/card">
+                                <Card className="sport-card-hover @container/card">
                                     <CardHeader>
                                         <div className="flex items-center gap-2">
-                                            <Trophy className="size-4" />
+                                            <span className="sport-icon-well">
+                                                <Trophy className="size-4" />
+                                            </span>
                                             <CardTitle>My Rankings</CardTitle>
                                         </div>
                                         <CardDescription>
@@ -375,10 +396,12 @@ export default function Dashboard({
                             )}
 
                             {pathway_eligibility && (
-                                <Card className="@container/card">
+                                <Card className="sport-card-hover @container/card">
                                     <CardHeader>
                                         <div className="flex items-center gap-2">
-                                            <Route className="size-4" />
+                                            <span className="sport-icon-well">
+                                                <Route className="size-4" />
+                                            </span>
                                             <CardTitle>Pathway Eligibility</CardTitle>
                                             <Badge
                                                 variant={

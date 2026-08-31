@@ -1,3 +1,4 @@
+import { redirect } from '@/actions/App/Http/Controllers/Auth/SocialAuthController';
 import { Button } from '@/components/ui/button';
 
 function GoogleIcon() {
@@ -46,14 +47,17 @@ export default function AuthGoogleButton({ action = 'sign-in' }: Props) {
 
             <div className="flex items-center justify-center">
                 <Button
-                    type="button"
+                    asChild
                     variant="outline"
                     size="icon-lg"
                     className="size-12 rounded-xl border-border/80 bg-white shadow-sm hover:bg-white/90"
-                    aria-label={`${action === 'sign-up' ? 'Sign up' : 'Sign in'} with Google`}
-                    disabled
                 >
-                    <GoogleIcon />
+                    <a
+                        href={redirect.url()}
+                        aria-label={`${action === 'sign-up' ? 'Sign up' : 'Sign in'} with Google`}
+                    >
+                        <GoogleIcon />
+                    </a>
                 </Button>
             </div>
         </div>

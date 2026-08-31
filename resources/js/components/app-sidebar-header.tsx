@@ -32,9 +32,9 @@ export function AppSidebarHeader({
     }, [searchOpen]);
 
     return (
-        <header className="flex h-16 w-full shrink-0 items-center justify-between gap-2 border-b border-sidebar-border/50 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
+        <header className="flex h-16 w-full shrink-0 items-center justify-between gap-2 border-b border-neutral-200/80 bg-white/70 px-6 backdrop-blur-sm transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
             <div className="flex items-center gap-2">
-                <SidebarTrigger className="-ml-1" />
+                <SidebarTrigger className="-ml-1 hover:bg-primary/10 hover:text-primary" />
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
             <div className="ml-auto flex items-center gap-1">
@@ -43,7 +43,7 @@ export function AppSidebarHeader({
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9"
+                            className="h-9 w-9 hover:bg-primary/10 hover:text-primary"
                             aria-label="Search"
                         >
                             <Search className="size-5 opacity-80" />
@@ -72,7 +72,7 @@ export function AppSidebarHeader({
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9"
+                            className="h-9 w-9 hover:bg-primary/10 hover:text-primary"
                             aria-label="Notifications"
                         >
                             <Bell className="size-5 opacity-80" />
@@ -88,10 +88,10 @@ export function AppSidebarHeader({
                     <DropdownMenuTrigger asChild>
                         <Button
                             variant="ghost"
-                            className="size-10 rounded-full p-1"
+                            className="size-10 rounded-full p-1 ring-2 ring-transparent transition-all hover:ring-primary/30"
                             aria-label="User menu"
                         >
-                            <Avatar className="size-8 overflow-hidden rounded-full">
+                            <Avatar className="size-8 overflow-hidden rounded-full ring-2 ring-primary/20">
                                 <AvatarImage
                                     src={auth.user.avatar}
                                     alt={auth.user.name}

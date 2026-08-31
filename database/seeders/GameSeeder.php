@@ -7,6 +7,8 @@ namespace Database\Seeders;
 use App\Actions\Admin\Allocation\CreateAllocation;
 use App\Actions\Pathway\RecalculateAllPathwayEligibilityAction;
 use App\Actions\Ranking\CalculateRankingsAction;
+use App\Enums\GameFormat;
+use App\Enums\GameParticipant;
 use App\Enums\GameStatus;
 use App\Enums\ResultStatus;
 use App\Enums\Role;
@@ -15,6 +17,7 @@ use App\Models\Game;
 use App\Models\GameModeration;
 use App\Models\PathwayConfiguration;
 use App\Models\RankingConfiguration;
+use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -34,21 +37,24 @@ final class GameSeeder extends Seeder
         $courts = Court::query()->get();
         $config = RankingConfiguration::query()->latest('id')->firstOrFail();
         $createAllocation = resolve(CreateAllocation::class);
-        $formats = ['1v1', '3v3', '5v5'];
+        $formats = [
+            GameFormat::ONE_ON_ONE->value,
+            GameFormat::THREE_ON_THREE->value,
+            GameFormat::FIVE_ON_FIVE->value,
+        ];
 
         // Pick 5 players to be pathway-eligible (they'll get concentrated approved games)
         $pathwayPlayers = $players->random(min(5, $players->count()));
-        $players->diff($pathwayPlayers);
 
         // Step A — Approved games (60 general + 50 pathway-targeted)
         /** @var Collection<int, Game> $rejectedGames */
         $rejectedGames = collect();
 
-        // A1 — Give each pathway player 10 approved games across formats
+        // A1 — Give each pathway player 12 approved games across formats (enough to meet eligibility)
         foreach ($pathwayPlayers as $pathwayPlayer) {
             foreach ($formats as $format) {
-                for ($i = 0; $i < 2; $i++) {
-                    $playedAt = $i === 0
+                for ($i = 0; $i < 4; $i++) {
+                    $playedAt = $i < 2
                         ? fake()->dateTimeBetween('-30 days', 'now')
                         : fake()->dateTimeBetween('-1 year', '-31 days');
 
@@ -56,7 +62,7 @@ final class GameSeeder extends Seeder
                         'player_id' => $pathwayPlayer->id,
                         'format' => $format,
                         'status' => GameStatus::Approved->value,
-                        'result' => fake()->randomElement([ResultStatus::WIN->value, ResultStatus::LOST->value]),
+                        'result' => $i === 3 ? ResultStatus::LOST->value : ResultStatus::WIN->value,
                         'court_id' => random_int(1, 10) > 3 ? $courts->random()->id : null,
                         'played_at' => $playedAt,
                     ]);
@@ -158,6 +164,47 @@ final class GameSeeder extends Seeder
                     'played_at' => fake()->dateTimeBetween('-1 year', 'now'),
                 ]);
             }
+        }
+
+        // Step D2 — Scheduled upcoming games
+        foreach ($formats as $format) {
+            for ($i = 0; $i < 2; $i++) {
+                Game::factory()->scheduled()->create([
+                    'player_id' => $players->random()->id,
+                    'format' => $format,
+                    'court_id' => $courts->random()->id,
+                ]);
+            }
+        }
+
+        // Step D3 — Team games (3v3 / 5v5 only)
+        $teams = Team::query()->get();
+        $teamFormats = [
+            GameFormat::THREE_ON_THREE->value,
+            GameFormat::FIVE_ON_FIVE->value,
+        ];
+
+        foreach ($teams as $index => $team) {
+            $game = Game::factory()->create([
+                'participant' => GameParticipant::TEAM,
+                'team_id' => $team->id,
+                'player_id' => $team->user_id,
+                'format' => $teamFormats[$index % count($teamFormats)],
+                'status' => GameStatus::Approved->value,
+                'result' => fake()->randomElement([ResultStatus::WIN->value, ResultStatus::LOST->value]),
+                'court_id' => $courts->random()->id,
+                'played_at' => fake()->dateTimeBetween('-6 months', 'now'),
+            ]);
+
+            GameModeration::query()->create([
+                'game_id' => $game->id,
+                'moderator_id' => $moderators->random()->id,
+                'status' => GameStatus::Approved->value,
+                'reason' => fake()->sentence(),
+                'is_override' => false,
+            ]);
+
+            $createAllocation->handle($game);
         }
 
         // Step E — Override scenario (3 rejected games get approved via override)

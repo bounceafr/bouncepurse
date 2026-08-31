@@ -52,6 +52,7 @@ final class CourtSeeder extends Seeder
             $factory->create([
                 'country_id' => $country->id,
                 'city' => $data['city'],
+                'court_code' => Court::generateCourtCode($country, $data['city']),
                 'created_by' => $admin->id,
             ]);
         }

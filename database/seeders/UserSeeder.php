@@ -18,7 +18,10 @@ final class UserSeeder extends Seeder
         ];
 
         foreach ($administrators as $data) {
-            User::factory()->create($data)->assignRole(Role::Administrator->value);
+            User::factory()->create([
+                ...$data,
+                'password' => DemoCredentials::PASSWORD,
+            ])->assignRole(Role::Administrator->value);
         }
 
         $moderators = [
@@ -28,7 +31,10 @@ final class UserSeeder extends Seeder
         ];
 
         foreach ($moderators as $data) {
-            User::factory()->create($data)->assignRole(Role::Moderator->value);
+            User::factory()->create([
+                ...$data,
+                'password' => DemoCredentials::PASSWORD,
+            ])->assignRole(Role::Moderator->value);
         }
     }
 }

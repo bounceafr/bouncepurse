@@ -1,6 +1,7 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import { EyeIcon, EyeOffIcon, LockIcon, MailIcon } from 'lucide-react';
 import { useState } from 'react';
+import AuthGoogleButton from '@/components/auth-google-button';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ export default function Login({
     canRegister,
 }: Props) {
     const [showPassword, setShowPassword] = useState(false);
+    const { errors } = usePage().props;
 
     return (
         <AuthGlassLayout
@@ -36,6 +38,11 @@ export default function Login({
                     {status}
                 </div>
             )}
+
+            <InputError
+                message={errors.social}
+                className="mb-4 text-center"
+            />
 
             <Form
                 {...store.form()}
@@ -144,6 +151,8 @@ export default function Login({
                     </>
                 )}
             </Form>
+
+            <AuthGoogleButton action="sign-in" />
         </AuthGlassLayout>
     );
 }

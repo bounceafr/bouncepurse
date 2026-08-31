@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import AppLogoIcon from '@/components/app-logo-icon';
+import { sportEase } from '@/components/motion';
 import type { AuthLayoutProps } from '@/types';
 
 export default function AuthGlassLayout({
@@ -42,24 +44,29 @@ export default function AuthGlassLayout({
                 </video>
             )}
 
-            <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
+            <div
+                className="absolute inset-0 bg-gradient-to-br from-black/50 via-[#f86808]/25 to-black/60"
+                aria-hidden="true"
+            />
 
             <div className="relative z-10 flex min-h-dvh items-center justify-center p-4 sm:p-6">
                 <motion.div
-                    className="w-full max-w-[420px] rounded-[28px] border border-white/30 bg-white/75 px-8 py-10 shadow-[0_24px_64px_rgba(0,0,0,0.18)] backdrop-blur-2xl backdrop-saturate-150 sm:px-10"
+                    className="w-full max-w-[420px] rounded-[28px] border border-white/40 bg-white/80 px-8 py-10 shadow-[0_24px_64px_rgba(248,104,8,0.15)] backdrop-blur-2xl backdrop-saturate-150 sm:px-10"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    transition={{ duration: 0.5, ease: sportEase }}
                 >
                     <div className="flex flex-col items-center gap-6 text-center">
-                        <img
-                            src="/bounce_logo.png"
-                            alt="Bounce"
-                            className="h-16 w-auto"
-                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.1, ease: sportEase }}
+                        >
+                            <AppLogoIcon className="h-16 w-auto" />
+                        </motion.div>
 
                         <div className="flex flex-col gap-2">
-                            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
                                 {title}
                             </h1>
                             {description && (
@@ -70,7 +77,9 @@ export default function AuthGlassLayout({
                         </div>
                     </div>
 
-                    <div className="mt-8">{children}</div>
+                    <div className="mt-8 [&_button[type=submit]]:sport-glow">
+                        {children}
+                    </div>
                 </motion.div>
             </div>
         </div>

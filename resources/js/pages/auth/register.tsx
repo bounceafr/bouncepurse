@@ -7,6 +7,7 @@ import {
     UserIcon,
 } from 'lucide-react';
 import { useState } from 'react';
+import AuthGoogleButton from '@/components/auth-google-button';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -189,6 +190,8 @@ export default function Register({ email = '' }: { email?: string }) {
                     </>
                 )}
             </Form>
+
+            <AuthGoogleButton action="sign-up" />
         </AuthGlassLayout>
     );
 }

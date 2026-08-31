@@ -6,6 +6,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\Permission;
 use App\Enums\Role;
+use App\Support\VersionedAsset;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -48,6 +49,9 @@ final class HandleInertiaRequests extends Middleware
                 'permissions' => $request->user()?->hasRole(Role::SuperAdmin)
                     ? Permission::values()
                     : ($request->user()?->getAllPermissions()->pluck('name') ?? collect()),
+            ],
+            'assets' => [
+                'logo' => VersionedAsset::url('bounce_logo.png'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

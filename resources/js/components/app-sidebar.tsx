@@ -170,11 +170,19 @@ export function AppSidebar() {
     ];
 
     return (
-        <Sidebar collapsible="offcanvas" variant="sidebar">
-            <SidebarHeader>
+        <Sidebar
+            collapsible="offcanvas"
+            variant="sidebar"
+            className="border-r border-neutral-200 !bg-white dark:!bg-white"
+        >
+            <SidebarHeader className="border-b border-neutral-200 px-3 py-4">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
+                        <SidebarMenuButton
+                            size="lg"
+                            className="h-14 hover:bg-transparent"
+                            asChild
+                        >
                             <Link href={dashboard()} prefetch>
                                 <AppLogo />
                             </Link>
