@@ -174,11 +174,7 @@ export default function EligiblePlayers({ candidates, filters }: Props) {
                         />
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                        <Button
-                            type="submit"
-                            size="sm"
-                            className="shadow-none"
-                        >
+                        <Button type="submit" size="sm" className="shadow-none">
                             Search
                         </Button>
                         {filters.search ? (

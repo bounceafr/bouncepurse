@@ -512,7 +512,6 @@ export default function Profile({
                         </Form>
                     </div>
                 )}
-
             </SettingsLayout>
         </AppLayout>
     );

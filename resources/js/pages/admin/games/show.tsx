@@ -4,12 +4,12 @@ import GameController from '@/actions/App/Http/Controllers/Admin/GameController'
 import { store as storeResult } from '@/actions/App/Http/Controllers/Admin/GameResultController';
 import DisputeController from '@/actions/App/Http/Controllers/DisputeController';
 import InputError from '@/components/input-error';
+import { ListPageShell } from '@/components/list-page-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ListPageShell } from '@/components/list-page-shell';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
@@ -364,7 +364,9 @@ export default function GameShow({
                                                 required
                                                 className="flex w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:aria-invalid:ring-destructive/40"
                                             />
-                                            <InputError message={errors.reason} />
+                                            <InputError
+                                                message={errors.reason}
+                                            />
                                         </div>
 
                                         <Button
@@ -396,7 +398,8 @@ export default function GameShow({
                                 <span
                                     className={cn(
                                         'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white capitalize',
-                                        disputeStatusColors[dispute.status] ?? 'bg-gray-400',
+                                        disputeStatusColors[dispute.status] ??
+                                            'bg-gray-400',
                                     )}
                                 >
                                     {dispute.status}
@@ -405,7 +408,9 @@ export default function GameShow({
                             <p className="text-sm">{dispute.reason}</p>
                             <p className="text-xs text-muted-foreground">
                                 Submitted{' '}
-                                {new Date(dispute.created_at).toLocaleDateString()}
+                                {new Date(
+                                    dispute.created_at,
+                                ).toLocaleDateString()}
                             </p>
                         </CardContent>
                     </Card>

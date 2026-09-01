@@ -88,7 +88,9 @@ export default function Register({ email = '' }: { email?: string }) {
                                     />
                                     <Input
                                         id="password"
-                                        type={showPassword ? 'text' : 'password'}
+                                        type={
+                                            showPassword ? 'text' : 'password'
+                                        }
                                         required
                                         tabIndex={3}
                                         autoComplete="new-password"
@@ -177,7 +179,7 @@ export default function Register({ email = '' }: { email?: string }) {
                             </Button>
                         </div>
 
-                        <div className="text-center text-sm font-bold italic text-foreground">
+                        <div className="text-center text-sm font-bold text-foreground italic">
                             Already have an account?{' '}
                             <TextLink
                                 href={login()}

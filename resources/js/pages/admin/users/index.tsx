@@ -284,9 +284,7 @@ export default function UsersIndex({
     const isInitialRender = useRef(true);
 
     const activeTab =
-        filters.status === 'removed'
-            ? 'removed'
-            : (filters.role ?? 'all');
+        filters.status === 'removed' ? 'removed' : (filters.role ?? 'all');
 
     useEffect(() => {
         if (isInitialRender.current) {
@@ -314,8 +312,7 @@ export default function UsersIndex({
             index().url,
             {
                 search: search || undefined,
-                role:
-                    tab !== 'all' && tab !== 'removed' ? tab : undefined,
+                role: tab !== 'all' && tab !== 'removed' ? tab : undefined,
                 status: tab === 'removed' ? 'removed' : undefined,
             },
             { preserveState: true, replace: true },
@@ -537,9 +534,10 @@ export default function UsersIndex({
                                 className="rounded-none px-4 py-2.5 text-muted-foreground data-active:text-foreground data-active:after:bg-primary"
                             >
                                 {role.label} (
-                                {String(
-                                    counts.roles[role.value] ?? 0,
-                                ).padStart(2, '0')}
+                                {String(counts.roles[role.value] ?? 0).padStart(
+                                    2,
+                                    '0',
+                                )}
                                 )
                             </TabsTrigger>
                         ))}
@@ -547,8 +545,7 @@ export default function UsersIndex({
                             value="removed"
                             className="rounded-none px-4 py-2.5 text-muted-foreground data-active:text-foreground data-active:after:bg-primary"
                         >
-                            Removed (
-                            {String(counts.removed).padStart(2, '0')})
+                            Removed ({String(counts.removed).padStart(2, '0')})
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>

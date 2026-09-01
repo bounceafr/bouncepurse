@@ -235,7 +235,6 @@ function EditGameFormFields({
                 </Select>
                 <InputError message={errors.result} />
             </div>
-
         </>
     );
 }
@@ -455,7 +454,6 @@ function CreateGameFormFields({
                         </Select>
                         <InputError message={errors.result} />
                     </div>
-
                 </>
             ) : (
                 <div className="grid gap-2">

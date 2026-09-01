@@ -40,7 +40,9 @@ export function usePrefersReducedMotion(): boolean {
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
     useEffect(() => {
-        const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const mediaQuery = window.matchMedia(
+            '(prefers-reduced-motion: reduce)',
+        );
         const updatePreference = () =>
             setPrefersReducedMotion(mediaQuery.matches);
 
@@ -55,11 +57,7 @@ export function usePrefersReducedMotion(): boolean {
 
 type MotionDivProps = HTMLMotionProps<'div'>;
 
-export function PageEnter({
-    children,
-    className,
-    ...props
-}: MotionDivProps) {
+export function PageEnter({ children, className, ...props }: MotionDivProps) {
     const prefersReducedMotion = usePrefersReducedMotion();
 
     if (prefersReducedMotion) {
@@ -112,11 +110,7 @@ export function StaggerChildren({
     );
 }
 
-export function StaggerItem({
-    children,
-    className,
-    ...props
-}: MotionDivProps) {
+export function StaggerItem({ children, className, ...props }: MotionDivProps) {
     const prefersReducedMotion = usePrefersReducedMotion();
 
     if (prefersReducedMotion) {
@@ -128,7 +122,11 @@ export function StaggerItem({
     }
 
     return (
-        <motion.div className={className} variants={staggerItemVariants} {...props}>
+        <motion.div
+            className={className}
+            variants={staggerItemVariants}
+            {...props}
+        >
             {children}
         </motion.div>
     );

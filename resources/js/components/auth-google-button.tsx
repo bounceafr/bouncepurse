@@ -35,8 +35,7 @@ type Props = {
 };
 
 export default function AuthGoogleButton({ action = 'sign-in' }: Props) {
-    const label =
-        action === 'sign-up' ? 'Or sign up with' : 'Or sign in with';
+    const label = action === 'sign-up' ? 'Or sign up with' : 'Or sign in with';
 
     return (
         <div className="mt-6 flex flex-col gap-5">

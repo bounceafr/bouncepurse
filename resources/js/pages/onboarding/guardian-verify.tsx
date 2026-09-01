@@ -15,8 +15,7 @@ type Guardian = {
 export default function GuardianVerify({ guardian }: { guardian: Guardian }) {
     const { props } = usePage();
     const status = (props as Record<string, unknown>).status as
-        | string
-        | undefined;
+        string | undefined;
 
     const isVerified = guardian.is_verified || status === 'guardian-verified';
 

@@ -1,6 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { ShieldBan, ShieldCheck } from 'lucide-react';
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
@@ -42,19 +42,11 @@ export default function TwoFactor({
         fetchRecoveryCodes,
         errors,
     } = useTwoFactorAuth();
-    const [showSetupModal, setShowSetupModal] = useState<boolean>(false);
-    const [isPasswordConfirmed, setIsPasswordConfirmed] =
-        useState(passwordConfirmed);
-
-    useEffect(() => {
-        setIsPasswordConfirmed(passwordConfirmed);
-    }, [passwordConfirmed]);
-
-    useEffect(() => {
-        if (confirmPassword && !isPasswordConfirmed) {
-            setShowSetupModal(true);
-        }
-    }, [confirmPassword, isPasswordConfirmed]);
+    const [showSetupModal, setShowSetupModal] = useState(
+        confirmPassword && !passwordConfirmed,
+    );
+    const [passwordWasConfirmed, setPasswordWasConfirmed] = useState(false);
+    const isPasswordConfirmed = passwordConfirmed || passwordWasConfirmed;
 
     const handleEnableClick = () => {
         setShowSetupModal(true);
@@ -146,7 +138,7 @@ export default function TwoFactor({
                         twoFactorEnabled={twoFactorEnabled}
                         confirmPassword={confirmPassword}
                         passwordConfirmed={isPasswordConfirmed}
-                        onPasswordConfirmed={() => setIsPasswordConfirmed(true)}
+                        onPasswordConfirmed={() => setPasswordWasConfirmed(true)}
                         qrCodeSvg={qrCodeSvg}
                         manualSetupKey={manualSetupKey}
                         clearSetupData={clearSetupData}
