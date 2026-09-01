@@ -1,5 +1,6 @@
-import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings, Users } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { LogOut, Settings, UserCog, Users } from 'lucide-react';
+import { index as usersIndex } from '@/actions/App/Http/Controllers/Admin/UserController';
 import { show as teamShow } from '@/actions/App/Http/Controllers/Team/TeamController';
 import {
     DropdownMenuGroup,
@@ -19,6 +20,13 @@ type Props = {
 
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
+    const { auth } = usePage().props;
+    const permissions = Array.isArray(auth.permissions)
+        ? auth.permissions
+        : Object.values(auth.permissions ?? {});
+    const canManageUsers =
+        permissions.includes('manage-users') ||
+        permissions.includes('view-users');
 
     const handleLogout = () => {
         cleanup();
@@ -45,9 +53,19 @@ export function UserMenuContent({ user }: Props) {
                         Settings
                     </Link>
                 </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+                {canManageUsers && (
+                    <DropdownMenuItem asChild>
+                        <Link
+                            className="block w-full cursor-pointer"
+                            href={usersIndex().url}
+                            prefetch
+                            onClick={cleanup}
+                        >
+                            <UserCog className="mr-2" />
+                            Users
+                        </Link>
+                    </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"

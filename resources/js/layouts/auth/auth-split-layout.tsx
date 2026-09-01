@@ -54,7 +54,7 @@ export default function AuthSplitLayout({
                     alt="Youth playing basketball on an outdoor court"
                     className="absolute inset-0 h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-linear-to-r from-black/60 via-black/40 to-black/70" />
+                <div className="absolute inset-0 bg-linear-to-r from-black/60 via-[#f86808]/20 to-black/70" />
                 <div className="absolute inset-0 flex flex-col justify-end p-10 pb-12">
                     <div className="relative h-36 overflow-hidden">
                         <AnimatePresence initial={false} mode="wait">
@@ -81,7 +81,7 @@ export default function AuthSplitLayout({
                                 key={i}
                                 type="button"
                                 onClick={() => setSlideIndex(i)}
-                                className={`rounded-full transition-all duration-300 ${i === slideIndex ? 'h-1 w-6 bg-chart-1' : 'h-1.5 w-1.5 bg-white/30 hover:bg-white/50'}`}
+                                className={`rounded-full transition-all duration-300 ${i === slideIndex ? 'h-1 w-6 bg-primary' : 'h-1.5 w-1.5 bg-white/30 hover:bg-white/50'}`}
                                 aria-label={`Go to slide ${i + 1}`}
                             />
                         ))}
@@ -110,7 +110,7 @@ export default function AuthSplitLayout({
                         <AppLogoIcon className="h-9 w-auto" />
                     </motion.div>
                     <motion.div
-                        className="rounded-xl border border-border bg-card px-6 py-8 shadow-sm sm:px-8 sm:py-10"
+                        className="rounded-xl border border-primary/10 bg-card px-6 py-8 shadow-md shadow-primary/5 sm:px-8 sm:py-10"
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{
@@ -122,7 +122,7 @@ export default function AuthSplitLayout({
                         <div className="flex flex-col gap-8">
                             <div className="flex flex-col items-center gap-4">
                                 <div className="space-y-2 text-center">
-                                    <h1 className="text-xl font-medium text-card-foreground">
+                                    <h1 className="font-heading text-xl font-bold text-card-foreground">
                                         {title}
                                     </h1>
                                     {description && (

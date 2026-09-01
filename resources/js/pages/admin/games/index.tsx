@@ -11,6 +11,7 @@ import GameController, {
     index,
 } from '@/actions/App/Http/Controllers/Admin/GameController';
 import InputError from '@/components/input-error';
+import { ListPageShell } from '@/components/list-page-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -740,9 +741,11 @@ export default function GamesIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Games" />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <div>
-                    <h1 className="text-2xl font-semibold">Games</h1>
+                    <h1 className="text-2xl font-semibold text-foreground">
+                        Games
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         Manage all games ({games.total} total)
                     </p>
@@ -758,7 +761,7 @@ export default function GamesIndex({
                         ) : undefined
                     }
                 />
-            </div>
+            </ListPageShell>
 
             {/* Create Game Modal */}
             <Dialog open={createOpen} onOpenChange={setCreateOpen}>

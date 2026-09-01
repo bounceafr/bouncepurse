@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
+import { ListPageShell } from '@/components/list-page-shell';
 import { Button } from '@/components/ui/button';
 import {
     DataTable,
@@ -138,9 +139,11 @@ export default function OverrideIndex({ games }: { games: PaginatedGames }) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Flagged Games" />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <div>
-                    <h1 className="text-2xl font-semibold">Flagged Games</h1>
+                    <h1 className="text-2xl font-semibold text-foreground">
+                        Flagged Games
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         {games.total} game{games.total !== 1 ? 's' : ''} flagged
                         for review
@@ -156,7 +159,7 @@ export default function OverrideIndex({ games }: { games: PaginatedGames }) {
                         ) : undefined
                     }
                 />
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

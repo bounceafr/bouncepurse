@@ -35,13 +35,13 @@ final class ModerationController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
-        /** @var GameStatus $status */
-        $status = $request->enum('status', GameStatus::class);
+        /** @var string $status */
+        $status = $request->validated('status');
         /** @var string $reason */
         $reason = $request->validated('reason');
         $action->handle(
             $game,
-            $status,
+            GameStatus::from($status),
             $reason,
             $user->id,
         );

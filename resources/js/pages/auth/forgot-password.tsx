@@ -58,9 +58,11 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     )}
                 </Form>
 
-                <div className="space-x-1 text-center text-sm text-muted-foreground">
+                <div className="space-x-1 text-center text-sm font-bold italic text-foreground">
                     <span>Or, return to</span>
-                    <TextLink href={login()}>log in</TextLink>
+                    <TextLink href={login()} className="font-bold italic">
+                        log in
+                    </TextLink>
                 </div>
             </div>
         </AuthSplitLayout>

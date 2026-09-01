@@ -6,6 +6,7 @@ import {
     exportMethod,
     index,
 } from '@/actions/App/Http/Controllers/Admin/AllocationController';
+import { ListPageShell } from '@/components/list-page-shell';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -237,9 +238,9 @@ export default function AllocationIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Allocation Summary" />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <div>
-                    <h1 className="text-2xl font-semibold">
+                    <h1 className="text-2xl font-semibold text-foreground">
                         Allocation Summary
                     </h1>
                     <p className="text-sm text-muted-foreground">
@@ -408,7 +409,7 @@ export default function AllocationIndex({
                         ) : undefined
                     }
                 />
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

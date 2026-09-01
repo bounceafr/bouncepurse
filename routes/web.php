@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Auth\EmailVerificationCodeController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisputeController;
 use App\Http\Controllers\GuardianVerificationController;
@@ -14,14 +16,23 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
-Route::get('/', fn () => Inertia::render('auth/login', [
+Route::get('/', fn (Request $request) => Inertia::render('auth/login', [
+    'canResetPassword' => Features::enabled(Features::resetPasswords()),
     'canRegister' => Features::enabled(Features::registration()),
+    'status' => $request->session()->get('status'),
 ]))->name('home');
 
-Route::get('/ui-showcase', fn () => Inertia::render('ui-showcase'))->middleware(['auth', 'verified'])->name('ui-showcase');
+Route::get('auth/google/redirect', [SocialAuthController::class, 'redirect'])->name('auth.google.redirect');
+Route::get('auth/google/callback', [SocialAuthController::class, 'callback'])->name('auth.google.callback');
 
-// Route::get('auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('auth.social.redirect');
-// Route::get('auth/{provider}/callback', [SocialAuthController::class, 'callback'])->name('auth.social.callback');
+Route::middleware(['auth'])->group(function (): void {
+    Route::post('email/verify-code', [EmailVerificationCodeController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('verification.code.verify');
+    Route::post('email/verify-code/resend', [EmailVerificationCodeController::class, 'resend'])
+        ->middleware('throttle:3,1')
+        ->name('verification.code.resend');
+});
 
 Route::get('dashboard', DashboardController::class)->middleware(['auth', 'verified', 'player.profile'])->name('dashboard');
 Route::get('leaderboard', LeaderboardController::class)->middleware(['auth', 'verified', 'player.profile'])->name('leaderboard');

@@ -24,10 +24,12 @@ test('two factor settings page can be rendered', function (): void {
         ->assertInertia(fn (Assert $page): Assert => $page
             ->component('settings/two-factor')
             ->where('twoFactorEnabled', false)
+            ->where('confirmPassword', true)
+            ->where('passwordConfirmed', true)
         );
 });
 
-test('two factor settings page requires password confirmation when enabled', function (): void {
+test('two factor settings page renders with password confirmation modal instead of redirect', function (): void {
     if (! Features::canManageTwoFactorAuthentication()) {
         $this->markTestSkipped('Two-factor authentication is not enabled.');
     }
@@ -39,10 +41,14 @@ test('two factor settings page requires password confirmation when enabled', fun
         'confirmPassword' => true,
     ]);
 
-    $response = $this->actingAs($user)
-        ->get(route('two-factor.show'));
-
-    $response->assertRedirect(route('password.confirm'));
+    $this->actingAs($user)
+        ->get(route('two-factor.show'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): Assert => $page
+            ->component('settings/two-factor')
+            ->where('confirmPassword', true)
+            ->where('passwordConfirmed', false)
+        );
 });
 
 test('two factor settings page does not requires password confirmation when disabled', function (): void {
@@ -62,6 +68,8 @@ test('two factor settings page does not requires password confirmation when disa
         ->assertOk()
         ->assertInertia(fn (Assert $page): Assert => $page
             ->component('settings/two-factor')
+            ->where('confirmPassword', false)
+            ->where('passwordConfirmed', true)
         );
 });
 

@@ -38,6 +38,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { ListPageShell } from '@/components/list-page-shell';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -107,7 +108,7 @@ export default function Show({
             <AppLayout breadcrumbs={breadcrumbs}>
                 <Head title="My Team" />
 
-                <div className="flex flex-col gap-6 p-6">
+                <ListPageShell>
                     <Heading
                         title="My Team"
                         description="Manage your team details, members, and invitations."
@@ -123,7 +124,7 @@ export default function Show({
                             </CardDescription>
                         </CardHeader>
                     </Card>
-                </div>
+                </ListPageShell>
             </AppLayout>
         );
     }
@@ -132,7 +133,7 @@ export default function Show({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="My Team" />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <Heading
                     title="My Team"
                     description="Manage your team details, members, and invitations."
@@ -305,7 +306,7 @@ export default function Show({
                                                     leave="transition ease-in-out"
                                                     leaveTo="opacity-0"
                                                 >
-                                                    <p className="text-sm text-neutral-600">
+                                                    <p className="text-sm text-muted-foreground">
                                                         Saved
                                                     </p>
                                                 </Transition>
@@ -479,7 +480,7 @@ export default function Show({
                         </CardContent>
                     </Card>
                 )}
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

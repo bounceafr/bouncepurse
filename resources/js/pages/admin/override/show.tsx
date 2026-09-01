@@ -14,6 +14,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { ListPageShell } from '@/components/list-page-shell';
 import AppLayout from '@/layouts/app-layout';
 import { index, update } from '@/routes/admin/override';
 import type { BreadcrumbItem } from '@/types';
@@ -123,7 +124,8 @@ export default function OverrideShow({ game }: { game: Game }) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Override: ${game.title}`} />
 
-            <div className="grid gap-6 p-6 lg:grid-cols-3">
+            <ListPageShell>
+                <div className="grid gap-6 lg:grid-cols-3">
                 {/* Video — spans 2 columns */}
                 <div className="lg:col-span-2">
                     <VimeoPlayer
@@ -302,6 +304,7 @@ export default function OverrideShow({ game }: { game: Game }) {
                     </Card>
                 </div>
             </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

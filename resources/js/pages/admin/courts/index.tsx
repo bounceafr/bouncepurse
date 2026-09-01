@@ -6,6 +6,7 @@ import CourtController, {
     index,
 } from '@/actions/App/Http/Controllers/Admin/CourtController';
 import InputError from '@/components/input-error';
+import { ListPageShell } from '@/components/list-page-shell';
 import { Button } from '@/components/ui/button';
 import {
     DataTable,
@@ -387,9 +388,11 @@ export default function CourtsIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Courts" />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <div>
-                    <h1 className="text-2xl font-semibold">Courts</h1>
+                    <h1 className="text-2xl font-semibold text-foreground">
+                        Courts
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         Manage all courts ({courts.total} total)
                     </p>
@@ -405,7 +408,7 @@ export default function CourtsIndex({
                         ) : undefined
                     }
                 />
-            </div>
+            </ListPageShell>
 
             {/* Create Court Modal */}
             <Dialog open={createOpen} onOpenChange={setCreateOpen}>
