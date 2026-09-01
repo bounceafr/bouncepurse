@@ -2,6 +2,8 @@
 /bootstrap/ssr
 /node_modules
 /public/hot
+/public/build
+/public/fonts
 /public/storage
 /storage/*.key
 /storage/pail
@@ -34,3 +36,12 @@ report.md
 AGENTS.md
 Blueprint.md
 CLAUDE.md
+.env.before_lerd
+.lerd.yaml
+.node-version
+.php-version
+AGENTS.md
+boost.json
+composer.phar
+/.agents
+/.codex

@@ -1,5 +1,4 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
 import {
     Key,
     MoreHorizontal,
@@ -21,6 +20,7 @@ import { ListPageShell } from '@/components/list-page-shell';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
+    type DataTableColumnDef as ColumnDef,
     DataTable,
     LaravelPagination,
     selectionColumn,
@@ -333,8 +333,8 @@ export default function UsersIndex({
             ),
             enableSorting: false,
             cell: ({ row, table }) => {
-                const pageIndex = table.getState().pagination.pageIndex;
-                const pageSize = table.getState().pagination.pageSize;
+                const pageIndex = table.store.state.pagination.pageIndex;
+                const pageSize = table.store.state.pagination.pageSize;
                 return (
                     <span className="text-muted-foreground">
                         {pageIndex * pageSize + row.index + 1}

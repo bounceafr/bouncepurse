@@ -1,9 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { ListPageShell } from '@/components/list-page-shell';
 import { Button } from '@/components/ui/button';
 import {
+    type DataTableColumnDef as ColumnDef,
     DataTable,
     LaravelPagination,
     selectionColumn,

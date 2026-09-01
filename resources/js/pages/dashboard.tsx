@@ -1,5 +1,4 @@
 import { Head, usePage } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import {
     Activity,
@@ -39,6 +38,7 @@ import {
     type ChartConfig,
 } from '@/components/ui/chart';
 import {
+    type DataTableColumnDef as ColumnDef,
     DataTable,
     selectionColumn,
     sortableHeader,

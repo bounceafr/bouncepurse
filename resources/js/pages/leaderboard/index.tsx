@@ -1,8 +1,8 @@
 import { Head, router } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
 import { Trophy } from 'lucide-react';
 import { ListPageShell } from '@/components/list-page-shell';
 import {
+    type DataTableColumnDef as ColumnDef,
     DataTable,
     selectionColumn,
     sortableHeader,
