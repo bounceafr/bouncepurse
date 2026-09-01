@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useInitials } from '@/hooks/use-initials';
+import { ListPageShell } from '@/components/list-page-shell';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -80,7 +81,7 @@ export default function Show({ player, rankings, game_stats }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${player.name} - Profile`} />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <Heading
                     title="Player Profile"
                     description="View player information and statistics."
@@ -261,7 +262,7 @@ export default function Show({ player, rankings, game_stats }: Props) {
                         </CardContent>
                     </Card>
                 </div>
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

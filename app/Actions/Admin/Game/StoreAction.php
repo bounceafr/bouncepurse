@@ -17,7 +17,7 @@ final class StoreAction
             $data['status'] = GameStatus::Scheduled;
             $data['played_at'] = null;
         } elseif (isset($data['played_at'])) {
-            $data['status'] = GameStatus::Pending;
+            $data['status'] = GameStatus::Scheduled;
         }
 
         return Game::query()->create(array_merge($data, [

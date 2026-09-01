@@ -7,12 +7,12 @@ import {
     exportMethod,
     index,
 } from '@/actions/App/Http/Controllers/Admin/PathwayEligiblePlayersController';
+import { ListPageShell } from '@/components/list-page-shell';
 import { Button } from '@/components/ui/button';
 import {
     DataTable,
     LaravelPagination,
     selectionColumn,
-    sortableHeader,
 } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
@@ -32,6 +32,7 @@ type PaginatedCandidates = {
     data: Candidate[];
     links: { url: string | null; label: string; active: boolean }[];
     last_page: number;
+    total: number;
 };
 
 type Filters = {
@@ -54,27 +55,47 @@ function getBestRank(rankings: { rank: number }[]): number | null {
     return Math.min(...rankings.map((r) => r.rank));
 }
 
+function ColumnHeader({ label }: { label: string }) {
+    return (
+        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {label}
+        </span>
+    );
+}
+
 const columns: ColumnDef<Candidate, unknown>[] = [
     selectionColumn<Candidate>(),
     {
         accessorKey: 'name',
-        header: sortableHeader('Player Name'),
+        header: () => <ColumnHeader label="Player Name" />,
+        enableSorting: false,
         cell: ({ row }) => (
-            <span className="font-medium">{row.getValue('name')}</span>
+            <span className="font-medium text-foreground">
+                {row.getValue('name')}
+            </span>
         ),
     },
     {
         id: 'country',
         accessorFn: (row) => row.profile?.country?.name ?? '—',
-        header: sortableHeader('Country'),
+        header: () => <ColumnHeader label="Country" />,
+        enableSorting: false,
+        cell: ({ getValue }) => (
+            <span className="text-muted-foreground">{String(getValue())}</span>
+        ),
     },
     {
         id: 'best_rank',
         accessorFn: (row) => getBestRank(row.rankings),
-        header: sortableHeader('Best Rank'),
+        header: () => <ColumnHeader label="Best Rank" />,
+        enableSorting: false,
         cell: ({ row }) => {
             const rank = getBestRank(row.original.rankings);
-            return rank !== null ? `#${rank}` : '—';
+            return (
+                <span className="text-muted-foreground">
+                    {rank !== null ? `#${rank}` : '—'}
+                </span>
+            );
         },
     },
 ];
@@ -112,73 +133,86 @@ export default function EligiblePlayers({ candidates, filters }: Props) {
         return exportMethod.url() + (qs ? `?${qs}` : '');
     })();
 
-    const toolbar = (
-        <>
-            <form
-                className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center"
-                onSubmit={applyFilters}
-            >
-                <div className="relative w-full sm:w-80">
-                    <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        id="search"
-                        type="search"
-                        className="pl-8"
-                        placeholder="Search players..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
-                <div className="flex gap-2">
-                    <Button size="sm" type="submit">
-                        Search
-                    </Button>
-                    {filters.search ? (
-                        <Button
-                            size="sm"
-                            type="button"
-                            variant="outline"
-                            onClick={clearFilters}
-                        >
-                            <XIcon className="mr-2 size-4" />
-                            Clear
-                        </Button>
-                    ) : null}
-                </div>
-            </form>
-            <Button asChild variant="outline" size="sm">
-                <a href={exportUrl}>
-                    <DownloadIcon className="mr-2 size-4" />
-                    Export CSV
-                </a>
-            </Button>
-        </>
-    );
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pathway Candidates" />
 
-            <div className="flex flex-col gap-6 p-6">
-                <div>
-                    <h1 className="text-2xl font-semibold">
-                        Pathway Candidates
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Players who meet all pathway eligibility criteria.
-                    </p>
+            <ListPageShell>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-semibold text-foreground">
+                            Pathway Candidates
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Players who meet all pathway eligibility criteria.
+                        </p>
+                    </div>
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="border-border bg-background shadow-none"
+                    >
+                        <a href={exportUrl}>
+                            <DownloadIcon className="size-4" />
+                            Export CSV
+                        </a>
+                    </Button>
                 </div>
+
+                <form
+                    className="flex items-center justify-between gap-4"
+                    onSubmit={applyFilters}
+                >
+                    <div className="relative flex-1">
+                        <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search players..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="border-border bg-background pl-9 shadow-none"
+                        />
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                        <Button
+                            type="submit"
+                            size="sm"
+                            className="shadow-none"
+                        >
+                            Search
+                        </Button>
+                        {filters.search ? (
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="border-border bg-background shadow-none"
+                                onClick={clearFilters}
+                            >
+                                <XIcon className="size-4" />
+                                Clear
+                            </Button>
+                        ) : null}
+                        <span className="text-sm text-muted-foreground">
+                            {candidates.total}{' '}
+                            {candidates.total === 1
+                                ? 'candidate'
+                                : 'candidates'}
+                        </span>
+                    </div>
+                </form>
+
                 <DataTable
                     columns={columns}
                     data={candidates.data}
-                    toolbar={toolbar}
+                    hideColumnToggle
                     pagination={
                         candidates.last_page > 1 ? (
                             <LaravelPagination links={candidates.links} />
                         ) : undefined
                     }
                 />
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

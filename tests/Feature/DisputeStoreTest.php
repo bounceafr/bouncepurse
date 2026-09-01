@@ -28,7 +28,7 @@ test('player can submit dispute on flagged game they submitted', function (): vo
         'reason' => 'I disagree with the flagging decision.',
     ]);
 
-    $response->assertRedirect(route('dashboard'));
+    $response->assertRedirect(route('admin.games.show', $game));
     $this->assertModelExists(
         Dispute::query()->where('game_id', $game->id)->where('player_id', $player->id)->firstOrFail()
     );

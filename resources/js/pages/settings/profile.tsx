@@ -12,11 +12,12 @@ import * as React from 'react';
 import PlayerProfileController from '@/actions/App/Http/Controllers/Settings/PlayerProfileController';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/heading';
+import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
     Popover,
     PopoverContent,
@@ -29,14 +30,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Field,
-    FieldContent,
-    FieldDescription,
-    FieldError,
-    FieldGroup,
-    FieldLabel,
-} from '@/components/ui/field';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { cn } from '@/lib/utils';
@@ -175,46 +168,49 @@ export default function Profile({
                     <Form
                         {...ProfileController.update.form()}
                         options={{ preserveScroll: true }}
+                        className="space-y-6"
                     >
                         {({ processing, recentlySuccessful, errors }) => (
-                            <FieldGroup className="space-y-6">
-                                <Field data-invalid={!!errors.name}>
-                                    <FieldLabel htmlFor="name">Name</FieldLabel>
-                                    <FieldContent>
-                                        <Input
-                                            id="name"
-                                            defaultValue={auth.user.name}
-                                            name="name"
-                                            required
-                                            autoComplete="name"
-                                            placeholder="Full name"
-                                            aria-invalid={!!errors.name}
-                                        />
-                                        <FieldError errors={errors.name ? [{ message: errors.name }] : undefined} />
-                                    </FieldContent>
-                                </Field>
+                            <>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="name">Name</Label>
+                                    <Input
+                                        id="name"
+                                        className="mt-1 block w-full"
+                                        defaultValue={auth.user.name}
+                                        name="name"
+                                        required
+                                        autoComplete="name"
+                                        placeholder="Full name"
+                                    />
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.name}
+                                    />
+                                </div>
 
-                                <Field data-invalid={!!errors.email}>
-                                    <FieldLabel htmlFor="email">Email address</FieldLabel>
-                                    <FieldContent>
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            defaultValue={auth.user.email}
-                                            name="email"
-                                            required
-                                            autoComplete="username"
-                                            placeholder="Email address"
-                                            aria-invalid={!!errors.email}
-                                        />
-                                        <FieldError errors={errors.email ? [{ message: errors.email }] : undefined} />
-                                    </FieldContent>
-                                </Field>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="email">Email address</Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        className="mt-1 block w-full"
+                                        defaultValue={auth.user.email}
+                                        name="email"
+                                        required
+                                        autoComplete="username"
+                                        placeholder="Email address"
+                                    />
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.email}
+                                    />
+                                </div>
 
                                 {mustVerifyEmail &&
                                     auth.user.email_verified_at === null && (
                                         <div>
-                                            <p className="text-sm text-muted-foreground">
+                                            <p className="-mt-4 text-sm text-muted-foreground">
                                                 Your email address is
                                                 unverified.{' '}
                                                 <Link
@@ -253,12 +249,12 @@ export default function Profile({
                                         leave="transition ease-in-out"
                                         leaveTo="opacity-0"
                                     >
-                                        <p className="text-sm text-neutral-600">
+                                        <p className="text-sm text-muted-foreground">
                                             Saved
                                         </p>
                                     </Transition>
                                 </div>
-                            </FieldGroup>
+                            </>
                         )}
                     </Form>
                 </div>
@@ -282,9 +278,10 @@ export default function Profile({
                                         'Failed to save player profile. Please fix the errors below.',
                                 })
                             }
+                            className="space-y-6"
                         >
                             {({ processing, errors }) => (
-                                <FieldGroup className="space-y-6">
+                                <>
                                     {/* Method spoofing for file upload via PATCH */}
                                     <input
                                         type="hidden"
@@ -293,225 +290,216 @@ export default function Profile({
                                     />
 
                                     {/* Profile image */}
-                                    <Field data-invalid={!!errors.profile_image}>
-                                        <FieldLabel>Profile image</FieldLabel>
-                                        <FieldContent>
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
-                                                    {imagePreview ? (
-                                                        <img
-                                                            src={imagePreview}
-                                                            alt="Profile"
-                                                            className="size-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <UserCircle className="size-12 text-muted-foreground" />
-                                                    )}
-                                                </div>
-                                                <div className="grid gap-1.5">
-                                                    <Input
-                                                        type="file"
-                                                        name="profile_image"
-                                                        accept="image/*"
-                                                        onChange={handleImageChange}
-                                                        className="cursor-pointer"
+                                    <div className="grid gap-3">
+                                        <Label>Profile image</Label>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
+                                                {imagePreview ? (
+                                                    <img
+                                                        src={imagePreview}
+                                                        alt="Profile"
+                                                        className="size-full object-cover"
                                                     />
-                                                    <FieldDescription>
-                                                        JPG, PNG or WebP. Max 2 MB.
-                                                    </FieldDescription>
-                                                </div>
+                                                ) : (
+                                                    <UserCircle className="size-12 text-muted-foreground" />
+                                                )}
                                             </div>
-                                            <FieldError errors={errors.profile_image ? [{ message: errors.profile_image }] : undefined} />
-                                        </FieldContent>
-                                    </Field>
+                                            <div className="grid gap-1.5">
+                                                <Input
+                                                    type="file"
+                                                    name="profile_image"
+                                                    accept="image/*"
+                                                    onChange={handleImageChange}
+                                                    className="cursor-pointer"
+                                                />
+                                                <p className="text-xs text-muted-foreground">
+                                                    JPG, PNG or WebP. Max 2 MB.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <InputError
+                                            message={errors.profile_image}
+                                        />
+                                    </div>
 
                                     {/* Date of birth */}
-                                    <Field data-invalid={!!errors.date_of_birth}>
-                                        <FieldLabel>Date of birth</FieldLabel>
-                                        <FieldContent>
-                                            <input
-                                                type="hidden"
-                                                name="date_of_birth"
-                                                value={
-                                                    dateOfBirth
+                                    <div className="grid gap-2">
+                                        <Label>Date of birth</Label>
+                                        <input
+                                            type="hidden"
+                                            name="date_of_birth"
+                                            value={
+                                                dateOfBirth
+                                                    ? format(
+                                                          dateOfBirth,
+                                                          'yyyy-MM-dd',
+                                                      )
+                                                    : ''
+                                            }
+                                            readOnly
+                                        />
+                                        <Popover
+                                            open={dateOpen}
+                                            onOpenChange={setDateOpen}
+                                        >
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    className={cn(
+                                                        'w-full justify-start text-left font-normal',
+                                                        !dateOfBirth &&
+                                                            'text-muted-foreground',
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 size-4" />
+                                                    {dateOfBirth
                                                         ? format(
                                                               dateOfBirth,
-                                                              'yyyy-MM-dd',
+                                                              'PPP',
                                                           )
-                                                        : ''
-                                                }
-                                                readOnly
-                                            />
-                                            <Popover
-                                                open={dateOpen}
-                                                onOpenChange={setDateOpen}
+                                                        : 'Pick a date'}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent
+                                                className="w-auto p-0"
+                                                align="start"
                                             >
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        className={cn(
-                                                            'w-full justify-start text-left font-normal',
-                                                            !dateOfBirth &&
-                                                                'text-muted-foreground',
-                                                        )}
-                                                    >
-                                                        <CalendarIcon className="mr-2 size-4" />
-                                                        {dateOfBirth
-                                                            ? format(
-                                                                  dateOfBirth,
-                                                                  'PPP',
-                                                              )
-                                                            : 'Pick a date'}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent
-                                                    className="w-auto p-0"
-                                                    align="start"
-                                                >
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={dateOfBirth}
-                                                        onSelect={(date) => {
-                                                            setDateOfBirth(date);
-                                                            setDateOpen(false);
-                                                        }}
-                                                        disabled={(date) =>
-                                                            date >= new Date() ||
-                                                            date <
-                                                                new Date(
-                                                                    '1900-01-01',
-                                                                )
-                                                        }
-                                                        captionLayout="dropdown"
-                                                        fromYear={1930}
-                                                        toYear={
-                                                            new Date().getFullYear() -
-                                                            5
-                                                        }
-                                                        defaultMonth={
-                                                            dateOfBirth ??
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={dateOfBirth}
+                                                    onSelect={(date) => {
+                                                        setDateOfBirth(date);
+                                                        setDateOpen(false);
+                                                    }}
+                                                    disabled={(date) =>
+                                                        date >= new Date() ||
+                                                        date <
                                                             new Date(
-                                                                new Date().getFullYear() -
-                                                                    25,
-                                                                0,
+                                                                '1900-01-01',
                                                             )
-                                                        }
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                            <FieldError errors={errors.date_of_birth ? [{ message: errors.date_of_birth }] : undefined} />
-                                        </FieldContent>
-                                    </Field>
+                                                    }
+                                                    captionLayout="dropdown"
+                                                    fromYear={1930}
+                                                    toYear={
+                                                        new Date().getFullYear() -
+                                                        5
+                                                    }
+                                                    defaultMonth={
+                                                        dateOfBirth ??
+                                                        new Date(
+                                                            new Date().getFullYear() -
+                                                                25,
+                                                            0,
+                                                        )
+                                                    }
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <InputError
+                                            message={errors.date_of_birth}
+                                        />
+                                    </div>
 
                                     {/* Country */}
-                                    <Field data-invalid={!!errors.country_id}>
-                                        <FieldLabel htmlFor="country_id">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="country_id">
                                             Country
-                                        </FieldLabel>
-                                        <FieldContent>
-                                            <Select
-                                                name="country_id"
-                                                defaultValue={
-                                                    playerProfile?.country_id?.toString() ??
-                                                    undefined
-                                                }
-                                            >
-                                                <SelectTrigger id="country_id">
-                                                    <SelectValue placeholder="Select a country" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {countries.map((country) => (
-                                                        <SelectItem
-                                                            key={country.id}
-                                                            value={country.id.toString()}
-                                                        >
-                                                            {country.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FieldError errors={errors.country_id ? [{ message: errors.country_id }] : undefined} />
-                                        </FieldContent>
-                                    </Field>
+                                        </Label>
+                                        <Select
+                                            name="country_id"
+                                            defaultValue={
+                                                playerProfile?.country_id?.toString() ??
+                                                undefined
+                                            }
+                                        >
+                                            <SelectTrigger id="country_id">
+                                                <SelectValue placeholder="Select a country" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {countries.map((country) => (
+                                                    <SelectItem
+                                                        key={country.id}
+                                                        value={country.id.toString()}
+                                                    >
+                                                        {country.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError
+                                            message={errors.country_id}
+                                        />
+                                    </div>
 
                                     {/* City */}
-                                    <Field data-invalid={!!errors.city}>
-                                        <FieldLabel htmlFor="city">City</FieldLabel>
-                                        <FieldContent>
-                                            <Input
-                                                id="city"
-                                                name="city"
-                                                defaultValue={
-                                                    playerProfile?.city ?? ''
-                                                }
-                                                required
-                                                placeholder="Your city"
-                                                aria-invalid={!!errors.city}
-                                            />
-                                            <FieldError errors={errors.city ? [{ message: errors.city }] : undefined} />
-                                        </FieldContent>
-                                    </Field>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="city">City</Label>
+                                        <Input
+                                            id="city"
+                                            name="city"
+                                            defaultValue={
+                                                playerProfile?.city ?? ''
+                                            }
+                                            required
+                                            placeholder="Your city"
+                                        />
+                                        <InputError message={errors.city} />
+                                    </div>
 
                                     {/* Phone number */}
-                                    <Field data-invalid={!!errors.phone_number}>
-                                        <FieldLabel htmlFor="phone_number">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="phone_number">
                                             Phone number
-                                        </FieldLabel>
-                                        <FieldContent>
-                                            <Input
-                                                id="phone_number"
-                                                name="phone_number"
-                                                defaultValue={
-                                                    playerProfile?.phone_number ??
-                                                    ''
-                                                }
-                                                required
-                                                placeholder="+1 234 567 8900"
-                                                aria-invalid={!!errors.phone_number}
-                                            />
-                                            <FieldError errors={errors.phone_number ? [{ message: errors.phone_number }] : undefined} />
-                                        </FieldContent>
-                                    </Field>
+                                        </Label>
+                                        <Input
+                                            id="phone_number"
+                                            name="phone_number"
+                                            defaultValue={
+                                                playerProfile?.phone_number ??
+                                                ''
+                                            }
+                                            required
+                                            placeholder="+1 234 567 8900"
+                                        />
+                                        <InputError
+                                            message={errors.phone_number}
+                                        />
+                                    </div>
 
                                     {/* Position */}
-                                    <Field data-invalid={!!errors.position}>
-                                        <FieldLabel htmlFor="position">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="position">
                                             Position
-                                        </FieldLabel>
-                                        <FieldContent>
-                                            <Input
-                                                id="position"
-                                                name="position"
-                                                defaultValue={
-                                                    playerProfile?.position ?? ''
-                                                }
-                                                required
-                                                placeholder="e.g. Point Guard"
-                                                aria-invalid={!!errors.position}
-                                            />
-                                            <FieldError errors={errors.position ? [{ message: errors.position }] : undefined} />
-                                        </FieldContent>
-                                    </Field>
+                                        </Label>
+                                        <Input
+                                            id="position"
+                                            name="position"
+                                            defaultValue={
+                                                playerProfile?.position ?? ''
+                                            }
+                                            required
+                                            placeholder="e.g. Point Guard"
+                                        />
+                                        <InputError message={errors.position} />
+                                    </div>
 
                                     {/* Bio */}
-                                    <Field data-invalid={!!errors.bio}>
-                                        <FieldLabel htmlFor="bio">Bio</FieldLabel>
-                                        <FieldContent>
-                                            <Textarea
-                                                id="bio"
-                                                name="bio"
-                                                defaultValue={
-                                                    playerProfile?.bio ?? ''
-                                                }
-                                                required
-                                                rows={4}
-                                                placeholder="Tell us about yourself"
-                                                aria-invalid={!!errors.bio}
-                                            />
-                                            <FieldError errors={errors.bio ? [{ message: errors.bio }] : undefined} />
-                                        </FieldContent>
-                                    </Field>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="bio">Bio</Label>
+                                        <textarea
+                                            id="bio"
+                                            name="bio"
+                                            defaultValue={
+                                                playerProfile?.bio ?? ''
+                                            }
+                                            required
+                                            rows={4}
+                                            placeholder="Tell us about yourself"
+                                            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                        />
+                                        <InputError message={errors.bio} />
+                                    </div>
 
                                     <Button
                                         disabled={processing}
@@ -519,7 +507,7 @@ export default function Profile({
                                     >
                                         Save player profile
                                     </Button>
-                                </FieldGroup>
+                                </>
                             )}
                         </Form>
                     </div>

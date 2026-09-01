@@ -20,7 +20,6 @@ final class TeamMemberController extends Controller
         $team = $user->ownedTeam;
 
         abort_unless($team !== null, 403);
-        abort_unless($team->hasMember($member), 403);
 
         $action->handle($team, $member);
 

@@ -26,14 +26,18 @@ final class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Jacques MBABAZI',
             'email' => 'mbabazijacques@gmail.com',
+            'password' => DemoCredentials::PASSWORD,
         ])->assignRole(Role::SuperAdmin->value);
 
         $this->call([
             UserSeeder::class,
             PlayerSeeder::class,
+            GuardianSeeder::class,
             CourtSeeder::class,
             TeamSeeder::class,
             GameSeeder::class,
+            GameResultSeeder::class,
+            DisputeSeeder::class,
         ]);
     }
 }

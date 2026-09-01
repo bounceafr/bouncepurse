@@ -5,6 +5,7 @@ import {
     index,
     show,
 } from '@/actions/App/Http/Controllers/Admin/ModerationController';
+import { ListPageShell } from '@/components/list-page-shell';
 import { Button } from '@/components/ui/button';
 import {
     DataTable,
@@ -134,9 +135,11 @@ export default function ModerationIndex({ games }: { games: PaginatedGames }) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Moderation Queue" />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <div>
-                    <h1 className="text-2xl font-semibold">Moderation Queue</h1>
+                    <h1 className="text-2xl font-semibold text-foreground">
+                        Moderation Queue
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         {games.total} game{games.total !== 1 ? 's' : ''} pending
                         review
@@ -152,7 +155,7 @@ export default function ModerationIndex({ games }: { games: PaginatedGames }) {
                         ) : undefined
                     }
                 />
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }
