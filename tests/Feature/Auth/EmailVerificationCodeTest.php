@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Actions\Auth\VerifyEmailVerificationCode;
 use App\Models\User;
 use App\Notifications\EmailVerificationCodeNotification;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -84,6 +87,22 @@ test('invalid verification code is rejected', function (): void {
     expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
 });
 
+test('valid verification code for verified user succeeds without dispatching another event', function (): void {
+    $user = User::factory()->create([
+        'social_provider' => 'google',
+        'social_provider_id' => 'google-123',
+    ]);
+    $cacheKey = 'email-verification-code:'.$user->id;
+    Cache::put($cacheKey, Hash::make('123456'));
+    Event::fake([Verified::class]);
+
+    $verified = resolve(VerifyEmailVerificationCode::class)->handle($user, '123456');
+
+    expect($verified)->toBeTrue();
+    expect(Cache::has($cacheKey))->toBeFalse();
+    Event::assertNotDispatched(Verified::class);
+});
+
 test('email password users cannot verify with code endpoint', function (): void {
     $user = User::factory()->unverified()->create([
         'social_provider' => null,
@@ -109,4 +128,19 @@ test('resend verification code sends notification to google user', function (): 
         ->assertSessionHas('status', 'verification-code-sent');
 
     Notification::assertSentTo($user, EmailVerificationCodeNotification::class);
+});
+
+test('resending verification code for verified google user redirects without notification', function (): void {
+    Notification::fake();
+
+    $user = User::factory()->create([
+        'social_provider' => 'google',
+        'social_provider_id' => 'google-123',
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('verification.code.resend'))
+        ->assertRedirect(route('dashboard'));
+
+    Notification::assertNothingSent();
 });
