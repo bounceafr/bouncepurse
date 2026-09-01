@@ -162,14 +162,6 @@ final class DashboardController extends Controller
 
     private function integerAggregate(mixed $value): int
     {
-        if (is_int($value)) {
-            return $value;
-        }
-
-        if (is_string($value) && is_numeric($value)) {
-            return (int) $value;
-        }
-
-        return 0;
+        return is_numeric($value) ? (int) $value : 0;
     }
 }

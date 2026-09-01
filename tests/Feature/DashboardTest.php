@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Enums\GameStatus;
 use App\Enums\Role;
+use App\Models\Court;
+use App\Models\Game;
 use App\Models\PathwayConfiguration;
 use App\Models\PlayerRanking;
 use App\Models\RankingConfiguration;
@@ -33,6 +36,31 @@ test('authenticated users can visit the dashboard', function (): void {
         ->has('recent_games')
         ->has('games_per_month')
         ->has('player_rankings')
+    );
+});
+
+test('dashboard returns daily game and court aggregate counts', function (): void {
+    $user = User::factory()->create();
+    $court = Court::factory()->create(['created_at' => now()]);
+
+    Game::factory()->create([
+        'court_id' => $court->id,
+        'played_at' => now(),
+        'status' => GameStatus::Approved,
+    ]);
+
+    $this->actingAs($user);
+
+    $response = $this->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+        ->where('stats_sparklines.6.games', 1)
+        ->where('stats_sparklines.6.approved', 1)
+        ->where('stats_sparklines.6.pending', 0)
+        ->where('stats_sparklines.6.courts', 1)
+        ->where('games_per_month.'.(now()->month - 1).'.games', 1)
+        ->where('games_per_month.'.(now()->month - 1).'.courts', 1)
     );
 });
 
