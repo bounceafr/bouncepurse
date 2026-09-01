@@ -223,7 +223,6 @@ export function DataTable<TData extends RowData>({
 
     const tableData = draggable ? draggableRows : data;
 
-    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useTable({
         features: dataTableFeatures,
         data: tableData,

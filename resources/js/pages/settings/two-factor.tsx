@@ -138,7 +138,9 @@ export default function TwoFactor({
                         twoFactorEnabled={twoFactorEnabled}
                         confirmPassword={confirmPassword}
                         passwordConfirmed={isPasswordConfirmed}
-                        onPasswordConfirmed={() => setPasswordWasConfirmed(true)}
+                        onPasswordConfirmed={() =>
+                            setPasswordWasConfirmed(true)
+                        }
                         qrCodeSvg={qrCodeSvg}
                         manualSetupKey={manualSetupKey}
                         clearSetupData={clearSetupData}
