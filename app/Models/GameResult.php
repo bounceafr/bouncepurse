@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Carbon\CarbonInterface;
 use Database\Factories\GameResultFactory;
+use Illuminate\Database\Eloquent\Attributes\RouteKey;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,23 +25,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Game $game
  * @property-read User $submitter
  */
+#[RouteKey('uuid')]
 final class GameResult extends Model
 {
     /** @use HasFactory<GameResultFactory> */
     use HasFactory;
 
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
-    /** @return BelongsTo<Game, self> */
+    /** @return BelongsTo<Game, $this> */
     public function game(): BelongsTo
     {
         return $this->belongsTo(Game::class);
     }
 
-    /** @return BelongsTo<User, self> */
+    /** @return BelongsTo<User, $this> */
     public function submitter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'submitter_id');

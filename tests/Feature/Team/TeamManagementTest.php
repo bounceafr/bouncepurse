@@ -41,8 +41,8 @@ test('owner can update team details', function (): void {
         ])
         ->assertRedirect();
 
-    expect($team->fresh()->name)->toBe('Updated Team Name');
-    expect($team->fresh()->email)->toBe('updated@example.com');
+    expect($team->refresh()->name)->toBe('Updated Team Name');
+    expect($team->refresh()->email)->toBe('updated@example.com');
 });
 
 test('non-owner cannot update team details', function (): void {
@@ -57,7 +57,7 @@ test('non-owner cannot update team details', function (): void {
             'name' => 'Hacked Name',
         ]);
 
-    expect($owner->fresh()->ownedTeam->name)->not->toBe('Hacked Name');
+    expect($owner->ownedTeam()->firstOrFail()->name)->not->toBe('Hacked Name');
 });
 
 test('team name is required', function (): void {

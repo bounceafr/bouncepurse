@@ -18,12 +18,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
     InputOTP,
     InputOTPGroup,
     InputOTPSlot,
 } from '@/components/ui/input-otp';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useClipboard } from '@/hooks/use-clipboard';
@@ -427,24 +427,28 @@ export default function TwoFactorSetupModal({
         setEnabling(true);
         setEnableError(undefined);
 
-        router.post(enable.url(), {}, {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: async () => {
-                await fetchSetupData();
-                setShowPasswordStep(false);
-                setEnabling(false);
+        router.post(
+            enable.url(),
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: async () => {
+                    await fetchSetupData();
+                    setShowPasswordStep(false);
+                    setEnabling(false);
+                },
+                onError: () => {
+                    setEnableError(
+                        'Unable to start two-factor setup. Please try again.',
+                    );
+                    setEnabling(false);
+                },
+                onCancel: () => {
+                    setEnabling(false);
+                },
             },
-            onError: () => {
-                setEnableError(
-                    'Unable to start two-factor setup. Please try again.',
-                );
-                setEnabling(false);
-            },
-            onCancel: () => {
-                setEnabling(false);
-            },
-        });
+        );
     }, [fetchSetupData]);
 
     const handlePasswordConfirmed = useCallback(() => {
@@ -489,7 +493,9 @@ export default function TwoFactorSetupModal({
         }
 
         // Password already confirmed: start (or resume) setup when the modal opens.
-        startSetup();
+        const setupTask = window.setTimeout(startSetup, 0);
+
+        return () => window.clearTimeout(setupTask);
     }, [
         isOpen,
         showPasswordStep,

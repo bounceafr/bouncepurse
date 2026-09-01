@@ -62,10 +62,10 @@ test('administrator can access games', function (): void {
     $this->actingAs($user)->get(route('admin.games.index'))->assertOk();
 });
 
-test('administrator cannot access users', function (): void {
+test('administrator can access users', function (): void {
     $user = User::factory()->create()->assignRole(Role::Administrator->value);
 
-    $this->actingAs($user)->get(route('admin.users.index'))->assertForbidden();
+    $this->actingAs($user)->get(route('admin.users.index'))->assertOk();
 });
 
 test('administrator can access moderation', function (): void {

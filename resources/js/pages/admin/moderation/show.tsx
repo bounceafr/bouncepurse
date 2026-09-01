@@ -6,6 +6,7 @@ import {
     update,
 } from '@/actions/App/Http/Controllers/Admin/ModerationController';
 import InputError from '@/components/input-error';
+import { ListPageShell } from '@/components/list-page-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -16,7 +17,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { ListPageShell } from '@/components/list-page-shell';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -108,134 +108,136 @@ export default function ModerationShow({ game }: { game: Game }) {
 
             <ListPageShell>
                 <div className="grid gap-6 lg:grid-cols-3">
-                {/* Video — spans 2 columns */}
-                <div className="lg:col-span-2">
-                    <VimeoPlayer
-                        vimeoUri={game.vimeo_uri}
-                        subtitle={game.title}
-                    />
+                    {/* Video — spans 2 columns */}
+                    <div className="lg:col-span-2">
+                        <VimeoPlayer
+                            vimeoUri={game.vimeo_uri}
+                            subtitle={game.title}
+                        />
+                    </div>
+
+                    {/* Sidebar */}
+                    <div className="flex flex-col gap-6">
+                        {/* Game info */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Game Details</CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid gap-3 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">
+                                        Title
+                                    </span>
+                                    <span className="font-medium">
+                                        {game.title}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">
+                                        Player
+                                    </span>
+                                    <span>{game.player?.name ?? '—'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">
+                                        Format
+                                    </span>
+                                    <span>{game.format}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">
+                                        Court
+                                    </span>
+                                    <span>{game.court?.name ?? '—'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">
+                                        Played
+                                    </span>
+                                    <span>
+                                        {new Date(
+                                            game.played_at,
+                                        ).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Review form */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Review Decision</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <Form
+                                    {...update.form(game.uuid)}
+                                    className="space-y-4"
+                                >
+                                    {({ processing, errors }) => (
+                                        <>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="status">
+                                                    Decision
+                                                </Label>
+                                                <Select name="status" required>
+                                                    <SelectTrigger id="status">
+                                                        <SelectValue placeholder="Select a decision" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {statusOptions.map(
+                                                            (opt) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        opt.value
+                                                                    }
+                                                                    value={
+                                                                        opt.value
+                                                                    }
+                                                                >
+                                                                    {opt.label}
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                <InputError
+                                                    message={errors.status}
+                                                />
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="reason">
+                                                    Reason
+                                                </Label>
+                                                <textarea
+                                                    id="reason"
+                                                    name="reason"
+                                                    placeholder="Provide a reason for this decision..."
+                                                    rows={4}
+                                                    required
+                                                    className="flex w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:aria-invalid:ring-destructive/40"
+                                                />
+                                                <InputError
+                                                    message={errors.reason}
+                                                />
+                                            </div>
+
+                                            <Button
+                                                disabled={processing}
+                                                className="w-full"
+                                                asChild
+                                            >
+                                                <button type="submit">
+                                                    Submit Decision
+                                                </button>
+                                            </Button>
+                                        </>
+                                    )}
+                                </Form>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
-
-                {/* Sidebar */}
-                <div className="flex flex-col gap-6">
-                    {/* Game info */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Game Details</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid gap-3 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">
-                                    Title
-                                </span>
-                                <span className="font-medium">
-                                    {game.title}
-                                </span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">
-                                    Player
-                                </span>
-                                <span>{game.player?.name ?? '—'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">
-                                    Format
-                                </span>
-                                <span>{game.format}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">
-                                    Court
-                                </span>
-                                <span>{game.court?.name ?? '—'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">
-                                    Played
-                                </span>
-                                <span>
-                                    {new Date(
-                                        game.played_at,
-                                    ).toLocaleDateString()}
-                                </span>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Review form */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Review Decision</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Form
-                                {...update.form(game.uuid)}
-                                className="space-y-4"
-                            >
-                                {({ processing, errors }) => (
-                                    <>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="status">
-                                                Decision
-                                            </Label>
-                                            <Select name="status" required>
-                                                <SelectTrigger id="status">
-                                                    <SelectValue placeholder="Select a decision" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {statusOptions.map(
-                                                        (opt) => (
-                                                            <SelectItem
-                                                                key={opt.value}
-                                                                value={
-                                                                    opt.value
-                                                                }
-                                                            >
-                                                                {opt.label}
-                                                            </SelectItem>
-                                                        ),
-                                                    )}
-                                                </SelectContent>
-                                            </Select>
-                                            <InputError
-                                                message={errors.status}
-                                            />
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="reason">
-                                                Reason
-                                            </Label>
-                                            <textarea
-                                                id="reason"
-                                                name="reason"
-                                                placeholder="Provide a reason for this decision..."
-                                                rows={4}
-                                                required
-                                                className="flex w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:aria-invalid:ring-destructive/40"
-                                            />
-                                            <InputError
-                                                message={errors.reason}
-                                            />
-                                        </div>
-
-                                        <Button
-                                            disabled={processing}
-                                            className="w-full"
-                                            asChild
-                                        >
-                                            <button type="submit">
-                                                Submit Decision
-                                            </button>
-                                        </Button>
-                                    </>
-                                )}
-                            </Form>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
             </ListPageShell>
         </AppLayout>
     );

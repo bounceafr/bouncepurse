@@ -3,10 +3,8 @@
 declare(strict_types=1);
 
 use App\Models\Country;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
-
-uses(RefreshDatabase::class);
+use Illuminate\Testing\PendingCommand;
 
 it('imports countries on a successful response', function (): void {
     Http::fake([
@@ -22,8 +20,9 @@ it('imports countries on a successful response', function (): void {
         ], 200),
     ]);
 
-    $this->artisan('app:import-countries-command')
-        ->assertSuccessful();
+    $command = $this->artisan('app:import-countries-command');
+    $this->assertInstanceOf(PendingCommand::class, $command);
+    $command->assertSuccessful()->run();
 
     expect(Country::query()->where('iso_code', 'USA')->first())
         ->not->toBeNull()
@@ -39,8 +38,9 @@ it('returns failure on an HTTP error response', function (): void {
         '*' => Http::response([], 500),
     ]);
 
-    $this->artisan('app:import-countries-command')
-        ->assertFailed();
+    $command = $this->artisan('app:import-countries-command');
+    $this->assertInstanceOf(PendingCommand::class, $command);
+    $command->assertFailed()->run();
 
     expect(Country::query()->count())->toBe(0);
 });
@@ -50,8 +50,9 @@ it('returns failure when the response is not an array', function (): void {
         '*' => Http::response('"not-an-array"', 200),
     ]);
 
-    $this->artisan('app:import-countries-command')
-        ->assertFailed();
+    $command = $this->artisan('app:import-countries-command');
+    $this->assertInstanceOf(PendingCommand::class, $command);
+    $command->assertFailed()->run();
 
     expect(Country::query()->count())->toBe(0);
 });

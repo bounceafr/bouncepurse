@@ -1,5 +1,4 @@
 import { Head, usePage } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import {
     Activity,
@@ -13,13 +12,7 @@ import {
     Trophy,
 } from 'lucide-react';
 import { Fragment } from 'react';
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    XAxis,
-    YAxis,
-} from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
 import { ListPageShell } from '@/components/list-page-shell';
 import { sportEase } from '@/components/motion';
@@ -39,6 +32,7 @@ import {
     type ChartConfig,
 } from '@/components/ui/chart';
 import {
+    type DataTableColumnDef as ColumnDef,
     DataTable,
     selectionColumn,
     sortableHeader,
@@ -133,7 +127,9 @@ const gamesChartConfig = {
     },
 } satisfies ChartConfig;
 
-function statusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' | 'success' {
+function statusBadgeVariant(
+    status: string,
+): 'default' | 'secondary' | 'destructive' | 'outline' | 'success' {
     switch (status) {
         case 'approved':
             return 'success';
@@ -208,7 +204,9 @@ export default function Dashboard({
 }: Props) {
     const { auth } = usePage().props;
 
-    const isAdmin = auth.roles.includes('Administrator') || auth.roles.includes('SuperAdmin');
+    const isAdmin =
+        auth.roles.includes('Administrator') ||
+        auth.roles.includes('SuperAdmin');
     const canSeeVisitorStats = visitor_stats.length > 0 && isAdmin;
 
     const gamesChartData = games_per_month.map((item) => ({
@@ -263,16 +261,19 @@ export default function Dashboard({
                     >
                         <h1 className="font-heading text-3xl font-bold tracking-tight">
                             {getGreeting()},{' '}
-                            <span className="text-primary">{auth.user.name}</span>
+                            <span className="text-primary">
+                                {auth.user.name}
+                            </span>
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            {getFormattedDate()} &middot; Here&rsquo;s what&rsquo;s happening across your games.
+                            {getFormattedDate()} &middot; Here&rsquo;s
+                            what&rsquo;s happening across your games.
                         </p>
                     </motion.div>
 
                     <SectionCards cards={sectionCards} />
 
-                    <div className="grid gap-4 lg:grid-cols-2 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs dark:*:data-[slot=card]:from-primary/12">
+                    <div className="grid gap-4 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:grid-cols-2 dark:*:data-[slot=card]:from-primary/12">
                         <Card className="sport-card-hover @container/card">
                             <CardHeader>
                                 <div className="flex items-center gap-2">
@@ -282,7 +283,11 @@ export default function Dashboard({
                                     <CardTitle>Games per Month</CardTitle>
                                 </div>
                                 <CardDescription>
-                                    {gamesChartData.reduce((s, d) => s + d.games, 0)} games this period
+                                    {gamesChartData.reduce(
+                                        (s, d) => s + d.games,
+                                        0,
+                                    )}{' '}
+                                    games this period
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="pt-0">
@@ -347,7 +352,7 @@ export default function Dashboard({
                     </div>
 
                     {(rankingEntries.length > 0 || pathway_eligibility) && (
-                        <div className="grid gap-4 md:grid-cols-2 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs dark:*:data-[slot=card]:from-primary/12">
+                        <div className="grid gap-4 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs md:grid-cols-2 dark:*:data-[slot=card]:from-primary/12">
                             {rankingEntries.length > 0 && (
                                 <Card className="sport-card-hover @container/card">
                                     <CardHeader>
@@ -358,38 +363,50 @@ export default function Dashboard({
                                             <CardTitle>My Rankings</CardTitle>
                                         </div>
                                         <CardDescription>
-                                            {rankingEntries.reduce((s, e) => s + e.wins + e.losses, 0)} games played
+                                            {rankingEntries.reduce(
+                                                (s, e) => s + e.wins + e.losses,
+                                                0,
+                                            )}{' '}
+                                            games played
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="pt-0">
                                         <div className="flex gap-4 overflow-x-auto">
-                                            {rankingEntries.map((entry, index) => (
-                                                <Fragment key={entry.format}>
-                                                    {index > 0 && (
-                                                        <Separator
-                                                            orientation="vertical"
-                                                            className="h-auto"
-                                                        />
-                                                    )}
-                                                    <div className="flex min-w-16 flex-col gap-0.5">
-                                                        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                                            {entry.format}
-                                                        </span>
-                                                        <span className="text-2xl font-bold tabular-nums">
-                                                            #{entry.rank}
-                                                        </span>
-                                                        <span className="text-xs text-muted-foreground">
-                                                            <span className="text-chart-1">
-                                                                {entry.wins}W
+                                            {rankingEntries.map(
+                                                (entry, index) => (
+                                                    <Fragment
+                                                        key={entry.format}
+                                                    >
+                                                        {index > 0 && (
+                                                            <Separator
+                                                                orientation="vertical"
+                                                                className="h-auto"
+                                                            />
+                                                        )}
+                                                        <div className="flex min-w-16 flex-col gap-0.5">
+                                                            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                                                {entry.format}
                                                             </span>
-                                                            {' / '}
-                                                            <span className="text-destructive">
-                                                                {entry.losses}L
+                                                            <span className="text-2xl font-bold tabular-nums">
+                                                                #{entry.rank}
                                                             </span>
-                                                        </span>
-                                                    </div>
-                                                </Fragment>
-                                            ))}
+                                                            <span className="text-xs text-muted-foreground">
+                                                                <span className="text-chart-1">
+                                                                    {entry.wins}
+                                                                    W
+                                                                </span>
+                                                                {' / '}
+                                                                <span className="text-destructive">
+                                                                    {
+                                                                        entry.losses
+                                                                    }
+                                                                    L
+                                                                </span>
+                                                            </span>
+                                                        </div>
+                                                    </Fragment>
+                                                ),
+                                            )}
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -402,7 +419,9 @@ export default function Dashboard({
                                             <span className="sport-icon-well">
                                                 <Route className="size-4" />
                                             </span>
-                                            <CardTitle>Pathway Eligibility</CardTitle>
+                                            <CardTitle>
+                                                Pathway Eligibility
+                                            </CardTitle>
                                             <Badge
                                                 variant={
                                                     pathway_eligibility.is_eligible
@@ -427,30 +446,42 @@ export default function Dashboard({
                                                 )}
                                                 <span className="text-sm">
                                                     Approved Games:{' '}
-                                                    {pathway_eligibility.criteria
-                                                        .approved_games.current}{' '}
+                                                    {
+                                                        pathway_eligibility
+                                                            .criteria
+                                                            .approved_games
+                                                            .current
+                                                    }{' '}
                                                     /{' '}
-                                                    {pathway_eligibility.criteria
-                                                        .approved_games.required}{' '}
+                                                    {
+                                                        pathway_eligibility
+                                                            .criteria
+                                                            .approved_games
+                                                            .required
+                                                    }{' '}
                                                     required
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                {pathway_eligibility.criteria.rank
-                                                    .met ? (
+                                                {pathway_eligibility.criteria
+                                                    .rank.met ? (
                                                     <CircleCheck className="size-4 text-chart-1" />
                                                 ) : (
                                                     <CircleX className="size-4 text-destructive" />
                                                 )}
                                                 <span className="text-sm">
                                                     Best Rank:{' '}
-                                                    {pathway_eligibility.criteria
-                                                        .rank.current !== null
+                                                    {pathway_eligibility
+                                                        .criteria.rank
+                                                        .current !== null
                                                         ? `#${pathway_eligibility.criteria.rank.current}`
                                                         : 'N/A'}{' '}
                                                     / top{' '}
-                                                    {pathway_eligibility.criteria
-                                                        .rank.required}{' '}
+                                                    {
+                                                        pathway_eligibility
+                                                            .criteria.rank
+                                                            .required
+                                                    }{' '}
                                                     required
                                                 </span>
                                             </div>
@@ -463,11 +494,18 @@ export default function Dashboard({
                                                 )}
                                                 <span className="text-sm">
                                                     Conduct Flags:{' '}
-                                                    {pathway_eligibility.criteria
-                                                        .conduct_flags.current}{' '}
+                                                    {
+                                                        pathway_eligibility
+                                                            .criteria
+                                                            .conduct_flags
+                                                            .current
+                                                    }{' '}
                                                     /{' '}
-                                                    {pathway_eligibility.criteria
-                                                        .conduct_flags.limit}{' '}
+                                                    {
+                                                        pathway_eligibility
+                                                            .criteria
+                                                            .conduct_flags.limit
+                                                    }{' '}
                                                     max allowed
                                                 </span>
                                             </div>

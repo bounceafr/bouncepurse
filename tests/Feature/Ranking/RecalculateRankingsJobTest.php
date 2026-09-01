@@ -68,7 +68,7 @@ test('job is not dispatched when a game is flagged', function (): void {
 });
 
 test('job runs the action and creates ranking snapshots for the given config', function (): void {
-    $config = RankingConfiguration::query()->latest()->first();
+    $config = RankingConfiguration::query()->latest()->firstOrFail();
     $player = User::factory()->create();
     Game::factory()->create(['player_id' => $player->id, 'status' => 'approved', 'result' => 'win', 'format' => '1v1']);
 

@@ -16,9 +16,9 @@ test('ranking configuration updated by belongs to a user', function (): void {
         'frequency_weight' => 2.0,
         'updated_by' => $user->id,
     ]);
+    $updatedBy = $config->updatedBy()->firstOrFail();
 
-    expect($config->updatedBy)->toBeInstanceOf(User::class)
-        ->and($config->updatedBy->id)->toBe($user->id);
+    expect($updatedBy->id)->toBe($user->id);
 });
 
 test('ranking configuration updated by is null when not set', function (): void {
@@ -66,8 +66,8 @@ test('ranking configuration weights are cast to float', function (): void {
         'frequency_weight' => 2.0,
     ]);
 
-    expect($config->win_weight)->toBeFloat()->toBe(3.0)
-        ->and($config->loss_weight)->toBeFloat()->toBe(1.0)
-        ->and($config->game_count_weight)->toBeFloat()->toBe(0.5)
-        ->and($config->frequency_weight)->toBeFloat()->toBe(2.0);
+    expect($config->win_weight)->toBe(3.0)
+        ->and($config->loss_weight)->toBe(1.0)
+        ->and($config->game_count_weight)->toBe(0.5)
+        ->and($config->frequency_weight)->toBe(2.0);
 });

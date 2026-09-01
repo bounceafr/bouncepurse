@@ -1,5 +1,4 @@
 import { Head, router } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
 import { CalendarIcon, DownloadIcon } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -11,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+    type DataTableColumnDef as ColumnDef,
     DataTable,
     LaravelPagination,
     selectionColumn,

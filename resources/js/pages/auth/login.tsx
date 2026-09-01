@@ -40,10 +40,7 @@ export default function Login({
                 </div>
             )}
 
-            <InputError
-                message={errors.social}
-                className="mb-4 text-center"
-            />
+            <InputError message={errors.social} className="mb-4 text-center" />
 
             <Form
                 {...store.form()}
@@ -82,7 +79,9 @@ export default function Login({
                                     />
                                     <Input
                                         id="password"
-                                        type={showPassword ? 'text' : 'password'}
+                                        type={
+                                            showPassword ? 'text' : 'password'
+                                        }
                                         name="password"
                                         required
                                         tabIndex={2}
@@ -138,7 +137,7 @@ export default function Login({
                         </div>
 
                         {canRegister && (
-                            <div className="text-center text-sm font-bold italic text-foreground">
+                            <div className="text-center text-sm font-bold text-foreground italic">
                                 Don&apos;t have an account?{' '}
                                 <TextLink
                                     href={register()}

@@ -10,16 +10,14 @@ test('profile belongs to a player', function (): void {
     $user = User::factory()->create();
     $profile = Profile::factory()->create(['player_id' => $user->id]);
 
-    expect($profile->player)->toBeInstanceOf(User::class)
-        ->and($profile->player->id)->toBe($user->id);
+    expect($profile->player->id)->toBe($user->id);
 });
 
 test('profile belongs to a country', function (): void {
     $country = Country::factory()->create();
     $profile = Profile::factory()->create(['country_id' => $country->id]);
 
-    expect($profile->country)->toBeInstanceOf(Country::class)
-        ->and($profile->country->id)->toBe($country->id);
+    expect($profile->country->id)->toBe($country->id);
 });
 
 test('profile uuid is auto generated on creation', function (): void {

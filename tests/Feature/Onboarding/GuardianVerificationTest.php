@@ -9,8 +9,10 @@ use App\Models\Guardian;
 use App\Models\Profile;
 use App\Models\User;
 use App\Notifications\GuardianVerificationNotification;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
+use Inertia\Testing\AssertableInertia;
 
 beforeEach(function (): void {
     foreach (Role::cases() as $role) {
@@ -26,7 +28,7 @@ test('guardian can view verification page with valid signed url', function (): v
     $response = $this->get($url);
 
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
         ->component('onboarding/guardian-verify')
         ->has('guardian')
         ->where('guardian.full_name', $guardian->full_name)
@@ -51,8 +53,8 @@ test('guardian can confirm verification with valid signed url', function (): voi
     $response->assertRedirect();
     $response->assertSessionHas('status', 'guardian-verified');
 
-    expect($guardian->fresh()->verified_at)->not->toBeNull();
-    expect($guardian->fresh()->ip_address)->not->toBeNull();
+    expect($guardian->refresh()->verified_at)->not->toBeNull();
+    expect($guardian->refresh()->ip_address)->not->toBeNull();
 });
 
 test('guardian cannot confirm with invalid signature', function (): void {
@@ -62,7 +64,7 @@ test('guardian cannot confirm with invalid signature', function (): void {
 
     $response->assertForbidden();
 
-    expect($guardian->fresh()->verified_at)->toBeNull();
+    expect($guardian->refresh()->verified_at)->toBeNull();
 });
 
 test('verification email is sent on minor profile completion', function (): void {
@@ -91,7 +93,7 @@ test('verification email is sent on minor profile completion', function (): void
 
     Notification::assertSentOnDemand(
         GuardianVerificationNotification::class,
-        fn ($notification, $channels, $notifiable): bool => $notifiable->routes['mail'] === 'jane@example.com'
+        fn (mixed $notification, mixed $channels, AnonymousNotifiable $notifiable): bool => $notifiable->routes['mail'] === 'jane@example.com'
     );
 });
 
@@ -121,7 +123,7 @@ test('after guardian verification minor can access dashboard', function (): void
     $this->post($url);
 
     // After verification — can access
-    $this->actingAs($user->fresh())->get(route('dashboard'))
+    $this->actingAs($user->refresh())->get(route('dashboard'))
         ->assertOk();
 });
 

@@ -28,13 +28,13 @@ final class AllocationConfiguration extends Model
     /** @use HasFactory<AllocationConfigurationFactory> */
     use HasFactory;
 
-    /** @return BelongsTo<User, self> */
+    /** @return BelongsTo<User, $this> */
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    /** @return HasMany<Allocation, self> */
+    /** @return HasMany<Allocation, $this> */
     public function allocations(): HasMany
     {
         return $this->hasMany(Allocation::class);

@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use App\Enums\Role;
+use App\Models\Profile;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Inertia\Testing\AssertableInertia;
 use Laravel\Fortify\Fortify;
 
 beforeEach(function (): void {
@@ -22,7 +24,7 @@ test('administrators can view users index', function (): void {
 
     $response = $this->get(route('admin.users.index'));
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->component('admin/users/index'));
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page->component('admin/users/index'));
 });
 
 test('administrator role can view users index', function (): void {
@@ -31,7 +33,7 @@ test('administrator role can view users index', function (): void {
 
     $response = $this->get(route('admin.users.index'));
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->component('admin/users/index')->has('counts'));
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page->component('admin/users/index')->has('counts'));
 });
 
 test('non-administrators cannot view users index', function (): void {
@@ -61,7 +63,7 @@ test('administrators can create a user', function (): void {
         'email' => 'newplayer@example.com',
     ]);
 
-    $newUser = User::query()->where('email', 'newplayer@example.com')->first();
+    $newUser = User::query()->where('email', 'newplayer@example.com')->firstOrFail();
     expect($newUser->hasRole(Role::Player->value))->toBeTrue();
 });
 
@@ -130,7 +132,7 @@ test('users index can be filtered by search', function (): void {
 
     $response->assertOk();
     $response->assertInertia(
-        fn ($page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/users/index')
             ->where('filters.search', 'Alice')
             ->has('users.data', 1)
@@ -149,7 +151,7 @@ test('users index can be filtered by role', function (): void {
 
     $response->assertOk();
     $response->assertInertia(
-        fn ($page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/users/index')
             ->where('filters.role', Role::Moderator->value)
             ->has('users.data', 1)
@@ -166,12 +168,37 @@ test('admin can view user show page', function (): void {
 
     $response->assertOk();
     $response->assertInertia(
-        fn ($page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/users/show')
             ->where('user.id', $user->id)
             ->where('user.name', $user->name)
             ->has('user.recent_games')
             ->has('user.recent_moderation_reviews')
+    );
+});
+
+test('admin can view user profile details on show page', function (): void {
+    $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
+    $user = User::factory()->create()->assignRole(Role::Player->value);
+    $profile = Profile::factory()->create([
+        'player_id' => $user->id,
+        'date_of_birth' => '2000-01-02',
+        'city' => 'Kigali',
+        'bio' => 'Point guard and team captain.',
+        'position' => 'Point Guard',
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('admin.users.show', $user));
+
+    $response->assertOk();
+    $response->assertInertia(
+        fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('admin/users/show')
+            ->where('user.profile.date_of_birth', '2000-01-02')
+            ->where('user.profile.city', 'Kigali')
+            ->where('user.profile.bio', 'Point guard and team captain.')
+            ->where('user.profile.position', 'Point Guard')
+            ->where('user.profile.country', $profile->country->name)
     );
 });
 
@@ -292,7 +319,7 @@ test('users index can be filtered by removed status', function (): void {
 
     $response->assertOk();
     $response->assertInertia(
-        fn ($page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/users/index')
             ->where('filters.status', 'removed')
             ->has('users.data', 1)

@@ -32,19 +32,19 @@ final class Allocation extends Model
     /** @use HasFactory<AllocationFactory> */
     use HasFactory;
 
-    /** @return BelongsTo<Game, self> */
+    /** @return BelongsTo<Game, $this> */
     public function game(): BelongsTo
     {
         return $this->belongsTo(Game::class);
     }
 
-    /** @return BelongsTo<User, self> */
+    /** @return BelongsTo<User, $this> */
     public function player(): BelongsTo
     {
         return $this->belongsTo(User::class, 'player_id');
     }
 
-    /** @return BelongsTo<AllocationConfiguration, self> */
+    /** @return BelongsTo<AllocationConfiguration, $this> */
     public function allocationConfiguration(): BelongsTo
     {
         return $this->belongsTo(AllocationConfiguration::class);

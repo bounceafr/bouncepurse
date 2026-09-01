@@ -24,18 +24,22 @@ final class TeamController extends Controller
         $team = $user->ownedTeam ?? $user->teams()->first();
         $isOwner = $team?->user_id === $user->id;
 
+        $invitations = [];
+        $countries = [];
+
+        if ($team !== null && $isOwner) {
+            $invitations = $team->invitations()
+                ->where('status', InvitationStatus::Pending)
+                ->with('invitedBy:id,name')
+                ->get();
+            $countries = Country::query()->orderBy('name')->get(['id', 'name']);
+        }
+
         return Inertia::render('team/show', [
             'team' => $team?->load('owner'),
             'members' => $team?->members()->get(['users.id', 'users.uuid', 'users.name', 'users.email', 'team_members.joined_at']),
-            'invitations' => $isOwner
-                ? $team->invitations()
-                    ->where('status', InvitationStatus::Pending)
-                    ->with('invitedBy:id,name')
-                    ->get()
-                : [],
-            'countries' => $isOwner
-                ? Country::query()->orderBy('name')->get(['id', 'name'])
-                : [],
+            'invitations' => $invitations,
+            'countries' => $countries,
             'isOwner' => $isOwner,
         ]);
     }

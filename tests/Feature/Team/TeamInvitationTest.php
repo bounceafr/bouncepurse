@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\TeamInvitationNotification;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Facades\Notification;
+use Inertia\Testing\AssertableInertia;
 
 beforeEach(function (): void {
     $this->seed(RolesAndPermissionsSeeder::class);
@@ -87,7 +88,7 @@ test('accept invitation flow works', function (): void {
         ->get(route('team.invitations.accept', $invitation->token))
         ->assertRedirect(route('team.show'));
 
-    expect($invitation->fresh()->status)->toBe(InvitationStatus::Accepted);
+    expect($invitation->refresh()->status)->toBe(InvitationStatus::Accepted);
     expect($team->hasMember($invitee))->toBeTrue();
 });
 
@@ -103,7 +104,7 @@ test('decline invitation flow works', function (): void {
     $this->get(route('team.invitations.decline', $invitation->token))
         ->assertRedirect(route('home'));
 
-    expect($invitation->fresh()->status)->toBe(InvitationStatus::Declined);
+    expect($invitation->refresh()->status)->toBe(InvitationStatus::Declined);
 });
 
 test('expired invitation cannot be accepted', function (): void {
@@ -175,10 +176,9 @@ test('invitation is auto-accepted after registration with token in session', fun
             'password_confirmation' => 'password123!',
         ]);
 
-    $newUser = User::query()->where('email', 'newplayer@example.com')->first();
+    $newUser = User::query()->where('email', 'newplayer@example.com')->firstOrFail();
 
-    expect($newUser)->not->toBeNull();
-    expect($invitation->fresh()->status)->toBe(InvitationStatus::Accepted);
+    expect($invitation->refresh()->status)->toBe(InvitationStatus::Accepted);
     expect($team->hasMember($newUser))->toBeTrue();
     expect(Team::query()->where('user_id', $newUser->id)->exists())->toBeFalse();
 });
@@ -213,7 +213,7 @@ test('invited member can view team members list', function (): void {
     $this->actingAs($member)
         ->get(route('team.show'))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('team/show')
             ->has('members', 2)
             ->where('isOwner', false)
@@ -231,7 +231,7 @@ test('invited member does not see invitations or team edit form', function (): v
     $this->actingAs($member)
         ->get(route('team.show'))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('team/show')
             ->where('isOwner', false)
             ->where('invitations', [])
@@ -285,7 +285,7 @@ test('pending invitation with expired date is rejected and marked expired', func
         ->get(route('team.invitations.accept', $invitation->token))
         ->assertSessionHasErrors('invitation');
 
-    expect($invitation->fresh()->status)->toBe(InvitationStatus::Expired);
+    expect($invitation->refresh()->status)->toBe(InvitationStatus::Expired);
 });
 
 test('invitation token in session with mismatched email creates team instead', function (): void {
@@ -307,10 +307,9 @@ test('invitation token in session with mismatched email creates team instead', f
             'password_confirmation' => 'password123!',
         ]);
 
-    $newUser = User::query()->where('email', 'different@example.com')->first();
+    $newUser = User::query()->where('email', 'different@example.com')->firstOrFail();
 
-    expect($newUser)->not->toBeNull();
-    expect($invitation->fresh()->status)->toBe(InvitationStatus::Pending);
+    expect($invitation->refresh()->status)->toBe(InvitationStatus::Pending);
     expect($newUser->ownedTeam)->not->toBeNull();
 });
 

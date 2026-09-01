@@ -8,13 +8,13 @@ use App\Enums\ResultStatus;
 use App\Models\Game;
 use App\Models\GameResult;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Date;
 
 final class GameResultSeeder extends Seeder
 {
     public function run(): void
     {
-        $games = Game::withoutGlobalScopes()
+        $games = Game::query()->withoutGlobalScopes()
             ->whereNotNull('played_at')
             ->whereDoesntHave('gameResult')
             ->get();
@@ -22,7 +22,7 @@ final class GameResultSeeder extends Seeder
         foreach ($games as $game) {
             $scores = $this->scoresFor($game->result);
             $finishedAt = $game->played_at ?? now();
-            $startedAt = Carbon::parse($finishedAt)->subMinutes(fake()->numberBetween(30, 90));
+            $startedAt = Date::parse($finishedAt)->subMinutes(fake()->numberBetween(30, 90));
 
             GameResult::factory()->create([
                 'game_id' => $game->id,

@@ -11,6 +11,7 @@ use App\Enums\ResultStatus;
 use App\Enums\Role;
 use Carbon\CarbonInterface;
 use Database\Factories\GameFactory;
+use Illuminate\Database\Eloquent\Attributes\RouteKey;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,24 +41,25 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read ?Team $team
  * @property-read ?GameResult $gameResult
  */
+#[RouteKey('uuid')]
 final class Game extends Model
 {
     /** @use HasFactory<GameFactory> */
     use HasFactory;
 
-    /** @return BelongsTo<Court, Game> */
+    /** @return BelongsTo<Court, $this> */
     public function court(): BelongsTo
     {
         return $this->belongsTo(Court::class);
     }
 
-    /** @return BelongsTo<User, Game> */
+    /** @return BelongsTo<User, $this> */
     public function player(): BelongsTo
     {
         return $this->belongsTo(User::class, 'player_id');
     }
 
-    /** @return BelongsTo<Team, Game> */
+    /** @return BelongsTo<Team, $this> */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
@@ -69,21 +71,16 @@ final class Game extends Model
         return $this->hasOne(GameResult::class);
     }
 
-    /** @return HasMany<GameModeration, Game> */
+    /** @return HasMany<GameModeration, $this> */
     public function moderation(): HasMany
     {
         return $this->hasMany(GameModeration::class);
     }
 
-    /** @return HasMany<Dispute, Game> */
+    /** @return HasMany<Dispute, $this> */
     public function disputes(): HasMany
     {
         return $this->hasMany(Dispute::class);
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
     }
 
     protected static function booted(): void

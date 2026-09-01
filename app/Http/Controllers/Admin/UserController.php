@@ -77,6 +77,18 @@ final class UserController extends Controller
                 'created_at' => $review->created_at?->toISOString() ?? '',
             ]);
 
+        $profile = null;
+
+        if ($user->profile !== null) {
+            $profile = [
+                'date_of_birth' => $user->profile->date_of_birth->format('Y-m-d'),
+                'city' => $user->profile->city,
+                'bio' => $user->profile->bio,
+                'position' => $user->profile->position,
+                'country' => $user->profile->country->name,
+            ];
+        }
+
         return Inertia::render('admin/users/show', [
             'user' => [
                 'id' => $user->id,
@@ -88,13 +100,7 @@ final class UserController extends Controller
                 'deactivation_reason' => $user->deactivation_reason,
                 'deactivated_by' => $user->deactivatedBy?->name,
                 'roles' => $userRoles->map(fn (\Spatie\Permission\Models\Role $r): array => ['id' => $r->id, 'name' => $r->name])->all(),
-                'profile' => $user->profile ? [
-                    'date_of_birth' => $user->profile->date_of_birth->format('Y-m-d'),
-                    'city' => $user->profile->city,
-                    'bio' => $user->profile->bio,
-                    'position' => $user->profile->position,
-                    'country' => $user->profile->country->name,
-                ] : null,
+                'profile' => $profile,
                 'recent_games' => $recentGames->all(),
                 'recent_moderation_reviews' => $recentModerationReviews->all(),
             ],

@@ -70,35 +70,33 @@ final class User extends Authenticatable implements MustVerifyEmail
         return ['uuid'];
     }
 
-    /** @return HasOne<Profile, User> */
+    /** @return HasOne<Profile, $this> */
     public function profile(): HasOne
     {
-        // @phpstan-ignore-next-line return.type
         return $this->hasOne(Profile::class, 'player_id');
     }
 
-    /** @return HasMany<PlayerRanking,self> */
+    /** @return HasMany<PlayerRanking, $this> */
     public function rankings(): HasMany
     {
         return $this->hasMany(PlayerRanking::class, 'player_id');
     }
 
-    /** @return HasMany<Game, self> */
+    /** @return HasMany<Game, $this> */
     public function games(): HasMany
     {
         return $this->hasMany(Game::class, 'player_id');
     }
 
-    /** @return HasMany<GameModeration, self> */
+    /** @return HasMany<GameModeration, $this> */
     public function moderationReviews(): HasMany
     {
         return $this->hasMany(GameModeration::class, 'moderator_id');
     }
 
-    /** @return HasOne<Guardian, User> */
+    /** @return HasOne<Guardian, $this> */
     public function guardian(): HasOne
     {
-        // @phpstan-ignore-next-line return.type
         return $this->hasOne(Guardian::class, 'player_id');
     }
 
@@ -107,14 +105,13 @@ final class User extends Authenticatable implements MustVerifyEmail
         return $this->profile !== null && $this->profile->date_of_birth->age < 18;
     }
 
-    /** @return HasOne<Team, User> */
+    /** @return HasOne<Team, $this> */
     public function ownedTeam(): HasOne
     {
-        // @phpstan-ignore-next-line return.type
         return $this->hasOne(Team::class);
     }
 
-    /** @return BelongsToMany<Team, self> */
+    /** @return BelongsToMany<Team, $this> */
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'team_members')
@@ -122,7 +119,7 @@ final class User extends Authenticatable implements MustVerifyEmail
             ->withTimestamps();
     }
 
-    /** @return BelongsTo<User, self> */
+    /** @return BelongsTo<User, $this> */
     public function deactivatedBy(): BelongsTo
     {
         return $this->belongsTo(self::class, 'deactivated_by');

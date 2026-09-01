@@ -55,7 +55,7 @@ test('admin can view allocation summary page', function (): void {
 });
 
 test('summary returns correct totals', function (): void {
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
     $game1 = Game::factory()->create();
     $game2 = Game::factory()->create();
 
@@ -96,7 +96,7 @@ test('summary returns correct totals', function (): void {
 });
 
 test('summary filters by player id', function (): void {
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
     $player1 = User::factory()->create();
     $player2 = User::factory()->create();
     $game1 = Game::factory()->create(['player_id' => $player1->id]);
@@ -124,7 +124,7 @@ test('summary filters by player id', function (): void {
 });
 
 test('summary filters by date range', function (): void {
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
     $game = Game::factory()->create();
 
     Allocation::query()->create([
@@ -157,7 +157,7 @@ test('summary filters by date range', function (): void {
 });
 
 test('summary filters by game format', function (): void {
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
     $singlesGame = Game::factory()->create(['format' => '1v1']);
     $doublesGame = Game::factory()->create(['format' => '3v3']);
 
@@ -185,7 +185,7 @@ test('csv export returns correct headers and data', function (): void {
     $admin = User::factory()->create()->assignRole(Role::Administrator->value);
     $this->actingAs($admin);
 
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
     $game = Game::factory()->create();
 
     Allocation::query()->create([
@@ -233,9 +233,9 @@ test('csv export includes data row with correct format', function (): void {
     $admin = User::factory()->create()->assignRole(Role::Administrator->value);
     $this->actingAs($admin);
 
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
     $game = Game::factory()->create(['format' => '1v1']);
-    $player = User::query()->find($game->player_id);
+    $player = User::query()->findOrFail($game->player_id);
 
     $allocation = Allocation::query()->create([
         'game_id' => $game->id,
@@ -251,6 +251,7 @@ test('csv export includes data row with correct format', function (): void {
 
     $response = $this->get(route('admin.allocation.export'));
     $content = $response->getContent();
+    $this->assertNotNull($allocation->created_at);
 
     expect($content)
         ->toContain('"'.$player->name.'"')
@@ -264,7 +265,7 @@ test('csv export filters by player id', function (): void {
     $admin = User::factory()->create()->assignRole(Role::Administrator->value);
     $this->actingAs($admin);
 
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
     $player1 = User::factory()->create();
     $player2 = User::factory()->create();
     $game1 = Game::factory()->create(['player_id' => $player1->id]);
@@ -296,7 +297,7 @@ test('csv export filters by date range', function (): void {
     $admin = User::factory()->create()->assignRole(Role::Administrator->value);
     $this->actingAs($admin);
 
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
     $game = Game::factory()->create();
 
     Allocation::query()->create([
@@ -321,18 +322,23 @@ test('csv export filters by date range', function (): void {
         'from' => now()->subDays(5)->toDateString(),
         'to' => now()->toDateString(),
     ]));
+    $withinContent = $responseWithin->getContent();
+    $outsideContent = $responseOutside->getContent();
+
+    $this->assertIsString($withinContent);
+    $this->assertIsString($outsideContent);
 
     $lines = fn (string $content): int => count(array_filter(explode("\n", mb_trim($content)))) - 1;
 
-    expect($lines($responseWithin->getContent()))->toBe(1)
-        ->and($lines($responseOutside->getContent()))->toBe(0);
+    expect($lines($withinContent))->toBe(1)
+        ->and($lines($outsideContent))->toBe(0);
 });
 
 test('csv export filters by game format', function (): void {
     $admin = User::factory()->create()->assignRole(Role::Administrator->value);
     $this->actingAs($admin);
 
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
     $singlesGame = Game::factory()->create(['format' => '1v1']);
     $doublesGame = Game::factory()->create(['format' => '3v3']);
 

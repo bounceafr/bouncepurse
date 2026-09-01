@@ -91,23 +91,20 @@ export default function Profile({
             ? `/storage/${playerProfile.profile_image}`
             : null,
     );
-    const [showToast, setShowToast] = React.useState(
-        status === 'player-profile-updated',
-    );
-
-    const toast: Toast | null =
-        showToast && status === 'player-profile-updated'
+    const [toast, setToast] = React.useState<Toast | null>(() =>
+        status === 'player-profile-updated'
             ? {
                   type: 'success',
                   message: 'Your player profile has been saved successfully.',
               }
-            : null;
+            : null,
+    );
 
     React.useEffect(() => {
-        if (!showToast) return;
-        const timer = setTimeout(() => setShowToast(false), 4000);
+        if (!toast) return;
+        const timer = setTimeout(() => setToast(null), 4000);
         return () => clearTimeout(timer);
-    }, [showToast]);
+    }, [toast]);
 
     function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -147,7 +144,7 @@ export default function Profile({
                         </AlertTitle>
                         <AlertDescription>{toast.message}</AlertDescription>
                         <button
-                            onClick={() => setShowToast(false)}
+                            onClick={() => setToast(null)}
                             className="absolute top-3 right-3 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
                             aria-label="Dismiss"
                         >
@@ -380,10 +377,15 @@ export default function Profile({
                                                             )
                                                     }
                                                     captionLayout="dropdown"
-                                                    fromYear={1930}
-                                                    toYear={
-                                                        new Date().getFullYear() -
-                                                        5
+                                                    startMonth={
+                                                        new Date(1930, 0)
+                                                    }
+                                                    endMonth={
+                                                        new Date(
+                                                            new Date().getFullYear() -
+                                                                5,
+                                                            11,
+                                                        )
                                                     }
                                                     defaultMonth={
                                                         dateOfBirth ??
@@ -512,7 +514,6 @@ export default function Profile({
                         </Form>
                     </div>
                 )}
-
             </SettingsLayout>
         </AppLayout>
     );

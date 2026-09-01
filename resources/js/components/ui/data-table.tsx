@@ -17,14 +17,19 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Link } from '@inertiajs/react';
 import {
+    columnVisibilityFeature,
     type ColumnDef,
+    type ColumnVisibilityState,
+    createSortedRowModel,
     flexRender,
-    getCoreRowModel,
-    getSortedRowModel,
+    rowPaginationFeature,
     type RowSelectionState,
+    rowSelectionFeature,
+    type RowData,
     type SortingState,
-    type VisibilityState,
-    useReactTable,
+    rowSortingFeature,
+    tableFeatures,
+    useTable,
 } from '@tanstack/react-table';
 import {
     ArrowDown,
@@ -51,6 +56,19 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+
+const dataTableFeatures = tableFeatures({
+    columnVisibilityFeature,
+    rowPaginationFeature,
+    rowSelectionFeature,
+    rowSortingFeature,
+    sortedRowModel: createSortedRowModel(),
+});
+
+export type DataTableColumnDef<
+    TData extends RowData,
+    TValue = unknown,
+> = ColumnDef<typeof dataTableFeatures, TData, TValue>;
 
 type PaginationLink = { url: string | null; label: string; active: boolean };
 
@@ -102,7 +120,9 @@ export function sortableHeader(label: string) {
     );
 }
 
-export function selectionColumn<TData>(): ColumnDef<TData, unknown> {
+export function selectionColumn<
+    TData extends RowData,
+>(): DataTableColumnDef<TData> {
     return {
         id: 'select',
         header: ({ table }) => (
@@ -129,8 +149,8 @@ export function selectionColumn<TData>(): ColumnDef<TData, unknown> {
     };
 }
 
-interface DataTableProps<TData> {
-    columns: ColumnDef<TData, unknown>[];
+interface DataTableProps<TData extends RowData> {
+    columns: DataTableColumnDef<TData>[];
     data: TData[];
     toolbar?: React.ReactNode;
     pagination?: React.ReactNode;
@@ -184,7 +204,7 @@ function SortableRow({
     );
 }
 
-export function DataTable<TData>({
+export function DataTable<TData extends RowData>({
     columns,
     data,
     toolbar,
@@ -196,20 +216,17 @@ export function DataTable<TData>({
     hideColumnToggle = false,
 }: DataTableProps<TData>) {
     const [sorting, setSorting] = useState<SortingState>([]);
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-        {},
-    );
+    const [columnVisibility, setColumnVisibility] =
+        useState<ColumnVisibilityState>({});
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [draggableRows, setDraggableRows] = useState<TData[]>(data);
 
     const tableData = draggable ? draggableRows : data;
 
-    // eslint-disable-next-line react-hooks/incompatible-library
-    const table = useReactTable({
+    const table = useTable({
+        features: dataTableFeatures,
         data: tableData,
         columns,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
         onSortingChange: setSorting,
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\DisputeStatus;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Attributes\RouteKey;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,23 +24,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Game $game
  * @property-read User $player
  */
+#[RouteKey('uuid')]
 final class Dispute extends Model
 {
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
-    /** @return BelongsTo<Game, self> */
+    /** @return BelongsTo<Game, $this> */
     public function game(): BelongsTo
     {
         return $this->belongsTo(Game::class);
     }
 
-    /** @return BelongsTo<User, self> */
+    /** @return BelongsTo<User, $this> */
     public function player(): BelongsTo
     {
         return $this->belongsTo(User::class, 'player_id');
