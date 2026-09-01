@@ -4,28 +4,24 @@ declare(strict_types=1);
 
 use App\Models\Allocation;
 use App\Models\AllocationConfiguration;
-use App\Models\Game;
 use App\Models\User;
 
 test('allocation belongs to a game', function (): void {
     $allocation = Allocation::factory()->create();
 
-    expect($allocation->game)->toBeInstanceOf(Game::class)
-        ->and($allocation->game->id)->toBe($allocation->game_id);
+    expect($allocation->game->id)->toBe($allocation->game_id);
 });
 
 test('allocation belongs to a player', function (): void {
     $allocation = Allocation::factory()->create();
 
-    expect($allocation->player)->toBeInstanceOf(User::class)
-        ->and($allocation->player->id)->toBe($allocation->player_id);
+    expect($allocation->player->id)->toBe($allocation->player_id);
 });
 
 test('allocation belongs to an allocation configuration', function (): void {
     $allocation = Allocation::factory()->create();
 
-    expect($allocation->allocationConfiguration)->toBeInstanceOf(AllocationConfiguration::class)
-        ->and($allocation->allocationConfiguration->id)->toBe($allocation->allocation_configuration_id);
+    expect($allocation->allocationConfiguration->id)->toBe($allocation->allocation_configuration_id);
 });
 
 test('allocation casts amount fields to float', function (): void {
@@ -37,11 +33,11 @@ test('allocation casts amount fields to float', function (): void {
         'administration_amount' => 0.25,
     ]);
 
-    expect($allocation->total_amount)->toBeFloat()
-        ->and($allocation->insurance_amount)->toBeFloat()
-        ->and($allocation->savings_amount)->toBeFloat()
-        ->and($allocation->pathway_amount)->toBeFloat()
-        ->and($allocation->administration_amount)->toBeFloat();
+    expect($allocation->total_amount)->toBe(1.0)
+        ->and($allocation->insurance_amount)->toBe(0.25)
+        ->and($allocation->savings_amount)->toBe(0.25)
+        ->and($allocation->pathway_amount)->toBe(0.25)
+        ->and($allocation->administration_amount)->toBe(0.25);
 });
 
 test('allocation configuration has many allocations', function (): void {
@@ -56,9 +52,9 @@ test('allocation configuration has many allocations', function (): void {
 test('allocation configuration belongs to updated by user', function (): void {
     $user = User::factory()->create();
     $config = AllocationConfiguration::factory()->create(['updated_by' => $user->id]);
+    $updatedBy = $config->updatedBy()->firstOrFail();
 
-    expect($config->updatedBy)->toBeInstanceOf(User::class)
-        ->and($config->updatedBy->id)->toBe($user->id);
+    expect($updatedBy->id)->toBe($user->id);
 });
 
 test('allocation configuration updated by is nullable', function (): void {
@@ -70,8 +66,8 @@ test('allocation configuration updated by is nullable', function (): void {
 test('allocation configuration casts percentage fields to float', function (): void {
     $config = AllocationConfiguration::factory()->create();
 
-    expect($config->insurance_percentage)->toBeFloat()
-        ->and($config->savings_percentage)->toBeFloat()
-        ->and($config->pathway_percentage)->toBeFloat()
-        ->and($config->administration_percentage)->toBeFloat();
+    expect($config->insurance_percentage)->toBe(20.0)
+        ->and($config->savings_percentage)->toBe(20.0)
+        ->and($config->pathway_percentage)->toBe(20.0)
+        ->and($config->administration_percentage)->toBe(20.0);
 });

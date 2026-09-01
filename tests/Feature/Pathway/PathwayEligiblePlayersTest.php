@@ -188,6 +188,7 @@ test('csv export shows best rank across multiple formats', function (): void {
 
     $response = $this->get(route('admin.pathway-eligible.export'));
     $content = $response->getContent();
+    $this->assertIsString($content);
 
     $lines = explode("\n", mb_trim($content));
     $dataLine = $lines[1];

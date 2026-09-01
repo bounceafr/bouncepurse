@@ -7,6 +7,7 @@ use App\Models\GameModeration;
 use App\Models\RankingConfiguration;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
+use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function (): void {
@@ -30,7 +31,7 @@ test('admin can view the flagged games index', function (): void {
     $response = $this->get(route('admin.override.index'));
 
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->component('admin/override/index'));
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page->component('admin/override/index'));
 });
 
 test('flagged games index only shows flagged games', function (): void {
@@ -45,7 +46,7 @@ test('flagged games index only shows flagged games', function (): void {
 
     $response->assertOk();
     $response->assertInertia(
-        fn ($page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/override/index')
             ->has('games.data', 1)
             ->where('games.data.0.id', $flagged->id)
@@ -61,7 +62,7 @@ test('admin can view the override show page', function (): void {
 
     $response->assertOk();
     $response->assertInertia(
-        fn ($page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/override/show')
             ->where('game.id', $game->id)
             ->has('game.player')
@@ -228,7 +229,7 @@ test('override moderation record has is_override set to true', function (): void
         ->where('game_id', $game->id)
         ->where('moderator_id', $admin->id)
         ->latest()
-        ->first();
+        ->firstOrFail();
 
     expect($moderation)->not->toBeNull()
         ->and($moderation->is_override)->toBeTrue();

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Actions\Admin\Allocation\CreateAllocation;
 use App\Jobs\CreateGameAllocationJob;
-use App\Models\Allocation;
 use App\Models\AllocationConfiguration;
 use App\Models\Game;
 use App\Models\RankingConfiguration;
@@ -37,8 +36,7 @@ test('create allocation action creates record with correct amounts', function ()
 
     $allocation = $action->handle($game);
 
-    expect($allocation)->toBeInstanceOf(Allocation::class)
-        ->and($allocation->game_id)->toBe($game->id)
+    expect($allocation->game_id)->toBe($game->id)
         ->and($allocation->player_id)->toBe($game->player_id)
         ->and($allocation->total_amount)->toBe(1.0)
         ->and($allocation->insurance_amount)->toBe(0.2)
@@ -68,7 +66,7 @@ test('allocation stores reference to configuration', function (): void {
     $action = resolve(CreateAllocation::class);
 
     $allocation = $action->handle($game);
-    $config = AllocationConfiguration::query()->latest('id')->first();
+    $config = AllocationConfiguration::query()->latest('id')->firstOrFail();
 
     expect($allocation->allocation_configuration_id)->toBe($config->id);
 });
@@ -106,7 +104,7 @@ test('approving game via moderation dispatches allocation job', function (): voi
         'reason' => 'Looks good.',
     ]);
 
-    Queue::assertPushed(CreateGameAllocationJob::class, fn ($job): bool => $job->gameId === $game->id);
+    Queue::assertPushed(CreateGameAllocationJob::class, fn (CreateGameAllocationJob $job): bool => $job->gameId === $game->id);
 });
 
 test('rejecting game via moderation does not dispatch allocation job', function (): void {

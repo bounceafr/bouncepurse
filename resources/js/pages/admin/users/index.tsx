@@ -1,5 +1,4 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
 import {
     Key,
     MoreHorizontal,
@@ -21,6 +20,7 @@ import { ListPageShell } from '@/components/list-page-shell';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
+    type DataTableColumnDef as ColumnDef,
     DataTable,
     LaravelPagination,
     selectionColumn,
@@ -284,9 +284,7 @@ export default function UsersIndex({
     const isInitialRender = useRef(true);
 
     const activeTab =
-        filters.status === 'removed'
-            ? 'removed'
-            : (filters.role ?? 'all');
+        filters.status === 'removed' ? 'removed' : (filters.role ?? 'all');
 
     useEffect(() => {
         if (isInitialRender.current) {
@@ -314,8 +312,7 @@ export default function UsersIndex({
             index().url,
             {
                 search: search || undefined,
-                role:
-                    tab !== 'all' && tab !== 'removed' ? tab : undefined,
+                role: tab !== 'all' && tab !== 'removed' ? tab : undefined,
                 status: tab === 'removed' ? 'removed' : undefined,
             },
             { preserveState: true, replace: true },
@@ -333,8 +330,8 @@ export default function UsersIndex({
             ),
             enableSorting: false,
             cell: ({ row, table }) => {
-                const pageIndex = table.getState().pagination.pageIndex;
-                const pageSize = table.getState().pagination.pageSize;
+                const pageIndex = table.store.state.pagination.pageIndex;
+                const pageSize = table.store.state.pagination.pageSize;
                 return (
                     <span className="text-muted-foreground">
                         {pageIndex * pageSize + row.index + 1}
@@ -537,9 +534,10 @@ export default function UsersIndex({
                                 className="rounded-none px-4 py-2.5 text-muted-foreground data-active:text-foreground data-active:after:bg-primary"
                             >
                                 {role.label} (
-                                {String(
-                                    counts.roles[role.value] ?? 0,
-                                ).padStart(2, '0')}
+                                {String(counts.roles[role.value] ?? 0).padStart(
+                                    2,
+                                    '0',
+                                )}
                                 )
                             </TabsTrigger>
                         ))}
@@ -547,8 +545,7 @@ export default function UsersIndex({
                             value="removed"
                             className="rounded-none px-4 py-2.5 text-muted-foreground data-active:text-foreground data-active:after:bg-primary"
                         >
-                            Removed (
-                            {String(counts.removed).padStart(2, '0')})
+                            Removed ({String(counts.removed).padStart(2, '0')})
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>

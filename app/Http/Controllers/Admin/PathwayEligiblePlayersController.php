@@ -44,8 +44,8 @@ final class PathwayEligiblePlayersController extends Controller
                 'best_rank' => PlayerRanking::query()
                     ->selectRaw('MIN(rank)')
                     ->whereColumn('player_id', 'users.id')
-                    ->whereIn('calculated_at', function ($q): void {
-                        $q->selectRaw('MAX(calculated_at)')
+                    ->whereIn('calculated_at', function (\Illuminate\Database\Query\Builder $query): void {
+                        $query->selectRaw('MAX(calculated_at)')
                             ->from('player_rankings')
                             ->whereColumn('player_id', 'users.id')
                             ->groupBy('format');
@@ -59,12 +59,14 @@ final class PathwayEligiblePlayersController extends Controller
 
         foreach ($candidates as $candidate) {
             $summary = $allocationSummary->handle(['player_id' => $candidate->id]);
+            $bestRank = $candidate->getAttribute('best_rank');
+            $approvedGames = $candidate->getAttribute('approved_games_count');
 
             $csv .= implode(',', [
                 $escape($candidate->name),
                 $escape($candidate->profile?->country->name ?? ''),
-                $candidate->best_rank ?? 'N/A',
-                $candidate->approved_games_count,
+                is_numeric($bestRank) ? (string) $bestRank : 'N/A',
+                is_numeric($approvedGames) ? (string) $approvedGames : '0',
                 number_format($summary['savings'], 4),
                 number_format($summary['pathway'], 4),
             ])."\n";

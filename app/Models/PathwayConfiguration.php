@@ -25,7 +25,7 @@ final class PathwayConfiguration extends Model
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
-    /** @return BelongsTo<User,self> */
+    /** @return BelongsTo<User, $this> */
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');

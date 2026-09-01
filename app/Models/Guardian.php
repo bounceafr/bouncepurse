@@ -42,7 +42,7 @@ final class Guardian extends Model
         return ['uuid'];
     }
 
-    /** @return BelongsTo<User, self> */
+    /** @return BelongsTo<User, $this> */
     public function player(): BelongsTo
     {
         return $this->belongsTo(User::class, 'player_id');

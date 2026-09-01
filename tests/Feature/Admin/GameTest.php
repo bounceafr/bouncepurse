@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Game;
 use App\Models\User;
+use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Permission;
 use Vimeo\Laravel\Facades\Vimeo;
 
@@ -22,7 +23,7 @@ test('authenticated users can view games index', function (): void {
 
     $response = $this->get(route('admin.games.index'));
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->component('admin/games/index'));
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page->component('admin/games/index'));
 });
 
 test('games index can be filtered by search term', function (): void {
@@ -36,7 +37,7 @@ test('games index can be filtered by search term', function (): void {
 
     $response->assertOk();
     $response->assertInertia(
-        fn ($page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/games/index')
             ->where('filters.search', 'Championship')
             ->has('games.data', 1)
@@ -205,7 +206,7 @@ test('authenticated users can view the upload game page', function (): void {
     $response = $this->get(route('admin.games.upload', $game));
 
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
         ->component('admin/games/upload')
         ->where('game.id', $game->id)
     );

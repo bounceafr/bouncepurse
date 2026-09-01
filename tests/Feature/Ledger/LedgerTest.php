@@ -51,7 +51,7 @@ test('player only sees own allocations', function (): void {
     Profile::factory()->create(['player_id' => $player1->id]);
     $player2 = User::factory()->create()->assignRole(Role::Player->value);
 
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
 
     $game1 = Game::factory()->create(['player_id' => $player1->id, 'status' => GameStatus::Approved]);
     $game2 = Game::factory()->create(['player_id' => $player2->id, 'status' => GameStatus::Approved]);
@@ -82,7 +82,7 @@ test('player only sees own allocations', function (): void {
 test('ledger filters by date range and format', function (): void {
     $player = User::factory()->create()->assignRole(Role::Player->value);
     Profile::factory()->create(['player_id' => $player->id]);
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
 
     $game = Game::factory()->create(['player_id' => $player->id, 'format' => '1v1']);
 
@@ -120,7 +120,7 @@ test('ledger filters by date range and format', function (): void {
 test('summary stats are correct for player', function (): void {
     $player = User::factory()->create()->assignRole(Role::Player->value);
     Profile::factory()->create(['player_id' => $player->id]);
-    $config = AllocationConfiguration::query()->latest()->first();
+    $config = AllocationConfiguration::query()->latest()->firstOrFail();
 
     Game::factory()->count(3)->create(['player_id' => $player->id, 'status' => GameStatus::Approved]);
     Game::factory()->count(2)->create(['player_id' => $player->id, 'status' => GameStatus::Pending]);

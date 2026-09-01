@@ -11,9 +11,9 @@ use App\Models\User;
 test('user has one profile', function (): void {
     $user = User::factory()->create();
     Profile::factory()->create(['player_id' => $user->id]);
+    $profile = $user->profile()->firstOrFail();
 
-    expect($user->profile)->toBeInstanceOf(Profile::class)
-        ->and($user->profile->player_id)->toBe($user->id);
+    expect($profile->player_id)->toBe($user->id);
 });
 
 test('user profile is null when no profile exists', function (): void {

@@ -13,8 +13,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import AuthSplitLayout from '@/layouts/auth/auth-split-layout';
 import { logout } from '@/routes';
-import { resend, verify } from '@/routes/verification/code';
 import { send } from '@/routes/verification';
+import { resend, verify } from '@/routes/verification/code';
 
 type Props = {
     status?: string;

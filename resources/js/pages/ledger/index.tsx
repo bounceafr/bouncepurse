@@ -1,5 +1,4 @@
 import { Head, router } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
 import { CheckCircle2, Gamepad2, PiggyBank, Route } from 'lucide-react';
 import { useState } from 'react';
 import LedgerController from '@/actions/App/Http/Controllers/LedgerController';
@@ -8,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+    type DataTableColumnDef as ColumnDef,
     DataTable,
     LaravelPagination,
     selectionColumn,

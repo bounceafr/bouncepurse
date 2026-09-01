@@ -1,5 +1,4 @@
 import { Head, router } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
 import { DownloadIcon, SearchIcon, XIcon } from 'lucide-react';
 import { type FormEvent } from 'react';
 import { useState } from 'react';
@@ -10,6 +9,7 @@ import {
 import { ListPageShell } from '@/components/list-page-shell';
 import { Button } from '@/components/ui/button';
 import {
+    type DataTableColumnDef as ColumnDef,
     DataTable,
     LaravelPagination,
     selectionColumn,
@@ -174,11 +174,7 @@ export default function EligiblePlayers({ candidates, filters }: Props) {
                         />
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                        <Button
-                            type="submit"
-                            size="sm"
-                            className="shadow-none"
-                        >
+                        <Button type="submit" size="sm" className="shadow-none">
                             Search
                         </Button>
                         {filters.search ? (

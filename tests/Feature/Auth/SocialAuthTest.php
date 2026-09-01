@@ -167,6 +167,29 @@ test('verified google users with two factor enabled are redirected to two factor
     $this->assertGuest();
 });
 
+test('verified google users are logged in when two factor feature is disabled', function (): void {
+    config()->set('fortify.features', []);
+    Notification::fake();
+
+    $existing = User::factory()->withTwoFactor()->create([
+        'email' => 'jane@example.com',
+        'social_provider' => 'google',
+        'social_provider_id' => 'google-abc123',
+    ]);
+
+    Socialite::fake('google', (new SocialiteUser)->map([
+        'id' => 'google-abc123',
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+    ]));
+
+    $response = $this->get(route('auth.google.callback'));
+
+    $this->assertAuthenticatedAs($existing);
+    $response->assertRedirect(route('dashboard'));
+    Notification::assertNothingSent();
+});
+
 test('unverified google users with two factor enabled still receive verification code', function (): void {
     if (! Features::canManageTwoFactorAuthentication()) {
         $this->markTestSkipped('Two-factor authentication is not enabled.');

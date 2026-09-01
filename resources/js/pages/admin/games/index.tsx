@@ -1,5 +1,4 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
 import {
     CalendarIcon,
     CirclePlusIcon,
@@ -16,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
+    type DataTableColumnDef as ColumnDef,
     DataTable,
     LaravelPagination,
     selectionColumn,
@@ -235,7 +235,6 @@ function EditGameFormFields({
                 </Select>
                 <InputError message={errors.result} />
             </div>
-
         </>
     );
 }
@@ -455,7 +454,6 @@ function CreateGameFormFields({
                         </Select>
                         <InputError message={errors.result} />
                     </div>
-
                 </>
             ) : (
                 <div className="grid gap-2">

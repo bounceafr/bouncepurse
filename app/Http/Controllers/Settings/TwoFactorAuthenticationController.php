@@ -43,8 +43,12 @@ final class TwoFactorAuthenticationController extends Controller
      */
     private function passwordIsConfirmed(Request $request): bool
     {
-        $confirmedAt = Date::now()->unix() - $request->session()->get('auth.password_confirmed_at', 0);
+        $confirmedAt = $request->session()->get('auth.password_confirmed_at', 0);
 
-        return $confirmedAt < (int) config('auth.password_timeout', 10800);
+        if (! is_int($confirmedAt)) {
+            return false;
+        }
+
+        return Date::now()->unix() - $confirmedAt < config()->integer('auth.password_timeout', 10800);
     }
 }

@@ -36,7 +36,7 @@ test('middleware allows onboarding routes even without profile', function (): vo
 
     $request = Request::create(route('onboarding.complete-profile'));
     $request->setUserResolver(fn () => $user);
-    $request->setRouteResolver(fn () => (new Route('GET', 'onboarding/complete-profile', []))->name('onboarding.complete-profile'));
+    $request->setRouteResolver(fn () => new Route('GET', 'onboarding/complete-profile', [])->name('onboarding.complete-profile'));
 
     $response = $middleware->handle($request, fn (): Response => new Response('ok'));
 
@@ -159,8 +159,10 @@ test('player profile image can be uploaded', function (): void {
             'profile_image' => UploadedFile::fake()->image('avatar.jpg'),
         ]);
 
-    expect($user->fresh()->profile->profile_image)->not->toBeNull();
-    Storage::disk('public')->assertExists($user->fresh()->profile->profile_image);
+    $profileImage = $user->profile()->firstOrFail()->profile_image;
+
+    $this->assertNotNull($profileImage);
+    Storage::disk('public')->assertExists($profileImage);
 });
 
 test('player profile is updated when already exists', function (): void {
@@ -182,5 +184,5 @@ test('player profile is updated when already exists', function (): void {
         ]);
 
     expect($user->profile()->count())->toBe(1)
-        ->and($user->profile->city)->toBe('Abuja');
+        ->and($user->profile()->firstOrFail()->city)->toBe('Abuja');
 });

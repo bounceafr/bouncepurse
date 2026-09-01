@@ -14,8 +14,11 @@ export default function AuthGlassLayout({
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
     useEffect(() => {
-        const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+        const mediaQuery = window.matchMedia(
+            '(prefers-reduced-motion: reduce)',
+        );
+        const updatePreference = () =>
+            setPrefersReducedMotion(mediaQuery.matches);
 
         updatePreference();
         mediaQuery.addEventListener('change', updatePreference);
@@ -62,7 +65,11 @@ export default function AuthGlassLayout({
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            transition={{ duration: 0.5, delay: 0.1, ease: sportEase }}
+                            transition={{
+                                duration: 0.5,
+                                delay: 0.1,
+                                ease: sportEase,
+                            }}
                         >
                             <AppLogoIcon className="h-16 w-auto" />
                         </motion.div>
@@ -86,7 +93,7 @@ export default function AuthGlassLayout({
                         </div>
                     </div>
 
-                    <div className="mt-8 [&_button[type=submit]]:sport-glow">
+                    <div className="[&_button[type=submit]]:sport-glow mt-8">
                         {children}
                     </div>
                 </motion.div>

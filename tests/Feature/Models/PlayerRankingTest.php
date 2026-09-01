@@ -31,8 +31,7 @@ test('player ranking belongs to a player', function (): void {
         'calculated_at' => now(),
     ]);
 
-    expect($ranking->player)->toBeInstanceOf(User::class)
-        ->and($ranking->player->id)->toBe($user->id);
+    expect($ranking->player->id)->toBe($user->id);
 });
 
 test('player ranking belongs to a ranking configuration', function (): void {
@@ -51,8 +50,7 @@ test('player ranking belongs to a ranking configuration', function (): void {
         'calculated_at' => now(),
     ]);
 
-    expect($ranking->configuration)->toBeInstanceOf(RankingConfiguration::class)
-        ->and($ranking->configuration->id)->toBe($this->config->id);
+    expect($ranking->configuration->id)->toBe($this->config->id);
 });
 
 test('player ranking integer fields are cast correctly', function (): void {
@@ -71,11 +69,11 @@ test('player ranking integer fields are cast correctly', function (): void {
         'calculated_at' => now(),
     ]);
 
-    expect($ranking->wins)->toBeInt()->toBe(3)
-        ->and($ranking->losses)->toBeInt()->toBe(2)
-        ->and($ranking->total_games)->toBeInt()->toBe(5)
-        ->and($ranking->recent_games)->toBeInt()->toBe(4)
-        ->and($ranking->rank)->toBeInt()->toBe(1);
+    expect($ranking->wins)->toBe(3)
+        ->and($ranking->losses)->toBe(2)
+        ->and($ranking->total_games)->toBe(5)
+        ->and($ranking->recent_games)->toBe(4)
+        ->and($ranking->rank)->toBe(1);
 });
 
 test('player ranking score is cast to float', function (): void {
@@ -94,5 +92,5 @@ test('player ranking score is cast to float', function (): void {
         'calculated_at' => now(),
     ]);
 
-    expect($ranking->score)->toBeFloat()->toBe(7.25);
+    expect($ranking->score)->toBe(7.25);
 });

@@ -176,8 +176,8 @@ export default function CompleteProfile({
                                             date < new Date('1900-01-01')
                                         }
                                         captionLayout="dropdown"
-                                        fromYear={2001}
-                                        toYear={currentYear - 5}
+                                        startMonth={new Date(2001, 0)}
+                                        endMonth={new Date(currentYear - 5, 11)}
                                         defaultMonth={
                                             dateOfBirth ??
                                             new Date(currentYear - 18, 0)

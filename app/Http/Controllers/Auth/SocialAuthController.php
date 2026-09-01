@@ -8,11 +8,11 @@ use App\Actions\Auth\HandleGoogleUser;
 use App\Actions\Auth\SendEmailVerificationCode;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Fortify\Features;
 use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Throwable;
 
 final class SocialAuthController extends Controller
@@ -30,16 +30,14 @@ final class SocialAuthController extends Controller
         try {
             $socialUser = Socialite::driver('google')->user();
         } catch (Throwable) {
-            return redirect()
-                ->route('login')
+            return to_route('login')
                 ->withErrors(['social' => 'Authentication was cancelled or failed. Please try again.']);
         }
 
         ['user' => $user] = $handleGoogleUser->handle($socialUser);
 
         if ($user->isDeactivated()) {
-            return redirect()
-                ->route('login')
+            return to_route('login')
                 ->withErrors(['social' => 'Your account has been deactivated.']);
         }
 
@@ -53,7 +51,7 @@ final class SocialAuthController extends Controller
                 'login.remember' => false,
             ]);
 
-            return redirect()->route('two-factor.login');
+            return to_route('two-factor.login');
         }
 
         Auth::login($user);

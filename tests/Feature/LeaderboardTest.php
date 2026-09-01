@@ -9,6 +9,7 @@ use App\Models\RankingConfiguration;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia;
 
+/** @param array<string, mixed>|null $profileOverrides */
 function createRankedPlayer(RankingConfiguration $config, string $format, int $rank, float $score, ?array $profileOverrides = null): User
 {
     $player = User::factory()->create();

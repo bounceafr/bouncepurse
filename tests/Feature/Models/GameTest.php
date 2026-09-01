@@ -77,15 +77,15 @@ test('unauthenticated user sees all games', function (): void {
 test('game belongs to a team', function (): void {
     $team = Team::factory()->create();
     $game = Game::factory()->create(['team_id' => $team->id]);
+    $relatedTeam = $game->team()->firstOrFail();
 
-    expect($game->team)->toBeInstanceOf(Team::class)
-        ->and($game->team->id)->toBe($team->id);
+    expect($relatedTeam->id)->toBe($team->id);
 });
 
 test('game has one game result', function (): void {
     $game = Game::factory()->create();
     $result = GameResult::factory()->create(['game_id' => $game->id]);
+    $relatedResult = $game->gameResult()->firstOrFail();
 
-    expect($game->gameResult)->toBeInstanceOf(GameResult::class)
-        ->and($game->gameResult->id)->toBe($result->id);
+    expect($relatedResult->id)->toBe($result->id);
 });

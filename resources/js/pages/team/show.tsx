@@ -12,6 +12,7 @@ import {
 import { destroy as memberDestroy } from '@/actions/App/Http/Controllers/Team/TeamMemberController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { ListPageShell } from '@/components/list-page-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,7 +39,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { ListPageShell } from '@/components/list-page-shell';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -444,36 +444,41 @@ export default function Show({
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {(invitations ?? []).map((invitation) => (
-                                            <TableRow key={invitation.id}>
-                                                <TableCell>
-                                                    {invitation.email}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {invitation.invited_by.name}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {new Date(
-                                                        invitation.created_at,
-                                                    ).toLocaleDateString()}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() =>
-                                                            router.delete(
-                                                                invitationDestroy(
-                                                                    invitation,
-                                                                ).url,
-                                                            )
+                                        {(invitations ?? []).map(
+                                            (invitation) => (
+                                                <TableRow key={invitation.id}>
+                                                    <TableCell>
+                                                        {invitation.email}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {
+                                                            invitation
+                                                                .invited_by.name
                                                         }
-                                                    >
-                                                        <Trash2 className="size-4 text-destructive" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {new Date(
+                                                            invitation.created_at,
+                                                        ).toLocaleDateString()}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() =>
+                                                                router.delete(
+                                                                    invitationDestroy(
+                                                                        invitation,
+                                                                    ).url,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="size-4 text-destructive" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ),
+                                        )}
                                     </TableBody>
                                 </Table>
                             )}

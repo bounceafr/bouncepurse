@@ -7,6 +7,7 @@ use App\Models\GameModeration;
 use App\Models\RankingConfiguration;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
+use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function (): void {
@@ -30,7 +31,7 @@ test('moderator can view the moderation queue', function (): void {
     $response = $this->get(route('admin.moderation.index'));
 
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->component('admin/moderation/index'));
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page->component('admin/moderation/index'));
 });
 
 test('moderation queue only shows pending games', function (): void {
@@ -44,7 +45,7 @@ test('moderation queue only shows pending games', function (): void {
 
     $response->assertOk();
     $response->assertInertia(
-        fn ($page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/moderation/index')
             ->has('games.data', 1)
             ->where('games.data.0.id', $pending->id)
@@ -173,7 +174,7 @@ test('moderator can view the moderation show page', function (): void {
 
     $response->assertOk();
     $response->assertInertia(
-        fn ($page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/moderation/show')
             ->where('game.id', $game->id)
             ->has('game.player')
@@ -232,8 +233,7 @@ test('game moderation belongs to a game', function (): void {
         'reason' => 'Looks good.',
     ]);
 
-    expect($moderation->game)->toBeInstanceOf(Game::class)
-        ->and($moderation->game->id)->toBe($game->id);
+    expect($moderation->game->id)->toBe($game->id);
 });
 
 test('game moderation belongs to a moderator', function (): void {
@@ -247,6 +247,5 @@ test('game moderation belongs to a moderator', function (): void {
         'reason' => 'Poor quality.',
     ]);
 
-    expect($moderation->moderator)->toBeInstanceOf(User::class)
-        ->and($moderation->moderator->id)->toBe($moderator->id);
+    expect($moderation->moderator->id)->toBe($moderator->id);
 });

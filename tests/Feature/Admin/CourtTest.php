@@ -6,6 +6,7 @@ use App\Enums\CourtStatus;
 use App\Models\Country;
 use App\Models\Court;
 use App\Models\User;
+use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function (): void {
@@ -23,7 +24,7 @@ test('authenticated users can view courts index', function (): void {
 
     $response = $this->get(route('admin.courts.index'));
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->component('admin/courts/index'));
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page->component('admin/courts/index'));
 });
 
 test('authenticated users can create a court', function (): void {
@@ -113,7 +114,7 @@ test('courts index can be filtered by search term', function (): void {
 
     $response->assertOk();
     $response->assertInertia(
-        fn ($page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/courts/index')
             ->where('filters.search', 'Wimbledon')
             ->has('courts.data', 1)
@@ -202,7 +203,7 @@ test('courts can be searched by court_code', function (): void {
 
     $response->assertOk();
     $response->assertInertia(
-        fn ($page) => $page
+        fn (AssertableInertia $page): AssertableInertia => $page
             ->component('admin/courts/index')
             ->has('courts.data', 1)
             ->where('courts.data.0.id', $matching->id)
@@ -213,6 +214,5 @@ test('court belongs to creator via createdBy relationship', function (): void {
     $user = User::factory()->create();
     $court = Court::factory()->create(['created_by' => $user->id]);
 
-    expect($court->createdBy)->toBeInstanceOf(User::class)
-        ->and($court->createdBy->id)->toBe($user->id);
+    expect($court->createdBy->id)->toBe($user->id);
 });

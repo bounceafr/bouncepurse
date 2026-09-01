@@ -58,7 +58,7 @@ final class DashboardController extends Controller
                     'status' => $game->status->value,
                     'played_at' => $game->played_at?->toISOString() ?? '',
                     'court' => $game->court ? ['name' => $game->court->name] : null,
-                    'player' => $game->player ? ['name' => $game->player->name] : null,
+                    'player' => ['name' => $game->player->name],
                 ]),
             'games_per_month' => $gamesPerMonth,
             'visitor_stats' => $visitorStats,
@@ -96,10 +96,10 @@ final class DashboardController extends Controller
             $row = $gamesByDay->get($date);
             $result[] = [
                 'date' => $date,
-                'games' => (int) ($row?->getAttribute('games') ?? 0),
-                'approved' => (int) ($row?->getAttribute('approved') ?? 0),
-                'pending' => (int) ($row?->getAttribute('pending') ?? 0),
-                'courts' => (int) ($courtsByDay[$date] ?? 0),
+                'games' => $this->integerAggregate($row?->getAttribute('games')),
+                'approved' => $this->integerAggregate($row?->getAttribute('approved')),
+                'pending' => $this->integerAggregate($row?->getAttribute('pending')),
+                'courts' => $this->integerAggregate($courtsByDay->get($date)),
             ];
         }
 
@@ -130,25 +130,38 @@ final class DashboardController extends Controller
             $month = sprintf('%s-%02d', $currentYear, $i);
             $result[] = [
                 'month' => $month,
-                'games' => (int) ($gamesByMonth[$month] ?? 0),
-                'courts' => (int) ($courtsByMonth[$month] ?? 0),
+                'games' => $this->integerAggregate($gamesByMonth->get($month)),
+                'courts' => $this->integerAggregate($courtsByMonth->get($month)),
             ];
         }
 
         return $result;
     }
 
+    /**
+     * @param  literal-string  $column
+     * @return literal-string
+     */
     private function dateExpression(string $column): string
     {
         return DB::getDriverName() === 'sqlite'
-            ? sprintf('date(%s)', $column)
-            : sprintf('DATE(%s)', $column); // @codeCoverageIgnore
+            ? 'date('.$column.')'
+            : 'DATE('.$column.')'; // @codeCoverageIgnore
     }
 
+    /**
+     * @param  literal-string  $column
+     * @return literal-string
+     */
     private function monthExpression(string $column): string
     {
         return DB::getDriverName() === 'sqlite'
-            ? sprintf("strftime('%%Y-%%m', %s)", $column)
-            : sprintf("DATE_FORMAT(%s, '%%Y-%%m')", $column); // @codeCoverageIgnore
+            ? "strftime('%Y-%m', ".$column.')'
+            : 'DATE_FORMAT('.$column.", '%Y-%m')"; // @codeCoverageIgnore
+    }
+
+    private function integerAggregate(mixed $value): int
+    {
+        return is_numeric($value) ? (int) $value : 0;
     }
 }
