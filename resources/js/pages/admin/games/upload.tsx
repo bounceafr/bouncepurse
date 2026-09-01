@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ListPageShell } from '@/components/list-page-shell';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -182,7 +183,7 @@ export default function UploadGame({ game }: { game: Game }) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Upload Video — ${game.title}`} />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <div>
                     <h1 className="text-2xl font-semibold">Upload Video</h1>
                     <p className="text-sm text-muted-foreground">
@@ -563,7 +564,7 @@ export default function UploadGame({ game }: { game: Game }) {
                         </CardContent>
                     </Card>
                 </div>
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

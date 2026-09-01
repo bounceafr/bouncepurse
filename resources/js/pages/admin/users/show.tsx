@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ListPageShell } from '@/components/list-page-shell';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -99,7 +100,7 @@ export default function UserShow({ user, roles }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`User: ${user.name}`} />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" size="icon" asChild>
@@ -298,7 +299,7 @@ export default function UserShow({ user, roles }: Props) {
                         <DeactivateButton user={user} />
                     )}
                 </div>
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

@@ -1,19 +1,29 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal } from 'lucide-react';
+import {
+    Key,
+    MoreHorizontal,
+    Pencil,
+    Plus,
+    Search,
+    UserCircle,
+    UserMinus,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import UserController, {
     deactivate,
     index,
+    resetPassword,
     show,
 } from '@/actions/App/Http/Controllers/Admin/UserController';
 import InputError from '@/components/input-error';
+import { ListPageShell } from '@/components/list-page-shell';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
     DataTable,
     LaravelPagination,
     selectionColumn,
-    sortableHeader,
 } from '@/components/ui/data-table';
 import {
     Dialog,
@@ -40,7 +50,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useInitials } from '@/hooks/use-initials';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 type RoleOption = {
@@ -59,6 +72,7 @@ type User = {
     name: string;
     email: string;
     created_at: string;
+    updated_at: string;
     deactivated_at: string | null;
     roles: UserRole[];
 };
@@ -77,20 +91,39 @@ type PaginatedUsers = {
     total: number;
 };
 
+type UserCounts = {
+    roles: Record<string, number>;
+    removed: number;
+    active: number;
+};
+
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: index().url }];
 
-function roleBadge(role: string | undefined, roles: RoleOption[]) {
-    if (!role) {
-        return <span className="text-xs text-muted-foreground">No role</span>;
-    }
-    const option = roles.find((r) => r.value === role);
-    return (
-        <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${option?.color ?? 'bg-gray-400'}`}
-        >
-            {option?.label ?? role}
-        </span>
-    );
+const userActionsMenuClassName =
+    '!bg-background text-foreground shadow-lg ring-0 before:hidden border border-border';
+
+const userActionsMenuItemClassName =
+    'text-foreground [&_svg]:text-foreground focus:bg-primary/10 focus:text-primary focus:[&_svg]:text-primary data-highlighted:bg-primary/10 data-highlighted:text-primary data-highlighted:[&_svg]:text-primary focus:**:text-primary! data-highlighted:**:text-primary!';
+
+function formatDateTime(value: string): string {
+    const date = new Date(value);
+    return date.toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    });
+}
+
+function formatDate(value: string): string {
+    const date = new Date(value);
+    return date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
 }
 
 function UserFormFields({
@@ -184,22 +217,76 @@ function UserFormFields({
     );
 }
 
+function InlineRoleSelect({
+    user,
+    roles,
+}: {
+    user: User;
+    roles: RoleOption[];
+}) {
+    const currentRole = user.roles[0]?.name ?? '';
+
+    function handleRoleChange(newRole: string) {
+        if (newRole === currentRole) {
+            return;
+        }
+
+        router.patch(
+            UserController.update.url(user.id),
+            {
+                name: user.name,
+                email: user.email,
+                role: newRole,
+            },
+            { preserveScroll: true },
+        );
+    }
+
+    return (
+        <Select value={currentRole} onValueChange={handleRoleChange}>
+            <SelectTrigger className="h-8 w-[160px] border-border bg-background shadow-none">
+                <UserCircle className="mr-1 size-3.5 text-muted-foreground" />
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+                {roles.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    );
+}
+
 export default function UsersIndex({
     users,
     roles,
+    counts,
     filters,
 }: {
     users: PaginatedUsers;
     roles: RoleOption[];
-    filters: { search: string | null; role: string | null };
+    counts: UserCounts;
+    filters: {
+        search: string | null;
+        role: string | null;
+        status: string | null;
+    };
 }) {
+    const getInitials = useInitials();
     const [createOpen, setCreateOpen] = useState(false);
     const [editUser, setEditUser] = useState<User | null>(null);
     const [deleteUser, setDeleteUser] = useState<User | null>(null);
     const [deactivateUser, setDeactivateUser] = useState<User | null>(null);
+    const [resetUser, setResetUser] = useState<User | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
-    const [roleFilter, setRoleFilter] = useState(filters.role ?? 'all');
     const isInitialRender = useRef(true);
+
+    const activeTab =
+        filters.status === 'removed'
+            ? 'removed'
+            : (filters.role ?? 'all');
 
     useEffect(() => {
         if (isInitialRender.current) {
@@ -212,101 +299,132 @@ export default function UsersIndex({
                 index().url,
                 {
                     search: search || undefined,
-                    role: roleFilter === 'all' ? undefined : roleFilter,
+                    role: filters.role || undefined,
+                    status: filters.status || undefined,
                 },
                 { preserveState: true, replace: true },
             );
         }, 300);
 
         return () => clearTimeout(timeout);
-    }, [search, roleFilter]);
+    }, [search, filters.role, filters.status]);
+
+    function handleTabChange(tab: string) {
+        router.get(
+            index().url,
+            {
+                search: search || undefined,
+                role:
+                    tab !== 'all' && tab !== 'removed' ? tab : undefined,
+                status: tab === 'removed' ? 'removed' : undefined,
+            },
+            { preserveState: true, replace: true },
+        );
+    }
 
     const columns: ColumnDef<User, unknown>[] = [
         selectionColumn<User>(),
         {
-            accessorKey: 'name',
-            header: sortableHeader('Name'),
-            cell: ({ row }) => {
-                const user = row.original;
+            id: 'index',
+            header: () => (
+                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    #
+                </span>
+            ),
+            enableSorting: false,
+            cell: ({ row, table }) => {
+                const pageIndex = table.getState().pagination.pageIndex;
+                const pageSize = table.getState().pagination.pageSize;
                 return (
-                    <Link
-                        href={show(user.id).url}
-                        className="font-medium hover:underline"
-                    >
-                        {user.name}
-                    </Link>
+                    <span className="text-muted-foreground">
+                        {pageIndex * pageSize + row.index + 1}
+                    </span>
                 );
             },
         },
         {
-            accessorKey: 'email',
-            header: sortableHeader('Email'),
-        },
-        {
-            id: 'role',
-            header: 'Role',
-            enableSorting: false,
-            cell: ({ row }) => (
-                <div className="flex items-center gap-1.5">
-                    {roleBadge(row.original.roles[0]?.name, roles)}
-                    {row.original.deactivated_at && (
-                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                            Deactivated
-                        </span>
-                    )}
-                </div>
+            id: 'name',
+            header: () => (
+                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    Name
+                </span>
             ),
-        },
-        {
-            accessorKey: 'created_at',
-            header: sortableHeader('Created At'),
-            cell: ({ row }) =>
-                new Date(row.getValue('created_at')).toLocaleDateString(),
-        },
-        {
-            id: 'actions',
-            enableHiding: false,
             enableSorting: false,
             cell: ({ row }) => {
                 const user = row.original;
                 return (
-                    <div className="text-right">
+                    <div className="flex items-center gap-3 py-1">
+                        <Avatar className="size-10">
+                            <AvatarFallback className="bg-muted text-xs font-medium text-muted-foreground">
+                                {getInitials(user.name)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                            <Link
+                                href={show(user.id).url}
+                                className="font-medium text-foreground hover:underline"
+                            >
+                                {user.name}
+                            </Link>
+                            <p className="truncate text-xs text-muted-foreground">
+                                {user.email}
+                            </p>
+                        </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8 shrink-0 text-muted-foreground"
+                                >
                                     <MoreHorizontal className="size-4" />
                                     <span className="sr-only">Actions</span>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem asChild>
-                                    <Link href={show(user.id).url}>View</Link>
-                                </DropdownMenuItem>
+                            <DropdownMenuContent
+                                align="end"
+                                className={userActionsMenuClassName}
+                            >
                                 <DropdownMenuItem
+                                    className={userActionsMenuItemClassName}
                                     onClick={() => setEditUser(user)}
                                 >
+                                    <Pencil className="size-4" />
                                     Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className={userActionsMenuItemClassName}
+                                    onClick={() => setResetUser(user)}
+                                >
+                                    <Key className="size-4" />
+                                    Reset password
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 {user.deactivated_at ? (
-                                    <DropdownMenuItem asChild>
+                                    <DropdownMenuItem
+                                        asChild
+                                        className={userActionsMenuItemClassName}
+                                    >
                                         <Link href={show(user.id).url}>
                                             View to reactivate
                                         </Link>
                                     </DropdownMenuItem>
                                 ) : (
                                     <DropdownMenuItem
-                                        className="text-orange-600"
+                                        className={userActionsMenuItemClassName}
                                         onClick={() => setDeactivateUser(user)}
                                     >
-                                        Deactivate
+                                        <UserMinus className="size-4" />
+                                        Suspend
                                     </DropdownMenuItem>
                                 )}
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                    variant="destructive"
+                                    className={userActionsMenuItemClassName}
                                     onClick={() => setDeleteUser(user)}
                                 >
-                                    Delete
+                                    <UserMinus className="size-4" />
+                                    Remove
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -314,60 +432,155 @@ export default function UsersIndex({
                 );
             },
         },
+        {
+            id: 'role',
+            header: () => (
+                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    Role
+                </span>
+            ),
+            enableSorting: false,
+            cell: ({ row }) => (
+                <InlineRoleSelect user={row.original} roles={roles} />
+            ),
+        },
+        {
+            id: 'status',
+            header: () => (
+                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    Status
+                </span>
+            ),
+            enableSorting: false,
+            cell: ({ row }) =>
+                row.original.deactivated_at ? (
+                    <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-600/20">
+                        Suspended
+                    </span>
+                ) : (
+                    <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-600/20">
+                        Active
+                    </span>
+                ),
+        },
+        {
+            accessorKey: 'updated_at',
+            header: () => (
+                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    Last Activity
+                </span>
+            ),
+            enableSorting: false,
+            cell: ({ row }) => (
+                <span className="text-sm text-muted-foreground">
+                    {formatDateTime(row.getValue('updated_at'))}
+                </span>
+            ),
+        },
+        {
+            accessorKey: 'created_at',
+            header: () => (
+                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    Joined
+                </span>
+            ),
+            enableSorting: false,
+            cell: ({ row }) => (
+                <span className="text-sm text-muted-foreground">
+                    {formatDate(row.getValue('created_at'))}
+                </span>
+            ),
+        },
     ];
-
-    const toolbar = (
-        <>
-            <Input
-                placeholder="Search users..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-64"
-            />
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-40">
-                    <SelectValue placeholder="All roles" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All roles</SelectItem>
-                    {roles.map((r) => (
-                        <SelectItem key={r.value} value={r.value}>
-                            {r.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <Button variant="default" onClick={() => setCreateOpen(true)}>
-                Add User
-            </Button>
-        </>
-    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Users" />
 
-            <div className="flex flex-col gap-6 p-6">
-                <div>
-                    <h1 className="text-2xl font-semibold">Users</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Manage all users ({users.total} total)
-                    </p>
+            <ListPageShell>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-semibold text-foreground">
+                            Users
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Active users: {counts.active}
+                        </p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        className="border-border bg-background shadow-none"
+                        onClick={() => setCreateOpen(true)}
+                    >
+                        <Plus className="size-4" />
+                        Create user
+                    </Button>
+                </div>
+
+                <Tabs value={activeTab} onValueChange={handleTabChange}>
+                    <TabsList
+                        variant="line"
+                        className="h-auto w-full justify-start gap-0 rounded-none border-b border-border bg-transparent p-0"
+                    >
+                        <TabsTrigger
+                            value="all"
+                            className={cn(
+                                'rounded-none px-4 py-2.5 text-muted-foreground data-active:text-foreground data-active:after:bg-primary',
+                            )}
+                        >
+                            All ({counts.active})
+                        </TabsTrigger>
+                        {roles.map((role) => (
+                            <TabsTrigger
+                                key={role.value}
+                                value={role.value}
+                                className="rounded-none px-4 py-2.5 text-muted-foreground data-active:text-foreground data-active:after:bg-primary"
+                            >
+                                {role.label} (
+                                {String(
+                                    counts.roles[role.value] ?? 0,
+                                ).padStart(2, '0')}
+                                )
+                            </TabsTrigger>
+                        ))}
+                        <TabsTrigger
+                            value="removed"
+                            className="rounded-none px-4 py-2.5 text-muted-foreground data-active:text-foreground data-active:after:bg-primary"
+                        >
+                            Removed (
+                            {String(counts.removed).padStart(2, '0')})
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+
+                <div className="flex items-center justify-between gap-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by name or email"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="border-border bg-background pl-9 shadow-none"
+                        />
+                    </div>
+                    <span className="shrink-0 text-sm text-muted-foreground">
+                        {users.total}{' '}
+                        {activeTab === 'removed' ? 'removed' : 'active'}
+                    </span>
                 </div>
 
                 <DataTable
                     columns={columns}
                     data={users.data}
-                    toolbar={toolbar}
+                    hideColumnToggle
                     pagination={
                         users.last_page > 1 ? (
                             <LaravelPagination links={users.links} />
                         ) : undefined
                     }
                 />
-            </div>
+            </ListPageShell>
 
-            {/* Create User Modal */}
             <Dialog open={createOpen} onOpenChange={setCreateOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -410,7 +623,6 @@ export default function UsersIndex({
                 </DialogContent>
             </Dialog>
 
-            {/* Edit User Modal */}
             <Dialog
                 open={editUser !== null}
                 onOpenChange={(open) => {
@@ -461,7 +673,6 @@ export default function UsersIndex({
                 </DialogContent>
             </Dialog>
 
-            {/* Deactivate User Modal */}
             <Dialog
                 open={deactivateUser !== null}
                 onOpenChange={(open) => {
@@ -472,9 +683,9 @@ export default function UsersIndex({
             >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Deactivate User</DialogTitle>
+                        <DialogTitle>Suspend User</DialogTitle>
                         <DialogDescription>
-                            Deactivating will prevent{' '}
+                            Suspending will prevent{' '}
                             <span className="font-medium">
                                 {deactivateUser?.name}
                             </span>{' '}
@@ -496,7 +707,7 @@ export default function UsersIndex({
                                         <Input
                                             id="deactivate-reason"
                                             name="reason"
-                                            placeholder="Reason for deactivation"
+                                            placeholder="Reason for suspension"
                                             required
                                         />
                                         <InputError message={errors.reason} />
@@ -515,7 +726,7 @@ export default function UsersIndex({
                                             asChild
                                         >
                                             <button type="submit">
-                                                Deactivate
+                                                Suspend
                                             </button>
                                         </Button>
                                     </DialogFooter>
@@ -526,7 +737,80 @@ export default function UsersIndex({
                 </DialogContent>
             </Dialog>
 
-            {/* Delete User Modal */}
+            <Dialog
+                open={resetUser !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setResetUser(null);
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Reset Password</DialogTitle>
+                        <DialogDescription>
+                            Set a new password for{' '}
+                            <span className="font-medium">
+                                {resetUser?.name}
+                            </span>
+                            .
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {resetUser && (
+                        <Form
+                            {...resetPassword.form(resetUser.id)}
+                            onSuccess={() => setResetUser(null)}
+                            className="space-y-4"
+                        >
+                            {({ processing, errors }) => (
+                                <>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="reset-password">
+                                            New Password
+                                        </Label>
+                                        <Input
+                                            id="reset-password"
+                                            name="password"
+                                            type="password"
+                                            placeholder="Min 8 characters"
+                                            required
+                                        />
+                                        <InputError message={errors.password} />
+                                    </div>
+
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="reset-password-confirm">
+                                            Confirm Password
+                                        </Label>
+                                        <Input
+                                            id="reset-password-confirm"
+                                            name="password_confirmation"
+                                            type="password"
+                                            placeholder="Repeat password"
+                                            required
+                                        />
+                                    </div>
+
+                                    <DialogFooter className="gap-2">
+                                        <DialogClose asChild>
+                                            <Button variant="secondary">
+                                                Cancel
+                                            </Button>
+                                        </DialogClose>
+                                        <Button disabled={processing} asChild>
+                                            <button type="submit">
+                                                Reset Password
+                                            </button>
+                                        </Button>
+                                    </DialogFooter>
+                                </>
+                            )}
+                        </Form>
+                    )}
+                </DialogContent>
+            </Dialog>
+
             <Dialog
                 open={deleteUser !== null}
                 onOpenChange={(open) => {
@@ -537,9 +821,9 @@ export default function UsersIndex({
             >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete User</DialogTitle>
+                        <DialogTitle>Remove User</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete{' '}
+                            Are you sure you want to remove{' '}
                             <span className="font-medium">
                                 {deleteUser?.name}
                             </span>
@@ -568,7 +852,7 @@ export default function UsersIndex({
                                             asChild
                                         >
                                             <button type="submit">
-                                                Delete
+                                                Remove
                                             </button>
                                         </Button>
                                     </DialogFooter>

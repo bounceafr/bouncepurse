@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Enums\Role;
 use App\Models\PathwayConfiguration;
 use App\Models\PlayerRanking;
-use App\Models\Profile;
 use App\Models\RankingConfiguration;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -85,10 +84,7 @@ test('administrator receives visitor stats on the dashboard', function (): void 
 });
 
 test('pathway_eligibility is returned when pathway configuration exists', function (): void {
-    $this->seed(RolesAndPermissionsSeeder::class);
-
-    $user = User::factory()->create()->assignRole(Role::Player->value);
-    Profile::factory()->create(['player_id' => $user->id]);
+    $user = User::factory()->create();
     $this->actingAs($user);
 
     PathwayConfiguration::factory()->create([
@@ -122,10 +118,7 @@ test('player_rankings prop is empty when player has no approved games', function
 });
 
 test('player_rankings prop contains correct rank and stats for each format', function (): void {
-    $this->seed(RolesAndPermissionsSeeder::class);
-
-    $user = User::factory()->create()->assignRole(Role::Player->value);
-    Profile::factory()->create(['player_id' => $user->id]);
+    $user = User::factory()->create();
 
     $config = RankingConfiguration::query()->create([
         'win_weight' => 3.0,
@@ -177,10 +170,7 @@ test('player_rankings prop contains correct rank and stats for each format', fun
 });
 
 test('player_rankings returns only the latest snapshot per format', function (): void {
-    $this->seed(RolesAndPermissionsSeeder::class);
-
-    $user = User::factory()->create()->assignRole(Role::Player->value);
-    Profile::factory()->create(['player_id' => $user->id]);
+    $user = User::factory()->create();
 
     $config = RankingConfiguration::query()->create([
         'win_weight' => 3.0,

@@ -43,6 +43,7 @@ Route::middleware(['auth', 'verified', 'permission:manage-users'])->group(functi
         ->only(['index', 'show', 'store', 'update', 'destroy']);
     Route::patch('admin/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('admin.users.deactivate');
     Route::patch('admin/users/{user}/reactivate', [UserController::class, 'reactivate'])->name('admin.users.reactivate');
+    Route::patch('admin/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('admin.users.reset-password');
 });
 
 Route::middleware(['auth', 'verified', 'permission:manage-ranking-configuration'])->group(function (): void {

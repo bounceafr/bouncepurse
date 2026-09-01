@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ListPageShell } from '@/components/list-page-shell';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
@@ -93,7 +94,7 @@ export default function GameShow({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={game.title} />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-semibold">{game.title}</h1>
                     <span
@@ -409,7 +410,7 @@ export default function GameShow({
                         </CardContent>
                     </Card>
                 )}
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

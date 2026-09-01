@@ -7,24 +7,14 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\TwoFactorAuthenticationRequest;
 use App\Models\User;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Date;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
 
-final class TwoFactorAuthenticationController extends Controller implements HasMiddleware
+final class TwoFactorAuthenticationController extends Controller
 {
-    /**
-     * Get the middleware that should be assigned to the controller.
-     */
-    public static function middleware(): array
-    {
-        return Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword')
-            ? [new Middleware('password.confirm', only: ['show'])]
-            : [];
-    }
-
     /**
      * Show the user's two-factor authentication settings page.
      */
@@ -35,9 +25,26 @@ final class TwoFactorAuthenticationController extends Controller implements HasM
         /** @var User $user */
         $user = $request->user();
 
+        $confirmPassword = Features::optionEnabled(
+            Features::twoFactorAuthentication(),
+            'confirmPassword',
+        );
+
         return Inertia::render('settings/two-factor', [
             'twoFactorEnabled' => $user->hasEnabledTwoFactorAuthentication(),
             'requiresConfirmation' => Features::optionEnabled(Features::twoFactorAuthentication(), 'confirm'),
+            'confirmPassword' => $confirmPassword,
+            'passwordConfirmed' => ! $confirmPassword || $this->passwordIsConfirmed($request),
         ]);
+    }
+
+    /**
+     * Determine whether the user's password has been recently confirmed.
+     */
+    private function passwordIsConfirmed(Request $request): bool
+    {
+        $confirmedAt = Date::now()->unix() - $request->session()->get('auth.password_confirmed_at', 0);
+
+        return $confirmedAt < (int) config('auth.password_timeout', 10800);
     }
 }

@@ -8,12 +8,14 @@ use App\Actions\Admin\User\DeactivateUserAction;
 use App\Actions\Admin\User\DeleteAction;
 use App\Actions\Admin\User\ListAction;
 use App\Actions\Admin\User\ReactivateUserAction;
+use App\Actions\Admin\User\ResetPasswordAction;
 use App\Actions\Admin\User\StoreAction;
 use App\Actions\Admin\User\UpdateAction;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\User\DeactivateUserRequest;
 use App\Http\Requests\Admin\User\DeleteUserRequest;
+use App\Http\Requests\Admin\User\ResetPasswordRequest;
 use App\Http\Requests\Admin\User\StoreUserRequest;
 use App\Http\Requests\Admin\User\UpdateUserRequest;
 use App\Models\Game;
@@ -31,11 +33,13 @@ final class UserController extends Controller
     {
         $search = $request->string('search')->toString() ?: null;
         $role = $request->string('role')->toString() ?: null;
+        $status = $request->string('status')->toString() ?: null;
 
         return Inertia::render('admin/users/index', [
-            'users' => $action->handle($search, $role),
+            'users' => $action->handle($search, $role, $status),
             'roles' => $this->roleOptions(),
-            'filters' => ['search' => $search, 'role' => $role],
+            'counts' => $action->counts(),
+            'filters' => ['search' => $search, 'role' => $role, 'status' => $status],
         ]);
     }
 
@@ -143,6 +147,15 @@ final class UserController extends Controller
         $action->handle($user);
 
         return to_route('admin.users.show', $user)->with('success', 'User reactivated.');
+    }
+
+    public function resetPassword(ResetPasswordRequest $request, ResetPasswordAction $action, User $user): RedirectResponse
+    {
+        /** @var array{password: string} $data */
+        $data = $request->validated();
+        $action->handle($user, $data);
+
+        return to_route('admin.users.index')->with('success', 'Password reset successfully.');
     }
 
     /**

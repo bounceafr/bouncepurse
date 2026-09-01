@@ -31,7 +31,6 @@ final class GetLeaderboardAction
             ->select('player_rankings.*', 'users.name as player_name')
             ->orderBy('player_rankings.rank');
 
-        $viewer->loadMissing('profile.country');
         $viewerProfile = $viewer->profile;
 
         match ($geo) {
