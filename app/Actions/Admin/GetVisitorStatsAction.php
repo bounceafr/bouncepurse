@@ -32,9 +32,7 @@ final readonly class GetVisitorStatsAction
         foreach ($rows as $row) {
             /** @var object{date: string|int, user_agent: string|null} $row */
             $date = (string) $row->date;
-            if (! isset($grouped[$date])) {
-                $grouped[$date] = ['desktop' => 0, 'mobile' => 0];
-            }
+            $grouped[$date] ??= ['desktop' => 0, 'mobile' => 0];
 
             if ($row->user_agent !== null && preg_match('/'.self::MOBILE_PATTERN.'/i', (string) $row->user_agent)) {
                 $grouped[$date]['mobile']++;

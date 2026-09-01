@@ -14,7 +14,7 @@ final class DisputeSeeder extends Seeder
 {
     public function run(): void
     {
-        $games = Game::withoutGlobalScopes()
+        $games = Game::query()->withoutGlobalScopes()
             ->where('status', GameStatus::Approved->value)
             ->whereNotNull('player_id')
             ->inRandomOrder()

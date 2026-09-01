@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Hash;
 
 final readonly class SendEmailVerificationCode
 {
-    private const CACHE_PREFIX = 'email-verification-code:';
+    private const string CACHE_PREFIX = 'email-verification-code:';
 
-    private const TTL_SECONDS = 600;
+    private const int TTL_SECONDS = 600;
 
     public function handle(User $user): void
     {

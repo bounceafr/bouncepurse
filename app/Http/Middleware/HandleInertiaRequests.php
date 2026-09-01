@@ -9,6 +9,7 @@ use App\Enums\Role;
 use App\Support\VersionedAsset;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Override;
 
 final class HandleInertiaRequests extends Middleware
 {
@@ -19,6 +20,7 @@ final class HandleInertiaRequests extends Middleware
      *
      * @var string
      */
+    #[Override]
     protected $rootView = 'app';
 
     /**

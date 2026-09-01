@@ -36,7 +36,7 @@ test('middleware allows onboarding routes even without profile', function (): vo
 
     $request = Request::create(route('onboarding.complete-profile'));
     $request->setUserResolver(fn () => $user);
-    $request->setRouteResolver(fn () => (new Route('GET', 'onboarding/complete-profile', []))->name('onboarding.complete-profile'));
+    $request->setRouteResolver(fn () => new Route('GET', 'onboarding/complete-profile', [])->name('onboarding.complete-profile'));
 
     $response = $middleware->handle($request, fn (): Response => new Response('ok'));
 

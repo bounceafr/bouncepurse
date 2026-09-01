@@ -42,7 +42,7 @@ final class EmailVerificationCodeController extends Controller
         $this->ensureGoogleVerificationUser($user);
 
         if ($user->hasVerifiedEmail()) {
-            return redirect()->route('dashboard');
+            return to_route('dashboard');
         }
 
         $sendEmailVerificationCode->handle($user);
@@ -52,8 +52,6 @@ final class EmailVerificationCodeController extends Controller
 
     private function ensureGoogleVerificationUser(User $user): void
     {
-        if ($user->social_provider !== HandleGoogleUser::PROVIDER) {
-            abort(403);
-        }
+        abort_if($user->social_provider !== HandleGoogleUser::PROVIDER, 403);
     }
 }

@@ -11,6 +11,7 @@ use App\Enums\ResultStatus;
 use App\Enums\Role;
 use Carbon\CarbonInterface;
 use Database\Factories\GameFactory;
+use Illuminate\Database\Eloquent\Attributes\RouteKey;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,6 +41,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read ?Team $team
  * @property-read ?GameResult $gameResult
  */
+#[RouteKey('uuid')]
 final class Game extends Model
 {
     /** @use HasFactory<GameFactory> */
@@ -79,11 +81,6 @@ final class Game extends Model
     public function disputes(): HasMany
     {
         return $this->hasMany(Dispute::class);
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
     }
 
     protected static function booted(): void

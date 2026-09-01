@@ -30,16 +30,14 @@ final class SocialAuthController extends Controller
         try {
             $socialUser = Socialite::driver('google')->user();
         } catch (Throwable) {
-            return redirect()
-                ->route('login')
+            return to_route('login')
                 ->withErrors(['social' => 'Authentication was cancelled or failed. Please try again.']);
         }
 
         ['user' => $user] = $handleGoogleUser->handle($socialUser);
 
         if ($user->isDeactivated()) {
-            return redirect()
-                ->route('login')
+            return to_route('login')
                 ->withErrors(['social' => 'Your account has been deactivated.']);
         }
 
@@ -53,7 +51,7 @@ final class SocialAuthController extends Controller
                 'login.remember' => false,
             ]);
 
-            return redirect()->route('two-factor.login');
+            return to_route('two-factor.login');
         }
 
         Auth::login($user);

@@ -31,14 +31,12 @@ final class CalculateRankingsAction
             $format = $game->format->value;
             $playerId = $game->player_id;
 
-            if (! isset($grouped[$format][$playerId])) {
-                $grouped[$format][$playerId] = [
-                    'wins' => 0,
-                    'losses' => 0,
-                    'total' => 0,
-                    'recent' => 0,
-                ];
-            }
+            $grouped[$format][$playerId] ??= [
+                'wins' => 0,
+                'losses' => 0,
+                'total' => 0,
+                'recent' => 0,
+            ];
 
             $grouped[$format][$playerId]['total']++;
 

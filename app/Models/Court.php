@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\CourtStatus;
 use Carbon\CarbonInterface;
 use Database\Factories\CourtFactory;
+use Illuminate\Database\Eloquent\Attributes\RouteKey;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read ?CarbonInterface $updated_at
  * @property-read User $createdBy
  */
+#[RouteKey('uuid')]
 final class Court extends Model
 {
     /** @use HasFactory<CourtFactory> */
@@ -56,11 +58,6 @@ final class Court extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
     }
 
     protected function casts(): array

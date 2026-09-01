@@ -24,7 +24,7 @@ test('only approved games are counted', function (): void {
     Game::factory()->create(['player_id' => $player->id, 'status' => 'pending', 'result' => 'win', 'format' => '1v1']);
     Game::factory()->create(['player_id' => $player->id, 'status' => 'rejected', 'result' => 'win', 'format' => '1v1']);
 
-    (new CalculateRankingsAction())->handle($this->config);
+    new CalculateRankingsAction()->handle($this->config);
 
     $ranking = PlayerRanking::query()
         ->where('player_id', $player->id)
@@ -43,7 +43,7 @@ test('wins and losses are counted correctly', function (): void {
     Game::factory()->create(['player_id' => $player->id, 'status' => 'approved', 'result' => 'win', 'format' => '1v1']);
     Game::factory()->create(['player_id' => $player->id, 'status' => 'approved', 'result' => 'lost', 'format' => '1v1']);
 
-    (new CalculateRankingsAction())->handle($this->config);
+    new CalculateRankingsAction()->handle($this->config);
 
     $ranking = PlayerRanking::query()
         ->where('player_id', $player->id)
@@ -74,7 +74,7 @@ test('recent games are counted for games within last 30 days', function (): void
         'played_at' => now()->subDays(60),
     ]);
 
-    (new CalculateRankingsAction())->handle($this->config);
+    new CalculateRankingsAction()->handle($this->config);
 
     $ranking = PlayerRanking::query()
         ->where('player_id', $player->id)
@@ -94,7 +94,7 @@ test('score formula is applied correctly', function (): void {
     Game::factory()->create(['player_id' => $player->id, 'status' => 'approved', 'result' => 'win', 'format' => '1v1', 'played_at' => now()->subDays(10)]);
     Game::factory()->create(['player_id' => $player->id, 'status' => 'approved', 'result' => 'lost', 'format' => '1v1', 'played_at' => now()->subDays(60)]);
 
-    (new CalculateRankingsAction())->handle($this->config);
+    new CalculateRankingsAction()->handle($this->config);
 
     $ranking = PlayerRanking::query()
         ->where('player_id', $player->id)
@@ -113,7 +113,7 @@ test('rank 1 is assigned to the highest score', function (): void {
     Game::factory()->count(3)->create(['player_id' => $player1->id, 'status' => 'approved', 'result' => 'win', 'format' => '1v1']);
     Game::factory()->count(1)->create(['player_id' => $player2->id, 'status' => 'approved', 'result' => 'win', 'format' => '1v1']);
 
-    (new CalculateRankingsAction())->handle($this->config);
+    new CalculateRankingsAction()->handle($this->config);
 
     $rank1 = PlayerRanking::query()->where('player_id', $player1->id)->where('format', '1v1')->first();
     $rank2 = PlayerRanking::query()->where('player_id', $player2->id)->where('format', '1v1')->first();
@@ -142,7 +142,7 @@ test('players with no approved games are excluded from snapshot', function (): v
     Game::factory()->create(['player_id' => $playerWithApproved->id, 'status' => 'approved', 'result' => 'win', 'format' => '1v1']);
     Game::factory()->create(['player_id' => $playerWithoutApproved->id, 'status' => 'pending', 'result' => 'win', 'format' => '1v1']);
 
-    (new CalculateRankingsAction())->handle($this->config);
+    new CalculateRankingsAction()->handle($this->config);
 
     expect(PlayerRanking::query()->where('player_id', $playerWithApproved->id)->exists())->toBeTrue()
         ->and(PlayerRanking::query()->where('player_id', $playerWithoutApproved->id)->exists())->toBeFalse();
@@ -154,7 +154,7 @@ test('rankings are split by format', function (): void {
     Game::factory()->create(['player_id' => $player->id, 'status' => 'approved', 'result' => 'win', 'format' => '1v1']);
     Game::factory()->create(['player_id' => $player->id, 'status' => 'approved', 'result' => 'win', 'format' => '3v3']);
 
-    (new CalculateRankingsAction())->handle($this->config);
+    new CalculateRankingsAction()->handle($this->config);
 
     expect(PlayerRanking::query()->where('player_id', $player->id)->where('format', '1v1')->exists())->toBeTrue()
         ->and(PlayerRanking::query()->where('player_id', $player->id)->where('format', '3v3')->exists())->toBeTrue();

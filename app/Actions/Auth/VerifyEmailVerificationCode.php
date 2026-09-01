@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash;
 
 final readonly class VerifyEmailVerificationCode
 {
-    private const CACHE_PREFIX = 'email-verification-code:';
+    private const string CACHE_PREFIX = 'email-verification-code:';
 
     public function handle(User $user, string $code): bool
     {
