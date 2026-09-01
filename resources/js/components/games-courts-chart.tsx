@@ -109,6 +109,10 @@ export function GamesCourtsChart({ data }: { data: GamesCourtsData[] }) {
                             content={
                                 <ChartTooltipContent
                                     labelFormatter={(value) => {
+                                        if (typeof value !== 'string') {
+                                            return '';
+                                        }
+
                                         const [year, month] = value.split('-');
                                         const date = new Date(
                                             Number(year),

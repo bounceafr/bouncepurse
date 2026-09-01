@@ -8,11 +8,11 @@ use App\Actions\Auth\HandleGoogleUser;
 use App\Actions\Auth\SendEmailVerificationCode;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Fortify\Features;
 use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Throwable;
 
 final class SocialAuthController extends Controller

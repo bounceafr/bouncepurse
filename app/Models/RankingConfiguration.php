@@ -27,13 +27,13 @@ final class RankingConfiguration extends Model
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
-    /** @return BelongsTo<User,self> */
+    /** @return BelongsTo<User, $this> */
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    /** @return HasMany<PlayerRanking,self> */
+    /** @return HasMany<PlayerRanking, $this> */
     public function rankings(): HasMany
     {
         return $this->hasMany(PlayerRanking::class);

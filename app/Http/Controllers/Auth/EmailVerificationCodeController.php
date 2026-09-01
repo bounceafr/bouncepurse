@@ -25,7 +25,7 @@ final class EmailVerificationCodeController extends Controller
 
         $this->ensureGoogleVerificationUser($user);
 
-        if (! $verifyEmailVerificationCode->handle($user, $request->validated('code'))) {
+        if (! $verifyEmailVerificationCode->handle($user, $request->string('code')->toString())) {
             throw ValidationException::withMessages([
                 'code' => [__('The verification code is invalid or has expired.')],
             ]);

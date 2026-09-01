@@ -71,7 +71,7 @@ test('valid verification code verifies google user email', function (): void {
 
     $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
     Event::assertDispatched(Verified::class);
-    expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+    expect($user->refresh()->hasVerifiedEmail())->toBeTrue();
 });
 
 test('invalid verification code is rejected', function (): void {
@@ -84,7 +84,7 @@ test('invalid verification code is rejected', function (): void {
         ->post(route('verification.code.verify'), ['code' => '000000'])
         ->assertSessionHasErrors('code');
 
-    expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
+    expect($user->refresh()->hasVerifiedEmail())->toBeFalse();
 });
 
 test('valid verification code for verified user succeeds without dispatching another event', function (): void {

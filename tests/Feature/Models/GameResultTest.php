@@ -16,14 +16,12 @@ test('game result belongs to a game', function (): void {
     $game = Game::factory()->create();
     $result = GameResult::factory()->create(['game_id' => $game->id]);
 
-    expect($result->game)->toBeInstanceOf(Game::class)
-        ->and($result->game->id)->toBe($game->id);
+    expect($result->game->id)->toBe($game->id);
 });
 
 test('game result belongs to a submitter', function (): void {
     $user = User::factory()->create();
     $result = GameResult::factory()->create(['submitter_id' => $user->id]);
 
-    expect($result->submitter)->toBeInstanceOf(User::class)
-        ->and($result->submitter->id)->toBe($user->id);
+    expect($result->submitter->id)->toBe($user->id);
 });

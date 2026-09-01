@@ -30,8 +30,7 @@ test('permission label returns correct string for each case', function (Permissi
 test('permission values returns all permission strings', function (): void {
     $values = Permission::values();
 
-    expect($values)->toBeArray()
-        ->toContain('view-courts')
+    expect($values)->toContain('view-courts')
         ->toContain('create-courts')
         ->toContain('edit-courts')
         ->toContain('delete-courts')

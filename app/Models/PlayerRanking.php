@@ -33,13 +33,13 @@ final class PlayerRanking extends Model
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
-    /** @return BelongsTo<User,self> */
+    /** @return BelongsTo<User, $this> */
     public function player(): BelongsTo
     {
         return $this->belongsTo(User::class, 'player_id');
     }
 
-    /** @return BelongsTo<RankingConfiguration,self> */
+    /** @return BelongsTo<RankingConfiguration, $this> */
     public function configuration(): BelongsTo
     {
         return $this->belongsTo(RankingConfiguration::class, 'ranking_configuration_id');

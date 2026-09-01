@@ -41,13 +41,13 @@ final class Profile extends Model
         return ['uuid'];
     }
 
-    /** @return BelongsTo<User,self> */
+    /** @return BelongsTo<User, $this> */
     public function player(): BelongsTo
     {
         return $this->belongsTo(User::class, 'player_id');
     }
 
-    /** @return BelongsTo<Country,self> */
+    /** @return BelongsTo<Country, $this> */
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);

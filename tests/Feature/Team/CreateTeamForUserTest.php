@@ -19,12 +19,11 @@ test('registration auto-creates a team for the user', function (): void {
         'password_confirmation' => 'Password123!',
     ]);
 
-    $user = User::query()->where('email', 'john@example.com')->first();
+    $user = User::query()->where('email', 'john@example.com')->firstOrFail();
+    $team = $user->ownedTeam()->firstOrFail();
 
-    expect($user)->not->toBeNull();
-    expect($user->ownedTeam)->not->toBeNull();
-    expect($user->ownedTeam->name)->toBe("John Doe's Team");
-    expect($user->ownedTeam->status)->toBe(TeamStatus::PENDING);
+    expect($team->name)->toBe("John Doe's Team");
+    expect($team->status)->toBe(TeamStatus::PENDING);
 });
 
 test('team owner is added as first member', function (): void {
@@ -32,7 +31,7 @@ test('team owner is added as first member', function (): void {
 
     resolve(CreateTeamForUser::class)->handle($user);
 
-    $team = $user->fresh()->ownedTeam;
+    $team = $user->ownedTeam()->firstOrFail();
 
     expect($team->members)->toHaveCount(1);
     expect($team->hasMember($user))->toBeTrue();

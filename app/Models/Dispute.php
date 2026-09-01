@@ -30,13 +30,13 @@ final class Dispute extends Model
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
-    /** @return BelongsTo<Game, self> */
+    /** @return BelongsTo<Game, $this> */
     public function game(): BelongsTo
     {
         return $this->belongsTo(Game::class);
     }
 
-    /** @return BelongsTo<User, self> */
+    /** @return BelongsTo<User, $this> */
     public function player(): BelongsTo
     {
         return $this->belongsTo(User::class, 'player_id');

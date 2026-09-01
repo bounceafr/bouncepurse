@@ -4,7 +4,12 @@ import {
     type Transition,
     type Variants,
 } from 'framer-motion';
-import { type ComponentProps, useEffect, useState } from 'react';
+import {
+    type ComponentProps,
+    type ReactNode,
+    useEffect,
+    useState,
+} from 'react';
 
 export const sportEase = [0.22, 1, 0.36, 1] as const;
 
@@ -55,7 +60,9 @@ export function usePrefersReducedMotion(): boolean {
     return prefersReducedMotion;
 }
 
-type MotionDivProps = HTMLMotionProps<'div'>;
+type MotionDivProps = Omit<HTMLMotionProps<'div'>, 'children'> & {
+    children?: ReactNode;
+};
 
 export function PageEnter({ children, className, ...props }: MotionDivProps) {
     const prefersReducedMotion = usePrefersReducedMotion();

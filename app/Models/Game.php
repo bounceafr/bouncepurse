@@ -47,19 +47,19 @@ final class Game extends Model
     /** @use HasFactory<GameFactory> */
     use HasFactory;
 
-    /** @return BelongsTo<Court, Game> */
+    /** @return BelongsTo<Court, $this> */
     public function court(): BelongsTo
     {
         return $this->belongsTo(Court::class);
     }
 
-    /** @return BelongsTo<User, Game> */
+    /** @return BelongsTo<User, $this> */
     public function player(): BelongsTo
     {
         return $this->belongsTo(User::class, 'player_id');
     }
 
-    /** @return BelongsTo<Team, Game> */
+    /** @return BelongsTo<Team, $this> */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
@@ -71,13 +71,13 @@ final class Game extends Model
         return $this->hasOne(GameResult::class);
     }
 
-    /** @return HasMany<GameModeration, Game> */
+    /** @return HasMany<GameModeration, $this> */
     public function moderation(): HasMany
     {
         return $this->hasMany(GameModeration::class);
     }
 
-    /** @return HasMany<Dispute, Game> */
+    /** @return HasMany<Dispute, $this> */
     public function disputes(): HasMany
     {
         return $this->hasMany(Dispute::class);

@@ -56,7 +56,7 @@ test('recalculation updates is_pathway_candidate on profiles', function (): void
     $action = resolve(RecalculateAllPathwayEligibilityAction::class);
     $action->handle($config);
 
-    expect($player->profile->fresh()->is_pathway_candidate)->toBeTrue();
+    expect($player->profile()->firstOrFail()->refresh()->is_pathway_candidate)->toBeTrue();
 });
 
 test('recalculation skips players without a profile', function (): void {
@@ -105,7 +105,7 @@ test('recalculate pathway eligibility job dispatches action', function (): void 
     $job = new RecalculatePathwayEligibilityJob($config->id);
     $job->handle(resolve(RecalculateAllPathwayEligibilityAction::class));
 
-    expect($player->profile->fresh()->is_pathway_candidate)->toBeTrue();
+    expect($player->profile()->firstOrFail()->refresh()->is_pathway_candidate)->toBeTrue();
 });
 
 test('non-player users are not evaluated during recalculation', function (): void {
@@ -121,7 +121,7 @@ test('non-player users are not evaluated during recalculation', function (): voi
     $action = resolve(RecalculateAllPathwayEligibilityAction::class);
     $action->handle($config);
 
-    expect($admin->profile->fresh()->is_pathway_candidate)->toBeFalse();
+    expect($admin->profile()->firstOrFail()->refresh()->is_pathway_candidate)->toBeFalse();
 });
 
 test('recalculation handles multiple players with mixed eligibility', function (): void {
@@ -162,8 +162,8 @@ test('recalculation handles multiple players with mixed eligibility', function (
     $action = resolve(RecalculateAllPathwayEligibilityAction::class);
     $action->handle($config);
 
-    expect($eligible->profile->fresh()->is_pathway_candidate)->toBeTrue()
-        ->and($ineligible->profile->fresh()->is_pathway_candidate)->toBeFalse()
+    expect($eligible->profile()->firstOrFail()->refresh()->is_pathway_candidate)->toBeTrue()
+        ->and($ineligible->profile()->firstOrFail()->refresh()->is_pathway_candidate)->toBeFalse()
         ->and($noProfile->profile)->toBeNull();
 });
 
@@ -198,5 +198,5 @@ test('previously eligible player becomes ineligible when criteria tighten', func
     $action = resolve(RecalculateAllPathwayEligibilityAction::class);
     $action->handle($tighterConfig);
 
-    expect($player->profile->fresh()->is_pathway_candidate)->toBeFalse();
+    expect($player->profile()->firstOrFail()->refresh()->is_pathway_candidate)->toBeFalse();
 });

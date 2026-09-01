@@ -48,13 +48,13 @@ final class Court extends Model
         return sprintf('%s-%06d', $prefix, $sequence);
     }
 
-    /** @return BelongsTo<Country, self> */
+    /** @return BelongsTo<Country, $this> */
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
     }
 
-    /** @return BelongsTo<User, self> */
+    /** @return BelongsTo<User, $this> */
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by', 'id');

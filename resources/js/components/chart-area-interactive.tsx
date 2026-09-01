@@ -188,6 +188,13 @@ export function ChartAreaInteractive({ data }: { data: VisitorData[] }) {
                             content={
                                 <ChartTooltipContent
                                     labelFormatter={(value) => {
+                                        if (
+                                            typeof value !== 'string' &&
+                                            typeof value !== 'number'
+                                        ) {
+                                            return '';
+                                        }
+
                                         return new Date(
                                             value,
                                         ).toLocaleDateString('en-US', {

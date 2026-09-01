@@ -28,13 +28,13 @@ final class GameModeration extends Model
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
-    /** @return BelongsTo<Game, self> */
+    /** @return BelongsTo<Game, $this> */
     public function game(): BelongsTo
     {
         return $this->belongsTo(Game::class);
     }
 
-    /** @return BelongsTo<User, self> */
+    /** @return BelongsTo<User, $this> */
     public function moderator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'moderator_id');

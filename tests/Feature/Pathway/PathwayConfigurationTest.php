@@ -57,7 +57,7 @@ test('admin can update pathway configuration', function (): void {
 
     expect(PathwayConfiguration::query()->count())->toBe(2);
 
-    $latest = PathwayConfiguration::query()->latest('id')->first();
+    $latest = PathwayConfiguration::query()->latest('id')->firstOrFail();
     expect($latest->min_approved_games)->toBe(15)
         ->and($latest->max_rank)->toBe(5)
         ->and($latest->max_conduct_flags)->toBe(1)
@@ -85,9 +85,9 @@ test('pathway configuration belongs to updater via updatedBy relationship', func
     $config = PathwayConfiguration::factory()->create([
         'updated_by' => $admin->id,
     ]);
+    $updatedBy = $config->updatedBy()->firstOrFail();
 
-    expect($config->updatedBy)->toBeInstanceOf(User::class)
-        ->and($config->updatedBy->id)->toBe($admin->id);
+    expect($updatedBy->id)->toBe($admin->id);
 });
 
 test('validation rejects invalid values', function (): void {

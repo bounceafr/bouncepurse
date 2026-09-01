@@ -11,16 +11,14 @@ test('dispute belongs to a game', function (): void {
     $game = Game::factory()->create();
     $dispute = Dispute::factory()->create(['game_id' => $game->id]);
 
-    expect($dispute->game)->toBeInstanceOf(Game::class)
-        ->and($dispute->game->id)->toBe($game->id);
+    expect($dispute->game->id)->toBe($game->id);
 });
 
 test('dispute belongs to a player', function (): void {
     $player = User::factory()->create();
     $dispute = Dispute::factory()->create(['player_id' => $player->id]);
 
-    expect($dispute->player)->toBeInstanceOf(User::class)
-        ->and($dispute->player->id)->toBe($player->id);
+    expect($dispute->player->id)->toBe($player->id);
 });
 
 test('dispute route key is uuid', function (): void {
@@ -30,5 +28,5 @@ test('dispute route key is uuid', function (): void {
 test('dispute status is cast to DisputeStatus enum', function (): void {
     $dispute = Dispute::factory()->create(['status' => DisputeStatus::Resolved]);
 
-    expect($dispute->fresh()->status)->toBe(DisputeStatus::Resolved);
+    expect($dispute->refresh()->status)->toBe(DisputeStatus::Resolved);
 });

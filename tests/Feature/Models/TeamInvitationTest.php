@@ -11,16 +11,14 @@ test('team invitation belongs to a team', function (): void {
     $team = Team::factory()->create();
     $invitation = TeamInvitation::factory()->create(['team_id' => $team->id]);
 
-    expect($invitation->team)->toBeInstanceOf(Team::class)
-        ->and($invitation->team->id)->toBe($team->id);
+    expect($invitation->team->id)->toBe($team->id);
 });
 
 test('team invitation belongs to an inviter', function (): void {
     $user = User::factory()->create();
     $invitation = TeamInvitation::factory()->create(['invited_by' => $user->id]);
 
-    expect($invitation->invitedBy)->toBeInstanceOf(User::class)
-        ->and($invitation->invitedBy->id)->toBe($user->id);
+    expect($invitation->invitedBy->id)->toBe($user->id);
 });
 
 test('team invitation is expired when expires_at is in the past', function (): void {
@@ -40,7 +38,7 @@ test('team invitation is not expired when expires_at is in the future', function
 test('team invitation casts status to InvitationStatus enum', function (): void {
     $invitation = TeamInvitation::factory()->create();
 
-    expect($invitation->status)->toBeInstanceOf(InvitationStatus::class);
+    expect($invitation->status)->toBe(InvitationStatus::Pending);
 });
 
 test('team invitation unique ids returns uuid', function (): void {

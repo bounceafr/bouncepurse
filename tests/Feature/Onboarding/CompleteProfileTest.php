@@ -12,6 +12,7 @@ use App\Notifications\GuardianVerificationNotification;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia;
 
 beforeEach(function (): void {
     foreach (Role::cases() as $role) {
@@ -35,7 +36,7 @@ test('player can view complete profile page', function (): void {
     $response = $this->actingAs($user)->get(route('onboarding.complete-profile'));
 
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->component('onboarding/complete-profile')
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page->component('onboarding/complete-profile')
         ->has('countries')
         ->has('guardianRelationships')
     );
@@ -215,8 +216,10 @@ test('adult player can complete profile with profile image', function (): void {
 
     $response->assertRedirect(route('dashboard'));
 
-    expect($user->fresh()->profile->profile_image)->not->toBeNull();
-    Storage::disk('public')->assertExists($user->fresh()->profile->profile_image);
+    $profileImage = $user->profile()->firstOrFail()->profile_image;
+
+    $this->assertNotNull($profileImage);
+    Storage::disk('public')->assertExists($profileImage);
 });
 
 test('guardian pending redirects to complete profile when no guardian exists', function (): void {
@@ -270,7 +273,7 @@ test('guardian pending page shows masked email', function (): void {
     $response = $this->actingAs($user)->get(route('onboarding.guardian-pending'));
 
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
         ->component('onboarding/guardian-pending')
         ->where('guardianEmail', 'gu******@example.com')
     );
