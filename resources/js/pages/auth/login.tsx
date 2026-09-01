@@ -28,7 +28,8 @@ export default function Login({
 
     return (
         <AuthGlassLayout
-            title="Sign in with email"
+            title="Welcome back to the court"
+            subtitle="Sign in to continue"
             description="Track your game, challenge rivals, and climb the leaderboard. Your court, your legacy."
         >
             <Head title="Log in" />
@@ -126,7 +127,7 @@ export default function Login({
 
                             <Button
                                 type="submit"
-                                className="h-11 w-full rounded-xl bg-foreground text-background hover:bg-foreground/90"
+                                className="h-11 w-full rounded-xl bg-foreground text-background hover:bg-primary hover:text-primary-foreground"
                                 tabIndex={3}
                                 disabled={processing}
                                 data-test="login-button"

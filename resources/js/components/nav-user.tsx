@@ -1,54 +1,37 @@
 import { usePage } from '@inertiajs/react';
 import { ChevronsUpDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    useSidebar,
-} from '@/components/ui/sidebar';
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 export function NavUser() {
     const { auth } = usePage().props;
-    const { state } = useSidebar();
-    const isMobile = useIsMobile();
 
     return (
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton
-                            size="lg"
-                            className="group text-neutral-800 data-[state=open]:bg-neutral-100"
-                            data-test="sidebar-menu-button"
-                        >
-                            <UserInfo user={auth.user} />
-                            <ChevronsUpDown className="ml-auto size-4" />
-                        </SidebarMenuButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-                        align="end"
-                        side={
-                            isMobile
-                                ? 'bottom'
-                                : state === 'collapsed'
-                                  ? 'left'
-                                  : 'bottom'
-                        }
-                    >
-                        <UserMenuContent user={auth.user} />
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </SidebarMenuItem>
-        </SidebarMenu>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    variant="ghost"
+                    className="h-10 max-w-56 justify-start gap-2 rounded-full px-2 hover:bg-primary/10 hover:text-primary data-[state=open]:bg-accent"
+                    data-test="sidebar-menu-button"
+                    aria-label="User menu"
+                >
+                    <UserInfo user={auth.user} />
+                    <ChevronsUpDown className="ml-auto opacity-60" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+                className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                align="end"
+                side="bottom"
+            >
+                <UserMenuContent user={auth.user} />
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }

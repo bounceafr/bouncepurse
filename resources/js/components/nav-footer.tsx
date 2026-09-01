@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
-import type { ComponentPropsWithoutRef } from 'react';
+import { Fragment, type ComponentPropsWithoutRef } from 'react';
+import { Separator } from '@/components/ui/separator';
 import {
     SidebarGroup,
     SidebarGroupContent,
@@ -11,10 +12,12 @@ import type { NavItem } from '@/types';
 
 export function NavFooter({
     items,
+    separatorBefore,
     className,
     ...props
 }: ComponentPropsWithoutRef<typeof SidebarGroup> & {
     items: NavItem[];
+    separatorBefore?: string;
 }) {
     return (
         <SidebarGroup
@@ -24,19 +27,26 @@ export function NavFooter({
             <SidebarGroupContent>
                 <SidebarMenu>
                     {items.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton
-                                asChild
-                                className="text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-                            >
-                                <Link href={item.href}>
-                                    {item.icon && (
-                                        <item.icon className="h-5 w-5" />
-                                    )}
-                                    <span>{item.title}</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
+                        <Fragment key={item.title}>
+                            {separatorBefore === item.title && (
+                                <SidebarMenuItem className="py-1">
+                                    <Separator className="bg-foreground/10" />
+                                </SidebarMenuItem>
+                            )}
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    className="text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                                >
+                                    <Link href={item.href}>
+                                        {item.icon && (
+                                            <item.icon className="h-5 w-5" />
+                                        )}
+                                        <span>{item.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </Fragment>
                     ))}
                 </SidebarMenu>
             </SidebarGroupContent>

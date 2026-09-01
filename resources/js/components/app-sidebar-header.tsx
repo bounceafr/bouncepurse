@@ -1,8 +1,7 @@
-import { usePage } from '@inertiajs/react';
 import { Bell, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { NavUser } from '@/components/nav-user';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -11,8 +10,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { UserMenuContent } from '@/components/user-menu-content';
-import { useInitials } from '@/hooks/use-initials';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
 export function AppSidebarHeader({
@@ -20,8 +17,6 @@ export function AppSidebarHeader({
 }: {
     breadcrumbs?: BreadcrumbItemType[];
 }) {
-    const { auth } = usePage().props;
-    const getInitials = useInitials();
     const [searchOpen, setSearchOpen] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -32,7 +27,7 @@ export function AppSidebarHeader({
     }, [searchOpen]);
 
     return (
-        <header className="flex h-16 w-full shrink-0 items-center justify-between gap-2 border-b border-neutral-200/80 bg-white/70 px-6 backdrop-blur-sm transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
+        <header className="flex h-16 w-full shrink-0 items-center justify-between gap-2 border-b border-border/80 bg-background/70 px-6 backdrop-blur-sm transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="-ml-1 hover:bg-primary/10 hover:text-primary" />
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
@@ -84,28 +79,7 @@ export function AppSidebarHeader({
                         </div>
                     </DropdownMenuContent>
                 </DropdownMenu>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            className="size-10 rounded-full p-1 ring-2 ring-transparent transition-all hover:ring-primary/30"
-                            aria-label="User menu"
-                        >
-                            <Avatar className="size-8 overflow-hidden rounded-full ring-2 ring-primary/20">
-                                <AvatarImage
-                                    src={auth.user.avatar}
-                                    alt={auth.user.name}
-                                />
-                                <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
-                                    {getInitials(auth.user.name)}
-                                </AvatarFallback>
-                            </Avatar>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end">
-                        <UserMenuContent user={auth.user} />
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <NavUser />
             </div>
         </header>
     );

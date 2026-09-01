@@ -50,6 +50,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 type PaginationLink = { url: string | null; label: string; active: boolean };
 
@@ -136,6 +137,8 @@ interface DataTableProps<TData> {
     draggable?: boolean;
     onRowOrderChange?: (newData: TData[]) => void;
     getRowId?: (row: TData) => string;
+    className?: string;
+    hideColumnToggle?: boolean;
 }
 
 function SortableRow({
@@ -189,6 +192,8 @@ export function DataTable<TData>({
     draggable = false,
     onRowOrderChange,
     getRowId,
+    className,
+    hideColumnToggle = false,
 }: DataTableProps<TData>) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
@@ -296,41 +301,50 @@ export function DataTable<TData>({
     );
 
     return (
-        <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-                {toolbar}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="ml-auto"
-                        >
-                            <Settings2 className="mr-2 size-4" />
-                            Columns
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        {table
-                            .getAllColumns()
-                            .filter((col) => col.getCanHide())
-                            .map((col) => (
-                                <DropdownMenuCheckboxItem
-                                    key={col.id}
-                                    className="capitalize"
-                                    checked={col.getIsVisible()}
-                                    onCheckedChange={(value) =>
-                                        col.toggleVisibility(!!value)
-                                    }
+        <div
+            className={cn(
+                'flex flex-col gap-4 [&_[data-slot=table-head]]:h-11 [&_[data-slot=table-head]]:bg-muted/50 [&_[data-slot=table-head]]:text-xs [&_[data-slot=table-head]]:font-medium [&_[data-slot=table-head]]:tracking-wide [&_[data-slot=table-head]]:text-muted-foreground [&_[data-slot=table-head]]:uppercase [&_[data-slot=table-row]]:border-border [&_[data-slot=table-row]:hover]:bg-muted/50',
+                className,
+            )}
+        >
+            {(toolbar || !hideColumnToggle) && (
+                <div className="flex items-center gap-2">
+                    {toolbar}
+                    {!hideColumnToggle && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="ml-auto border-border bg-background shadow-none"
                                 >
-                                    {col.id}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+                                    <Settings2 className="mr-2 size-4" />
+                                    Columns
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {table
+                                    .getAllColumns()
+                                    .filter((col) => col.getCanHide())
+                                    .map((col) => (
+                                        <DropdownMenuCheckboxItem
+                                            key={col.id}
+                                            className="capitalize"
+                                            checked={col.getIsVisible()}
+                                            onCheckedChange={(value) =>
+                                                col.toggleVisibility(!!value)
+                                            }
+                                        >
+                                            {col.id}
+                                        </DropdownMenuCheckboxItem>
+                                    ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </div>
+            )}
 
-            <div className="rounded-md border">
+            <div className="overflow-hidden rounded-lg border border-border">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (

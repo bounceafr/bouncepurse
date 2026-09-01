@@ -25,6 +25,15 @@ test('administrators can view users index', function (): void {
     $response->assertInertia(fn ($page) => $page->component('admin/users/index'));
 });
 
+test('administrator role can view users index', function (): void {
+    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $this->actingAs($admin);
+
+    $response = $this->get(route('admin.users.index'));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->component('admin/users/index')->has('counts'));
+});
+
 test('non-administrators cannot view users index', function (): void {
     $player = User::factory()->create()->assignRole(Role::Player->value);
     $this->actingAs($player);
@@ -252,4 +261,41 @@ test('admin can reactivate user', function (): void {
     expect($user->deactivated_at)->toBeNull()
         ->and($user->deactivation_reason)->toBeNull()
         ->and($user->deactivated_by)->toBeNull();
+});
+
+test('admin can reset user password', function (): void {
+    $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
+    $user = User::factory()->create()->assignRole(Role::Player->value);
+    $this->actingAs($admin);
+
+    $response = $this->patch(route('admin.users.reset-password', $user), [
+        'password' => 'newpassword123',
+        'password_confirmation' => 'newpassword123',
+    ]);
+
+    $response->assertRedirect(route('admin.users.index'));
+});
+
+test('users index can be filtered by removed status', function (): void {
+    $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
+    $this->actingAs($admin);
+
+    $removed = User::factory()->create()->assignRole(Role::Player->value);
+    $removed->update([
+        'deactivated_at' => now(),
+        'deactivated_by' => $admin->id,
+        'deactivation_reason' => 'Test',
+    ]);
+    User::factory()->create()->assignRole(Role::Player->value);
+
+    $response = $this->get(route('admin.users.index', ['status' => 'removed']));
+
+    $response->assertOk();
+    $response->assertInertia(
+        fn ($page) => $page
+            ->component('admin/users/index')
+            ->where('filters.status', 'removed')
+            ->has('users.data', 1)
+            ->where('users.data.0.id', $removed->id)
+    );
 });

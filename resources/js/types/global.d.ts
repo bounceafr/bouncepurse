@@ -7,6 +7,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             assets: {
                 logo: string;
+                logoDark: string;
             };
             sidebarOpen: boolean;
             [key: string]: unknown;

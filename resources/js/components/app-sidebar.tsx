@@ -13,7 +13,6 @@ import {
     SlidersHorizontal,
     Trophy,
     UserCog,
-    Users,
     Video,
 } from 'lucide-react';
 import { edit as allocationConfigEdit } from '@/actions/App/Http/Controllers/Admin/AllocationConfigurationController';
@@ -22,11 +21,9 @@ import { index as courtsIndex } from '@/actions/App/Http/Controllers/Admin/Court
 import { index as gamesIndex } from '@/actions/App/Http/Controllers/Admin/GameController';
 import { edit as pathwayConfigEdit } from '@/actions/App/Http/Controllers/Admin/PathwayConfigurationController';
 import { index as pathwayEligibleIndex } from '@/actions/App/Http/Controllers/Admin/PathwayEligiblePlayersController';
-import { index as usersIndex } from '@/actions/App/Http/Controllers/Admin/UserController';
 import LedgerController from '@/actions/App/Http/Controllers/LedgerController';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
     SidebarContent,
@@ -41,7 +38,7 @@ import moderation from '@/routes/admin/moderation';
 import moderators from '@/routes/admin/moderators';
 import override from '@/routes/admin/override';
 import ranking from '@/routes/admin/ranking';
-import type { NavItem } from '@/types';
+import type { NavGroup, NavItem } from '@/types';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -50,15 +47,6 @@ export function AppSidebar() {
     const can = (permission: string) => auth.permissions.includes(permission);
 
     const footerNavItems: NavItem[] = [
-        ...(can('manage-users')
-            ? [
-                  {
-                      title: 'Users Management',
-                      href: usersIndex().url,
-                      icon: Users,
-                  },
-              ]
-            : []),
         ...(can('manage-ranking-configuration')
             ? [
                   {
@@ -88,94 +76,114 @@ export function AppSidebar() {
             : []),
     ];
 
-    const mainNavItems: NavItem[] = [
+    const mainNavGroups: NavGroup[] = [
         {
-            title: 'Dashboard',
-            href: dashboard(),
-            icon: LayoutGrid,
+            items: [
+                {
+                    title: 'Dashboard',
+                    href: dashboard(),
+                    icon: LayoutGrid,
+                },
+                {
+                    title: 'Leaderboard',
+                    href: leaderboard().url,
+                    icon: Trophy,
+                },
+            ],
         },
         {
-            title: 'Leaderboard',
-            href: leaderboard().url,
-            icon: Trophy,
+            items: [
+                {
+                    title: 'My Ledger',
+                    href: LedgerController().url,
+                    icon: BookOpen,
+                },
+            ],
         },
         {
-            title: 'My Ledger',
-            href: LedgerController().url,
-            icon: BookOpen,
+            items: [
+                ...(can('view-pathway-eligibility')
+                    ? [
+                          {
+                              title: 'Pathway Candidates',
+                              href: pathwayEligibleIndex().url,
+                              icon: Award,
+                          },
+                      ]
+                    : []),
+                ...(can('edit-courts')
+                    ? [
+                          {
+                              title: 'Courts',
+                              href: courtsIndex().url,
+                              icon: MapPin,
+                          },
+                      ]
+                    : []),
+                ...(can('view-games')
+                    ? [
+                          {
+                              title: 'Games',
+                              href: gamesIndex().url,
+                              icon: Video,
+                          },
+                      ]
+                    : []),
+            ],
         },
-        ...(can('view-pathway-eligibility')
-            ? [
-                  {
-                      title: 'Pathway Candidates',
-                      href: pathwayEligibleIndex().url,
-                      icon: Award,
-                  },
-              ]
-            : []),
-        ...(can('edit-courts')
-            ? [
-                  {
-                      title: 'Courts',
-                      href: courtsIndex().url,
-                      icon: MapPin,
-                  },
-              ]
-            : []),
-        ...(can('view-games')
-            ? [
-                  {
-                      title: 'Games',
-                      href: gamesIndex().url,
-                      icon: Video,
-                  },
-              ]
-            : []),
-        ...(can('moderate-games')
-            ? [
-                  {
-                      title: 'Moderation Queues',
-                      href: moderation.index().url,
-                      icon: ClipboardList,
-                  },
-              ]
-            : []),
-        ...(can('override-moderation')
-            ? [
-                  {
-                      title: 'Flagged Games',
-                      href: override.index().url,
-                      icon: ShieldAlert,
-                  },
-              ]
-            : []),
-        ...(can('view-allocations')
-            ? [
-                  {
-                      title: 'Allocations',
-                      href: allocationIndex().url,
-                      icon: DollarSign,
-                  },
-              ]
-            : []),
-        ...(can('view-moderator-performance')
-            ? [
-                  {
-                      title: 'Moderators',
-                      href: moderators.index().url,
-                      icon: UserCog,
-                  },
-              ]
-            : []),
+        {
+            items: [
+                ...(can('moderate-games')
+                    ? [
+                          {
+                              title: 'Moderation Queues',
+                              href: moderation.index().url,
+                              icon: ClipboardList,
+                          },
+                      ]
+                    : []),
+                ...(can('override-moderation')
+                    ? [
+                          {
+                              title: 'Flagged Games',
+                              href: override.index().url,
+                              icon: ShieldAlert,
+                          },
+                      ]
+                    : []),
+                ...(can('view-moderator-performance')
+                    ? [
+                          {
+                              title: 'Moderators',
+                              href: moderators.index().url,
+                              icon: UserCog,
+                          },
+                      ]
+                    : []),
+            ],
+        },
+        {
+            items: [
+                ...(can('view-allocations')
+                    ? [
+                          {
+                              title: 'Allocations',
+                              href: allocationIndex().url,
+                              icon: DollarSign,
+                          },
+                      ]
+                    : []),
+            ],
+        },
     ];
 
     return (
         <Sidebar
             collapsible="offcanvas"
             variant="sidebar"
-            className="border-r border-neutral-200 !bg-white dark:!bg-white"
+            className="border-r border-sidebar-border bg-sidebar"
         >
-            <SidebarHeader className="border-b border-neutral-200 px-3 py-4">
+            <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
@@ -192,12 +200,15 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain groups={mainNavGroups} />
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
-                <NavUser />
+                <NavFooter
+                    items={footerNavItems}
+                    separatorBefore="Ranking Config"
+                    className="mt-auto"
+                />
             </SidebarFooter>
         </Sidebar>
     );

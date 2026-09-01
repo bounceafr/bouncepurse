@@ -14,12 +14,14 @@ test('versioned asset urls include a filemtime cache buster', function (): void 
         ->toContain('v='.$mtime);
 });
 
-test('login page shares the official versioned logo asset', function (): void {
+test('login page shares the official versioned logo assets', function (): void {
     $logo = VersionedAsset::url('bounce_logo.png');
+    $logoDark = VersionedAsset::url('bounce-logo.png');
 
     $this->get(route('login'))
         ->assertOk()
         ->assertInertia(fn (Assert $page): Assert => $page
             ->where('assets.logo', $logo)
+            ->where('assets.logoDark', $logoDark)
         );
 });

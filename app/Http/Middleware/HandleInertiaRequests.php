@@ -52,6 +52,7 @@ final class HandleInertiaRequests extends Middleware
             ],
             'assets' => [
                 'logo' => VersionedAsset::url('bounce_logo.png'),
+                'logoDark' => VersionedAsset::url('bounce-logo.png'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

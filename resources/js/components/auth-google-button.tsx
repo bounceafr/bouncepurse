@@ -1,5 +1,6 @@
 import { redirect } from '@/actions/App/Http/Controllers/Auth/SocialAuthController';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 function GoogleIcon() {
     return (
@@ -38,11 +39,12 @@ export default function AuthGoogleButton({ action = 'sign-in' }: Props) {
         action === 'sign-up' ? 'Or sign up with' : 'Or sign in with';
 
     return (
-        <div className="flex flex-col gap-5">
-            <div className="flex items-center gap-3">
-                <div className="h-px flex-1 border-t border-dashed border-border" />
-                <span className="text-xs text-muted-foreground">{label}</span>
-                <div className="h-px flex-1 border-t border-dashed border-border" />
+        <div className="mt-6 flex flex-col gap-5">
+            <div className="flex flex-col gap-3">
+                <Separator className="bg-foreground/10" />
+                <span className="text-center text-xs text-muted-foreground">
+                    {label}
+                </span>
             </div>
 
             <div className="flex items-center justify-center">
@@ -50,7 +52,7 @@ export default function AuthGoogleButton({ action = 'sign-in' }: Props) {
                     asChild
                     variant="outline"
                     size="icon-lg"
-                    className="size-12 rounded-xl border-border/80 bg-white shadow-sm hover:bg-white/90"
+                    className="size-12 rounded-xl border-border/80 bg-background shadow-sm hover:bg-muted"
                 >
                     <a
                         href={redirect.url()}

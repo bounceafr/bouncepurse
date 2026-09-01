@@ -166,42 +166,33 @@
 @layer utilities {
     .basketball-surface {
         position: relative;
-        isolation: isolate;
         background-color: var(--background);
-        background-image: radial-gradient(
-            circle at center,
-            oklch(0.688 0.195 44.711 / 5%) 0.65px,
-            transparent 0.65px
-        );
-        background-size: 7px 7px;
-    }
-
-    .basketball-surface::before {
-        content: '';
-        pointer-events: none;
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' preserveAspectRatio='none'%3E%3Cpath d='M0 110 C0 35 35 0 110 0' fill='none' stroke='%23f86808' stroke-opacity='0.14' stroke-width='1.5'/%3E%3Cpath d='M290 0 C365 0 400 35 400 110' fill='none' stroke='%23f86808' stroke-opacity='0.14' stroke-width='1.5'/%3E%3Cpath d='M0 290 C0 365 35 400 110 400' fill='none' stroke='%23f86808' stroke-opacity='0.14' stroke-width='1.5'/%3E%3Cpath d='M290 400 C365 400 400 365 400 290' fill='none' stroke='%23f86808' stroke-opacity='0.14' stroke-width='1.5'/%3E%3C/svg%3E");
-        background-size: 100% 100%;
-        background-repeat: no-repeat;
-    }
-
-    .basketball-surface > * {
-        position: relative;
-        z-index: 1;
+        background-image:
+            linear-gradient(
+                to bottom,
+                color-mix(in oklab, var(--background) 88%, var(--muted)) 0%,
+                var(--muted) 100%
+            ),
+            radial-gradient(
+                circle at center,
+                oklch(0.688 0.195 44.711 / 5%) 0.65px,
+                transparent 0.65px
+            );
+        background-size: auto, 7px 7px;
     }
 
     .dark .basketball-surface {
-        background-image: radial-gradient(
-            circle at center,
-            oklch(0.72 0.19 44.711 / 6%) 0.65px,
-            transparent 0.65px
-        );
-    }
-
-    .dark .basketball-surface::before {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' preserveAspectRatio='none'%3E%3Cpath d='M0 110 C0 35 35 0 110 0' fill='none' stroke='%23f86808' stroke-opacity='0.22' stroke-width='1.5'/%3E%3Cpath d='M290 0 C365 0 400 35 400 110' fill='none' stroke='%23f86808' stroke-opacity='0.22' stroke-width='1.5'/%3E%3Cpath d='M0 290 C0 365 35 400 110 400' fill='none' stroke='%23f86808' stroke-opacity='0.22' stroke-width='1.5'/%3E%3Cpath d='M290 400 C365 400 400 365 400 290' fill='none' stroke='%23f86808' stroke-opacity='0.22' stroke-width='1.5'/%3E%3C/svg%3E");
+        background-image:
+            linear-gradient(
+                to bottom,
+                color-mix(in oklab, var(--background) 92%, var(--card)) 0%,
+                var(--background) 100%
+            ),
+            radial-gradient(
+                circle at center,
+                oklch(0.72 0.19 44.711 / 6%) 0.65px,
+                transparent 0.65px
+            );
     }
 
     .sport-card-hover {
@@ -221,37 +212,25 @@
     }
 }
 
-/* Force light sidebar regardless of dark mode */
-[data-slot='sidebar-inner'],
-[data-sidebar='sidebar'] {
-    --sidebar: oklch(0.99 0.004 75);
-    --sidebar-foreground: oklch(0.20 0.012 50);
-    --sidebar-accent: oklch(0.955 0.012 70);
-    --sidebar-accent-foreground: oklch(0.22 0.015 50);
-    --sidebar-border: oklch(0.90 0.015 68);
-    background-color: #ffffff !important;
-    color: oklch(0.20 0.012 50) !important;
-}
-
 /* Sport sidebar: orange active pill */
 [data-sidebar='sidebar'] [data-slot='sidebar-menu-button'] {
-    color: oklch(0.35 0.015 50);
+    color: var(--sidebar-foreground);
 }
 
 [data-sidebar='sidebar'] [data-slot='sidebar-menu-button'][data-active='true'] {
     background: oklch(0.688 0.195 44.711 / 12%) !important;
-    color: oklch(0.688 0.195 44.711) !important;
+    color: var(--sidebar-primary) !important;
     font-weight: 600;
     box-shadow: inset 3px 0 0 #f86808;
 }
 
 [data-sidebar='sidebar'] [data-slot='sidebar-menu-button']:hover:not([data-active='true']) {
-    background: oklch(0.955 0.012 70) !important;
-    color: oklch(0.22 0.015 50) !important;
+    background: var(--sidebar-accent) !important;
+    color: var(--sidebar-accent-foreground) !important;
 }
 
 [data-sidebar='sidebar'] [data-slot='sidebar-group-label'] {
-    color: oklch(0.55 0.02 55);
+    color: var(--muted-foreground);
     font-size: 0.7rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;

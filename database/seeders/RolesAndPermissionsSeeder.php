@@ -29,14 +29,9 @@ final class RolesAndPermissionsSeeder extends Seeder
         SpatieRole::findByName(Role::SuperAdmin->value)
             ->syncPermissions([]);
 
-        // Administrator: all permissions except ViewUsers and ManageUsers
-        $adminPermissions = array_filter(
-            Permission::cases(),
-            fn (Permission $p): bool => ! in_array($p, [Permission::ViewUsers, Permission::ManageUsers], true),
-        );
-
+        // Administrator: all permissions
         SpatieRole::findByName(Role::Administrator->value)
-            ->syncPermissions(array_map(fn (Permission $p) => $p->value, $adminPermissions));
+            ->syncPermissions(array_map(fn (Permission $p) => $p->value, Permission::cases()));
 
         // Moderator: moderation queue only
         SpatieRole::findByName(Role::Moderator->value)

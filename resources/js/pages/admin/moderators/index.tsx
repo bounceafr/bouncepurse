@@ -4,6 +4,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { UserMinus } from 'lucide-react';
 import { useState } from 'react';
 import { update as userUpdate } from '@/actions/App/Http/Controllers/Admin/UserController';
+import { ListPageShell } from '@/components/list-page-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
@@ -122,9 +123,9 @@ export default function ModeratorsIndex({ moderators, filters }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Moderator performance" />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <div>
-                    <h1 className="text-2xl font-semibold">
+                    <h1 className="text-2xl font-semibold text-foreground">
                         Moderator performance
                     </h1>
                     <p className="text-sm text-muted-foreground">
@@ -176,7 +177,7 @@ export default function ModeratorsIndex({ moderators, filters }: Props) {
                 </Card>
 
                 <DataTable columns={columns} data={moderators} />
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

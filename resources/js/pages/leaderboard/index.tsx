@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Trophy } from 'lucide-react';
+import { ListPageShell } from '@/components/list-page-shell';
 import {
     DataTable,
     selectionColumn,
@@ -158,11 +159,13 @@ export default function LeaderboardIndex({ entries, filters, formats }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Leaderboard" />
 
-            <div className="flex flex-col gap-6 p-6">
+            <ListPageShell>
                 <div className="flex items-center gap-3">
                     <Trophy className="h-6 w-6 text-yellow-500" />
                     <div>
-                        <h1 className="text-2xl font-semibold">Leaderboard</h1>
+                        <h1 className="text-2xl font-semibold text-foreground">
+                            Leaderboard
+                        </h1>
                         <p className="text-sm text-muted-foreground">
                             Rankings based on approved games
                         </p>
@@ -170,7 +173,7 @@ export default function LeaderboardIndex({ entries, filters, formats }: Props) {
                 </div>
 
                 <DataTable columns={columns} data={entries} toolbar={toolbar} />
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

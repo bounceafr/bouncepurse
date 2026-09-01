@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ListPageShell } from '@/components/list-page-shell';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -37,7 +38,7 @@ export default function PathwayEdit({ config }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pathway Configuration" />
 
-            <div className="flex max-w-2xl flex-col gap-6 p-6">
+            <ListPageShell narrow>
                 <div>
                     <h1 className="text-2xl font-semibold">
                         Pathway Configuration
@@ -133,7 +134,7 @@ export default function PathwayEdit({ config }: Props) {
                         </Form>
                     </CardContent>
                 </Card>
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

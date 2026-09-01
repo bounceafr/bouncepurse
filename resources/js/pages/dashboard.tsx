@@ -21,6 +21,7 @@ import {
     YAxis,
 } from 'recharts';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
+import { ListPageShell } from '@/components/list-page-shell';
 import { sportEase } from '@/components/motion';
 import { SectionCards } from '@/components/section-cards';
 import { Badge } from '@/components/ui/badge';
@@ -253,10 +254,9 @@ export default function Dashboard({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
 
-            <div className="@container/main flex flex-1 flex-col gap-2">
-                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+            <ListPageShell fullWidth className="@container/main">
+                <div className="flex flex-col gap-4 md:gap-6">
                     <motion.div
-                        className="px-4 lg:px-6"
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.45, ease: sportEase }}
@@ -272,7 +272,7 @@ export default function Dashboard({
 
                     <SectionCards cards={sectionCards} />
 
-                    <div className="grid gap-4 px-4 lg:grid-cols-2 lg:px-6 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs dark:*:data-[slot=card]:from-primary/12">
+                    <div className="grid gap-4 lg:grid-cols-2 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs dark:*:data-[slot=card]:from-primary/12">
                         <Card className="sport-card-hover @container/card">
                             <CardHeader>
                                 <div className="flex items-center gap-2">
@@ -347,7 +347,7 @@ export default function Dashboard({
                     </div>
 
                     {(rankingEntries.length > 0 || pathway_eligibility) && (
-                        <div className="grid gap-4 px-4 md:grid-cols-2 lg:px-6 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs dark:*:data-[slot=card]:from-primary/12">
+                        <div className="grid gap-4 md:grid-cols-2 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs dark:*:data-[slot=card]:from-primary/12">
                             {rankingEntries.length > 0 && (
                                 <Card className="sport-card-hover @container/card">
                                     <CardHeader>
@@ -482,7 +482,7 @@ export default function Dashboard({
                         <ChartAreaInteractive data={visitor_stats} />
                     )}
                 </div>
-            </div>
+            </ListPageShell>
         </AppLayout>
     );
 }

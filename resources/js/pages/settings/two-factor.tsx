@@ -1,6 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { ShieldBan, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
@@ -9,12 +9,14 @@ import { Button } from '@/components/ui/button';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
-import { disable, enable, show } from '@/routes/two-factor';
+import { disable, show } from '@/routes/two-factor';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {
     requiresConfirmation?: boolean;
     twoFactorEnabled?: boolean;
+    confirmPassword?: boolean;
+    passwordConfirmed?: boolean;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -27,6 +29,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function TwoFactor({
     requiresConfirmation = false,
     twoFactorEnabled = false,
+    confirmPassword = false,
+    passwordConfirmed = true,
 }: Props) {
     const {
         qrCodeSvg,
@@ -39,6 +43,29 @@ export default function TwoFactor({
         errors,
     } = useTwoFactorAuth();
     const [showSetupModal, setShowSetupModal] = useState<boolean>(false);
+    const [isPasswordConfirmed, setIsPasswordConfirmed] =
+        useState(passwordConfirmed);
+
+    useEffect(() => {
+        setIsPasswordConfirmed(passwordConfirmed);
+    }, [passwordConfirmed]);
+
+    useEffect(() => {
+        if (confirmPassword && !isPasswordConfirmed) {
+            setShowSetupModal(true);
+        }
+    }, [confirmPassword, isPasswordConfirmed]);
+
+    const handleEnableClick = () => {
+        setShowSetupModal(true);
+    };
+
+    const handleDisableClick = (event: MouseEvent<HTMLButtonElement>) => {
+        if (confirmPassword && !isPasswordConfirmed) {
+            event.preventDefault();
+            setShowSetupModal(true);
+        }
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -47,14 +74,14 @@ export default function TwoFactor({
             <h1 className="sr-only">Two-Factor Authentication Settings</h1>
 
             <SettingsLayout>
-                <div className="space-y-6">
+                <div className="flex flex-col gap-6">
                     <Heading
                         variant="small"
                         title="Two-Factor Authentication"
                         description="Manage your two-factor authentication settings"
                     />
                     {twoFactorEnabled ? (
-                        <div className="flex flex-col items-start justify-start space-y-4">
+                        <div className="flex flex-col items-start justify-start gap-4">
                             <Badge variant="default">Enabled</Badge>
                             <p className="text-muted-foreground">
                                 With two-factor authentication enabled, you will
@@ -63,11 +90,13 @@ export default function TwoFactor({
                                 TOTP-supported application on your phone.
                             </p>
 
-                            <TwoFactorRecoveryCodes
-                                recoveryCodesList={recoveryCodesList}
-                                fetchRecoveryCodes={fetchRecoveryCodes}
-                                errors={errors}
-                            />
+                            {isPasswordConfirmed && (
+                                <TwoFactorRecoveryCodes
+                                    recoveryCodesList={recoveryCodesList}
+                                    fetchRecoveryCodes={fetchRecoveryCodes}
+                                    errors={errors}
+                                />
+                            )}
 
                             <div className="relative inline">
                                 <Form {...disable.form()}>
@@ -76,6 +105,7 @@ export default function TwoFactor({
                                             variant="destructive"
                                             type="submit"
                                             disabled={processing}
+                                            onClick={handleDisableClick}
                                         >
                                             <ShieldBan /> Disable 2FA
                                         </Button>
@@ -84,7 +114,7 @@ export default function TwoFactor({
                             </div>
                         </div>
                     ) : (
-                        <div className="flex flex-col items-start justify-start space-y-4">
+                        <div className="flex flex-col items-start justify-start gap-4">
                             <Badge variant="destructive">Disabled</Badge>
                             <p className="text-muted-foreground">
                                 When you enable two-factor authentication, you
@@ -94,30 +124,16 @@ export default function TwoFactor({
                             </p>
 
                             <div>
-                                {hasSetupData ? (
-                                    <Button
-                                        onClick={() => setShowSetupModal(true)}
-                                    >
+                                {hasSetupData && isPasswordConfirmed ? (
+                                    <Button onClick={handleEnableClick}>
                                         <ShieldCheck />
                                         Continue Setup
                                     </Button>
                                 ) : (
-                                    <Form
-                                        {...enable.form()}
-                                        onSuccess={() =>
-                                            setShowSetupModal(true)
-                                        }
-                                    >
-                                        {({ processing }) => (
-                                            <Button
-                                                type="submit"
-                                                disabled={processing}
-                                            >
-                                                <ShieldCheck />
-                                                Enable 2FA
-                                            </Button>
-                                        )}
-                                    </Form>
+                                    <Button onClick={handleEnableClick}>
+                                        <ShieldCheck />
+                                        Enable 2FA
+                                    </Button>
                                 )}
                             </div>
                         </div>
@@ -128,6 +144,9 @@ export default function TwoFactor({
                         onClose={() => setShowSetupModal(false)}
                         requiresConfirmation={requiresConfirmation}
                         twoFactorEnabled={twoFactorEnabled}
+                        confirmPassword={confirmPassword}
+                        passwordConfirmed={isPasswordConfirmed}
+                        onPasswordConfirmed={() => setIsPasswordConfirmed(true)}
                         qrCodeSvg={qrCodeSvg}
                         manualSetupKey={manualSetupKey}
                         clearSetupData={clearSetupData}

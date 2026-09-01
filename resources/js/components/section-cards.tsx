@@ -21,7 +21,7 @@ interface SectionCardData {
 
 export const SectionCards = ({ cards }: { cards: SectionCardData[] }) => {
   return (
-    <StaggerChildren className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:from-primary/12 dark:*:data-[slot=card]:bg-card">
+    <StaggerChildren className="grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-br *:data-[slot=card]:from-primary/8 *:data-[slot=card]:via-card *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:from-primary/12 dark:*:data-[slot=card]:bg-card">
       {cards.map((card) => (
         <StaggerItem key={card.label}>
           <Card className="sport-card-hover @container/card">
@@ -72,7 +72,7 @@ export const SectionCards = ({ cards }: { cards: SectionCardData[] }) => {
 
 export function SectionCardsSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       {Array.from({ length: 4 }).map((_, i) => (
         <Card key={i} className="@container/card">
           <CardHeader>
