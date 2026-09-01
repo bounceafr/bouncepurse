@@ -8,55 +8,76 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
-interface SectionCardData {
+export interface SectionCardData {
   label: string
   value: number
   icon: React.ReactNode
   trend?: number
   trendLabel: string
   description: string
+  /** Custom formatter for the value (e.g., for currency). */
+  valueFormatter?: (value: number) => string
+  /** Gradient background classes for the card (literal strings for Tailwind JIT). */
+  cardClassName?: string
+  /** Accent classes for the icon chip (literal strings for Tailwind JIT). */
+  iconClassName?: string
 }
 
 export const SectionCards = ({ cards }: { cards: SectionCardData[] }) => {
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+    <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       {cards.map((card) => (
-        <Card key={card.label} className="@container/card">
+        <Card key={card.label} className={cn("@container/card", card.cardClassName)}>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardDescription>{card.label}</CardDescription>
-              <span className="text-muted-foreground [&>svg]:size-4">
+            <div className="flex items-center gap-3">
+              <span
+                className={cn(
+                  "flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary [&>svg]:size-5",
+                  card.iconClassName
+                )}
+              >
                 {card.icon}
               </span>
+              <div className="flex flex-1 items-center justify-between gap-2">
+                <div>
+                  <CardDescription className="text-xs font-medium uppercase tracking-wider">
+                    {card.label}
+                  </CardDescription>
+                  <CardTitle className="mt-0.5 text-2xl font-bold tabular-nums @[250px]/card:text-3xl">
+                    {card.valueFormatter ? card.valueFormatter(card.value) : card.value.toLocaleString()}
+                  </CardTitle>
+                </div>
+                {card.trend !== undefined && (
+                  <CardAction className="row-span-1 row-start-1 self-start">
+                    <Badge
+                      variant="outline"
+                      className={`gap-1 text-xs font-medium ${
+                        card.trend >= 0
+                          ? 'text-chart-1'
+                          : 'text-destructive'
+                      }`}
+                    >
+                      {card.trend >= 0 ? (
+                        <TrendingUp className="size-3" />
+                      ) : (
+                        <TrendingDown className="size-3" />
+                      )}
+                      {Math.abs(card.trend)}%
+                    </Badge>
+                  </CardAction>
+                )}
+              </div>
             </div>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {card.value.toLocaleString()}
-            </CardTitle>
-            {card.trend !== undefined && (
-              <CardAction>
-                <Badge variant="outline">
-                  {card.trend >= 0 ? (
-                    <TrendingUp />
-                  ) : (
-                    <TrendingDown />
-                  )}
-                  {Math.abs(card.trend)}%
-                </Badge>
-              </CardAction>
-            )}
           </CardHeader>
-          <CardFooter className="flex-col items-start gap-1.5 text-sm">
-            <div className="line-clamp-1 flex gap-2 font-medium">
-              {card.trendLabel}
-              {card.trend !== undefined && card.trend >= 0 ? (
-                <TrendingUp className="size-4" />
-              ) : card.trend !== undefined ? (
-                <TrendingDown className="size-4" />
-              ) : null}
-            </div>
-            <div className="text-muted-foreground">
-              {card.description}
+          <CardFooter className="pt-0">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">
+                {card.trendLabel}
+              </span>
+              <span aria-hidden="true">&middot;</span>
+              <span>{card.description}</span>
             </div>
           </CardFooter>
         </Card>

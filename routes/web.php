@@ -18,6 +18,8 @@ Route::get('/', fn () => Inertia::render('auth/login', [
     'canRegister' => Features::enabled(Features::registration()),
 ]))->name('home');
 
+Route::get('/ui-showcase', fn () => Inertia::render('ui-showcase'))->middleware(['auth', 'verified'])->name('ui-showcase');
+
 // Route::get('auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('auth.social.redirect');
 // Route::get('auth/{provider}/callback', [SocialAuthController::class, 'callback'])->name('auth.social.callback');
 

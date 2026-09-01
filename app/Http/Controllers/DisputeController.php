@@ -21,6 +21,6 @@ final class DisputeController extends Controller
 
         $action->handle($game, $user, $reason);
 
-        return to_route('admin.games.show', $game->uuid)->with('success', 'Dispute submitted successfully.');
+        return to_route('dashboard')->with('success', 'Dispute submitted successfully.');
     }
 }
