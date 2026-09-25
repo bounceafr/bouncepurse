@@ -11,14 +11,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('games', function (Blueprint $table): void {
-            $table->timestamp('played_at')->nullable()->change();
+            $table->dateTime('played_at')->nullable()->change();
         });
     }
 
     public function down(): void
     {
         Schema::table('games', function (Blueprint $table): void {
-            $table->timestamp('played_at')->nullable(false)->change();
+            $table->dateTime('played_at')->nullable(false)->change();
         });
     }
 };
