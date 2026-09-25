@@ -55,11 +55,18 @@ type StatusOption = {
     color: string;
 };
 
+type CategoryOption = {
+    value: string;
+    label: string;
+    color: string;
+};
+
 type Court = {
     id: number;
     uuid: string;
     court_code: string;
     name: string;
+    category: string;
     country_id: number;
     country: CountryOption;
     city: string;
@@ -97,6 +104,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 function CourtFormFields({
     court,
     countries,
+    categories,
     statuses,
     errors,
     latRef,
@@ -104,6 +112,7 @@ function CourtFormFields({
 }: {
     court?: Court;
     countries: CountryOption[];
+    categories: CategoryOption[];
     statuses: StatusOption[];
     errors: Record<string, string>;
     latRef: React.RefObject<HTMLInputElement | null>;
@@ -111,6 +120,30 @@ function CourtFormFields({
 }) {
     return (
         <>
+            <div className="grid gap-2">
+                <Label htmlFor="category">Type</Label>
+                <Select
+                    name="category"
+                    defaultValue={court?.category}
+                    required
+                >
+                    <SelectTrigger id="category">
+                        <SelectValue placeholder="Select a type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {categories.map((category) => (
+                            <SelectItem
+                                key={category.value}
+                                value={category.value}
+                            >
+                                {category.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.category} />
+            </div>
+
             <div className="grid gap-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
@@ -253,18 +286,25 @@ function CourtFormFields({
 export default function CourtsIndex({
     courts,
     countries,
+    categories,
     statuses,
     filters,
 }: {
     courts: PaginatedCourts;
     countries: CountryOption[];
+    categories: CategoryOption[];
     statuses: StatusOption[];
-    filters: { search: string | null };
+    filters: { search: string | null; category: string | null };
 }) {
     const [createOpen, setCreateOpen] = useState(false);
     const [editCourt, setEditCourt] = useState<Court | null>(null);
     const [deleteCourt, setDeleteCourt] = useState<Court | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
+    const [categoryFilter, setCategoryFilter] = useState(
+        filters.category ?? 'all',
+    );
+    const categoryFilterRef = useRef(categoryFilter);
+    categoryFilterRef.current = categoryFilter;
     const isInitialMount = useRef(true);
     const createLatRef = useRef<HTMLInputElement>(null);
     const createLngRef = useRef<HTMLInputElement>(null);
@@ -272,6 +312,9 @@ export default function CourtsIndex({
     const editLngRef = useRef<HTMLInputElement>(null);
 
     const statusMap = Object.fromEntries(statuses.map((s) => [s.value, s]));
+    const categoryMap = Object.fromEntries(
+        categories.map((category) => [category.value, category]),
+    );
 
     useEffect(() => {
         if (isInitialMount.current) {
@@ -280,15 +323,33 @@ export default function CourtsIndex({
         }
 
         const timeout = setTimeout(() => {
+            const currentCategory = categoryFilterRef.current;
+
             router.get(
                 index().url,
-                { search: search || undefined },
+                {
+                    search: search || undefined,
+                    category:
+                        currentCategory !== 'all' ? currentCategory : undefined,
+                },
                 { preserveState: true, replace: true },
             );
         }, 300);
 
         return () => clearTimeout(timeout);
     }, [search]);
+
+    function handleCategoryChange(value: string) {
+        setCategoryFilter(value);
+        router.get(
+            index().url,
+            {
+                search: search || undefined,
+                category: value !== 'all' ? value : undefined,
+            },
+            { preserveState: true, replace: true },
+        );
+    }
 
     const columns: ColumnDef<Court, unknown>[] = [
         selectionColumn<Court>(),
@@ -307,6 +368,22 @@ export default function CourtsIndex({
             cell: ({ row }) => (
                 <span className="font-medium">{row.getValue('name')}</span>
             ),
+        },
+        {
+            accessorKey: 'category',
+            header: sortableHeader('Category'),
+            cell: ({ row }) => {
+                const category =
+                    categoryMap[row.getValue('category') as string];
+
+                return category ? (
+                    <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${category.color}`}
+                    >
+                        {category.label}
+                    </span>
+                ) : null;
+            },
         },
         {
             id: 'country',
@@ -380,6 +457,19 @@ export default function CourtsIndex({
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-64"
             />
+            <Select value={categoryFilter} onValueChange={handleCategoryChange}>
+                <SelectTrigger className="w-48">
+                    <SelectValue placeholder="All types" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All types</SelectItem>
+                    {categories.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                            {category.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
             <Button onClick={() => setCreateOpen(true)}>Add Court</Button>
         </>
     );
@@ -431,6 +521,7 @@ export default function CourtsIndex({
                             <>
                                 <CourtFormFields
                                     countries={countries}
+                                    categories={categories}
                                     statuses={statuses}
                                     errors={errors}
                                     latRef={createLatRef}
@@ -485,6 +576,7 @@ export default function CourtsIndex({
                                     <CourtFormFields
                                         court={editCourt}
                                         countries={countries}
+                                        categories={categories}
                                         statuses={statuses}
                                         errors={errors}
                                         latRef={editLatRef}

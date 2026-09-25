@@ -20,10 +20,11 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/app-layout';
+import { formatCourtName } from '@/lib/court';
 import type { BreadcrumbItem } from '@/types';
 
 type User = { id: number; name: string };
-type Court = { id: number; name: string };
+type Court = { id: number; name: string; category_label?: string | null };
 
 type Game = {
     id: number;
@@ -74,7 +75,7 @@ const columns: ColumnDef<Game, unknown>[] = [
     },
     {
         id: 'court',
-        accessorFn: (row) => row.court?.name ?? '—',
+        accessorFn: (row) => formatCourtName(row.court),
         header: sortableHeader('Court'),
     },
     {

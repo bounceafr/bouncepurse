@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\CourtCategory;
 use App\Enums\CourtStatus;
 use Carbon\CarbonInterface;
 use Database\Factories\CourtFactory;
 use Illuminate\Database\Eloquent\Attributes\RouteKey;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read string $court_code
  * @property-read int $country_id
  * @property-read string $name
+ * @property-read CourtCategory $category
+ * @property-read string $category_label
  * @property-read string $city
  * @property-read Country $country
  * @property-read ?string $host_name
@@ -36,6 +40,11 @@ final class Court extends Model
 {
     /** @use HasFactory<CourtFactory> */
     use HasFactory;
+
+    /** @var list<string> */
+    protected $appends = [
+        'category_label',
+    ];
 
     public static function generateCourtCode(Country $country, string $city): string
     {
@@ -60,9 +69,16 @@ final class Court extends Model
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
 
+    /** @return Attribute<string, never> */
+    protected function categoryLabel(): Attribute
+    {
+        return Attribute::get(fn (): string => $this->category->label());
+    }
+
     protected function casts(): array
     {
         return [
+            'category' => CourtCategory::class,
             'status' => CourtStatus::class,
             'latitude' => 'float',
             'longitude' => 'float',

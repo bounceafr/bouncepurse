@@ -18,10 +18,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { formatCourtName } from '@/lib/court';
 import type { BreadcrumbItem } from '@/types';
 
 type User = { id: number; name: string };
-type Court = { id: number; name: string };
+type Court = { id: number; name: string; category_label?: string | null };
 
 type Game = {
     id: number;
@@ -148,7 +149,7 @@ export default function ModerationShow({ game }: { game: Game }) {
                                     <span className="text-muted-foreground">
                                         Court
                                     </span>
-                                    <span>{game.court?.name ?? '—'}</span>
+                                    <span>{formatCourtName(game.court)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">

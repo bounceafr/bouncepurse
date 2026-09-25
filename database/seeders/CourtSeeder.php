@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\CourtCategory;
 use App\Enums\Role;
 use App\Models\Country;
 use App\Models\Court;
@@ -43,7 +44,9 @@ final class CourtSeeder extends Seeder
             ['country' => 'Jamaica', 'city' => 'Spanish Town', 'status' => 'priority'],
         ];
 
-        foreach ($courts as $data) {
+        $categories = CourtCategory::cases();
+
+        foreach ($courts as $index => $data) {
             $country = Country::query()->firstWhere('name', $data['country'])
                 ?? Country::factory()->create(['name' => $data['country']]);
 
@@ -52,6 +55,7 @@ final class CourtSeeder extends Seeder
             $factory->create([
                 'country_id' => $country->id,
                 'city' => $data['city'],
+                'category' => $categories[$index % count($categories)]->value,
                 'court_code' => Court::generateCourtCode($country, $data['city']),
                 'created_by' => $admin->id,
             ]);
