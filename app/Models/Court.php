@@ -8,6 +8,7 @@ use App\Enums\CourtCategory;
 use App\Enums\CourtStatus;
 use Carbon\CarbonInterface;
 use Database\Factories\CourtFactory;
+use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\RouteKey;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -36,15 +37,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read User $createdBy
  */
 #[RouteKey('uuid')]
+#[Appends([
+    'category_label',
+])]
 final class Court extends Model
 {
     /** @use HasFactory<CourtFactory> */
     use HasFactory;
-
-    /** @var list<string> */
-    protected $appends = [
-        'category_label',
-    ];
 
     public static function generateCourtCode(Country $country, string $city): string
     {

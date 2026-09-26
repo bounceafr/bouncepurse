@@ -38,7 +38,7 @@ final class GameController extends Controller
         return Inertia::render('admin/games/index', [
             'games' => $action->handle($search, $filter),
             'filters' => ['search' => $search, 'filter' => $filter],
-            'courts' => Court::query()->select(['id', 'name'])->orderBy('name')->get(),
+            'courts' => Court::query()->select(['id', 'name', 'category'])->orderBy('name')->get(),
             'teams' => $user->teams()->select(['teams.id', 'teams.name'])->get(),
         ]);
     }
