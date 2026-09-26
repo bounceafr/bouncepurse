@@ -57,10 +57,7 @@ final class DashboardController extends Controller
                     'title' => $game->title,
                     'status' => $game->status->value,
                     'played_at' => $game->played_at?->toISOString() ?? '',
-                    'court' => $game->court ? [
-                        'name' => $game->court->name,
-                        'category_label' => $game->court->category->label(),
-                    ] : null,
+                    'court' => $game->court?->only(['name', 'category_label']),
                     'player' => ['name' => $game->player->name],
                 ]),
             'games_per_month' => $gamesPerMonth,

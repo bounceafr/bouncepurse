@@ -122,11 +122,7 @@ function CourtFormFields({
         <>
             <div className="grid gap-2">
                 <Label htmlFor="category">Type</Label>
-                <Select
-                    name="category"
-                    defaultValue={court?.category}
-                    required
-                >
+                <Select name="category" defaultValue={court?.category} required>
                     <SelectTrigger id="category">
                         <SelectValue placeholder="Select a type" />
                     </SelectTrigger>
@@ -304,7 +300,6 @@ export default function CourtsIndex({
         filters.category ?? 'all',
     );
     const categoryFilterRef = useRef(categoryFilter);
-    categoryFilterRef.current = categoryFilter;
     const isInitialMount = useRef(true);
     const createLatRef = useRef<HTMLInputElement>(null);
     const createLngRef = useRef<HTMLInputElement>(null);
@@ -341,6 +336,7 @@ export default function CourtsIndex({
 
     function handleCategoryChange(value: string) {
         setCategoryFilter(value);
+        categoryFilterRef.current = value;
         router.get(
             index().url,
             {

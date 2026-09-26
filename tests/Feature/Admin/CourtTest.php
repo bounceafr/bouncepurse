@@ -149,6 +149,23 @@ test('courts index can be filtered by category', function (): void {
     );
 });
 
+test('courts index ignores an unknown category filter', function (): void {
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
+    $this->actingAs($user);
+
+    Court::factory()->count(2)->create(['created_by' => $user->id]);
+
+    $response = $this->get(route('admin.courts.index', ['category' => 'swimming_pool']));
+
+    $response->assertOk();
+    $response->assertInertia(
+        fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('admin/courts/index')
+            ->where('filters.category', null)
+            ->has('courts.data', 2)
+    );
+});
+
 test('courts index can be filtered by search term', function (): void {
     $user = User::factory()->create()->givePermissionTo('edit-courts');
     $this->actingAs($user);
