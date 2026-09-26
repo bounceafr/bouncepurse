@@ -52,11 +52,12 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { formatCourtName } from '@/lib/court';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 type User = { id: number; name: string };
-type Court = { id: number; name: string };
+type Court = { id: number; name: string; category_label?: string | null };
 type Team = { id: number; name: string };
 
 type GameResult = {
@@ -177,7 +178,7 @@ function EditGameFormFields({
                     <SelectContent>
                         {courts.map((court) => (
                             <SelectItem key={court.id} value={String(court.id)}>
-                                {court.name}
+                                {formatCourtName(court)}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -387,7 +388,7 @@ function CreateGameFormFields({
                     <SelectContent>
                         {courts.map((court) => (
                             <SelectItem key={court.id} value={String(court.id)}>
-                                {court.name}
+                                {formatCourtName(court)}
                             </SelectItem>
                         ))}
                     </SelectContent>

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\CourtCategory;
 use App\Enums\CourtStatus;
 use App\Models\Country;
 use App\Models\Court;
@@ -34,6 +35,7 @@ test('authenticated users can create a court', function (): void {
 
     $response = $this->post(route('admin.courts.store'), [
         'name' => 'Test Court',
+        'category' => CourtCategory::STADIUM->value,
         'country_id' => $country->id,
         'city' => 'London',
         'host_name' => 'John Doe',
@@ -52,6 +54,7 @@ test('authenticated users can create a court', function (): void {
 
     $this->assertDatabaseHas('courts', [
         'name' => 'Test Court',
+        'category' => CourtCategory::STADIUM->value,
         'country_id' => $country->id,
         'city' => 'London',
         'host_name' => 'John Doe',
@@ -68,7 +71,7 @@ test('create court validates required fields', function (): void {
 
     $response = $this->post(route('admin.courts.store'), []);
 
-    $response->assertInvalid(['name', 'country_id', 'city', 'status']);
+    $response->assertInvalid(['name', 'category', 'country_id', 'city', 'status']);
 });
 
 test('authenticated users can update a court', function (): void {
@@ -79,6 +82,7 @@ test('authenticated users can update a court', function (): void {
 
     $response = $this->patch(route('admin.courts.update', $court), [
         'name' => 'Updated Court',
+        'category' => CourtCategory::ARENA->value,
         'country_id' => $newCountry->id,
         'city' => 'Paris',
         'host_name' => 'Jane Smith',
@@ -94,6 +98,7 @@ test('authenticated users can update a court', function (): void {
     $this->assertDatabaseHas('courts', [
         'id' => $court->id,
         'name' => 'Updated Court',
+        'category' => CourtCategory::ARENA->value,
         'country_id' => $newCountry->id,
         'city' => 'Paris',
         'host_name' => 'Jane Smith',
@@ -101,6 +106,64 @@ test('authenticated users can update a court', function (): void {
         'contact_phone' => '+33 1 23 45 67 89',
         'status' => CourtStatus::PILOT->value,
     ]);
+});
+
+test('create court rejects an unknown category', function (): void {
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
+    $country = Country::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->post(route('admin.courts.store'), [
+        'name' => 'Test Court',
+        'category' => 'swimming_pool',
+        'country_id' => $country->id,
+        'city' => 'London',
+        'status' => CourtStatus::ACTIVE->value,
+    ]);
+
+    $response->assertInvalid(['category']);
+});
+
+test('courts index can be filtered by category', function (): void {
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
+    $this->actingAs($user);
+
+    $stadium = Court::factory()->create([
+        'category' => CourtCategory::STADIUM,
+        'created_by' => $user->id,
+    ]);
+    Court::factory()->create([
+        'category' => CourtCategory::ARENA,
+        'created_by' => $user->id,
+    ]);
+
+    $response = $this->get(route('admin.courts.index', ['category' => CourtCategory::STADIUM->value]));
+
+    $response->assertOk();
+    $response->assertInertia(
+        fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('admin/courts/index')
+            ->where('filters.category', CourtCategory::STADIUM->value)
+            ->has('courts.data', 1)
+            ->where('courts.data.0.id', $stadium->id)
+    );
+});
+
+test('courts index ignores an unknown category filter', function (): void {
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
+    $this->actingAs($user);
+
+    Court::factory()->count(2)->create(['created_by' => $user->id]);
+
+    $response = $this->get(route('admin.courts.index', ['category' => 'swimming_pool']));
+
+    $response->assertOk();
+    $response->assertInertia(
+        fn (AssertableInertia $page): AssertableInertia => $page
+            ->component('admin/courts/index')
+            ->where('filters.category', null)
+            ->has('courts.data', 2)
+    );
 });
 
 test('courts index can be filtered by search term', function (): void {
@@ -165,6 +228,7 @@ test('court_code is unique per court', function (): void {
 
     $this->post(route('admin.courts.store'), [
         'name' => 'Court A',
+        'category' => CourtCategory::BASKETBALL_COURT->value,
         'country_id' => $country->id,
         'city' => 'Kigali',
         'status' => CourtStatus::ACTIVE->value,
@@ -172,6 +236,7 @@ test('court_code is unique per court', function (): void {
 
     $this->post(route('admin.courts.store'), [
         'name' => 'Court B',
+        'category' => CourtCategory::TENNIS_COURT->value,
         'country_id' => $country->id,
         'city' => 'Kigali',
         'status' => CourtStatus::ACTIVE->value,

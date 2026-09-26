@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
+import { formatCourtName } from '@/lib/court';
 import type { BreadcrumbItem } from '@/types';
 
 type GameResult = {
@@ -24,7 +25,7 @@ type GameResult = {
     finished_at: string;
 };
 
-type Court = { id: number; name: string };
+type Court = { id: number; name: string; category_label?: string | null };
 type Team = { id: number; name: string };
 
 type Game = {
@@ -523,7 +524,7 @@ export default function UploadGame({ game }: { game: Game }) {
                                         Court
                                     </span>
                                     <span className="font-medium">
-                                        {game.court.name}
+                                        {formatCourtName(game.court)}
                                     </span>
                                 </div>
                             )}

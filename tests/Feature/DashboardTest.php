@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\CourtCategory;
 use App\Enums\GameStatus;
 use App\Enums\Role;
 use App\Models\Court;
@@ -36,6 +37,27 @@ test('authenticated users can visit the dashboard', function (): void {
         ->has('recent_games')
         ->has('games_per_month')
         ->has('player_rankings')
+    );
+});
+
+test('dashboard recent games include court category and handle games without a court', function (): void {
+    $user = User::factory()->create();
+    $court = Court::factory()->create(['category' => CourtCategory::ARENA]);
+
+    Game::factory()->create(['court_id' => $court->id, 'played_at' => now()->subDay()]);
+    Game::factory()->create(['court_id' => null, 'played_at' => now()]);
+
+    $this->actingAs($user);
+
+    $response = $this->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+        ->component('dashboard')
+        ->has('recent_games', 2)
+        ->where('recent_games.0.court', null)
+        ->where('recent_games.1.court.name', $court->name)
+        ->where('recent_games.1.court.category_label', CourtCategory::ARENA->label())
     );
 });
 

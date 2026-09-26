@@ -11,7 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 final class ListAction
 {
     /** @return LengthAwarePaginator<int, Court> */
-    public function handle(?string $search = null): LengthAwarePaginator
+    public function handle(?string $search = null, ?string $category = null): LengthAwarePaginator
     {
         return Court::query()
             ->with('country')
@@ -24,6 +24,9 @@ final class ListAction
                         })
                         ->orWhere('city', 'like', sprintf('%%%s%%', $search));
                 });
+            })
+            ->when($category, function (Builder $query, string $category): void {
+                $query->where('category', $category);
             })
             ->latest()
             ->paginate(15)

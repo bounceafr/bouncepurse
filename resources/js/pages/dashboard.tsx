@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/data-table';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
+import { formatCourtName } from '@/lib/court';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 
@@ -55,7 +56,7 @@ interface RecentGame {
     title: string;
     status: string;
     played_at: string;
-    court: { name: string } | null;
+    court: { name: string; category_label?: string | null } | null;
     player: { name: string } | null;
 }
 
@@ -174,7 +175,7 @@ const recentGamesColumns: ColumnDef<RecentGame>[] = [
     },
     {
         id: 'court',
-        accessorFn: (row) => row.court?.name ?? '—',
+        accessorFn: (row) => formatCourtName(row.court),
         header: sortableHeader('Court'),
     },
     {

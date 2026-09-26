@@ -21,7 +21,7 @@ return new class extends Migration
             $table->decimal('score', 12, 4)->default(0);
             $table->unsignedInteger('rank')->default(0);
             $table->foreignId('ranking_configuration_id')->constrained('ranking_configurations')->cascadeOnDelete();
-            $table->timestamp('calculated_at');
+            $table->dateTime('calculated_at');
             $table->timestamps();
 
             $table->index(['player_id', 'format', 'calculated_at']);

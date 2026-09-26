@@ -10,15 +10,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('games', function (Blueprint $table): void {
-            $table->dateTime('played_at')->nullable()->change();
+        Schema::table('courts', function (Blueprint $table): void {
+            $table->string('category')->default('basketball_court')->after('name');
         });
     }
 
     public function down(): void
     {
-        Schema::table('games', function (Blueprint $table): void {
-            $table->dateTime('played_at')->nullable(false)->change();
+        Schema::table('courts', function (Blueprint $table): void {
+            $table->dropColumn('category');
         });
     }
 };

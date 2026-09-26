@@ -8,6 +8,7 @@ use App\Actions\Admin\Court\DeleteAction;
 use App\Actions\Admin\Court\ListAction;
 use App\Actions\Admin\Court\StoreAction;
 use App\Actions\Admin\Court\UpdateAction;
+use App\Enums\CourtCategory;
 use App\Enums\CourtStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Court\DeleteCourtRequest;
@@ -26,11 +27,27 @@ final class CourtController extends Controller
     public function index(Request $request, ListAction $action): Response
     {
         $search = $request->string('search')->toString() ?: null;
+        $category = $request->string('category')->toString() ?: null;
+
+        if ($category !== null && CourtCategory::tryFrom($category) === null) {
+            $category = null;
+        }
 
         return Inertia::render('admin/courts/index', [
-            'courts' => $action->handle($search),
+            'courts' => $action->handle($search, $category),
             'countries' => Country::query()->orderBy('name')->get(['id', 'name', 'iso_alpha2']),
-            'filters' => ['search' => $search],
+            'filters' => [
+                'search' => $search,
+                'category' => $category,
+            ],
+            'categories' => array_map(
+                fn (CourtCategory $courtCategory): array => [
+                    'value' => $courtCategory->value,
+                    'label' => $courtCategory->label(),
+                    'color' => $courtCategory->color(),
+                ],
+                CourtCategory::cases()
+            ),
             'statuses' => array_map(
                 fn (CourtStatus $status): array => [
                     'value' => $status->value,

@@ -18,8 +18,8 @@ return new class extends Migration
             $table->uuid();
             $table->foreignId('game_id')->constrained('games');
             $table->foreignId('submitter_id')->constrained('users');
-            $table->timestamp('started_at');
-            $table->timestamp('finished_at');
+            $table->dateTime('started_at');
+            $table->dateTime('finished_at');
             $table->integer('your_score')->default(0);
             $table->integer('opponent_score')->default(0);
             $table->timestamps();

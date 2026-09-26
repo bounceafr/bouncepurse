@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Concerns;
 
+use App\Enums\CourtCategory;
 use App\Enums\CourtStatus;
 use Illuminate\Validation\Rule;
 
@@ -18,6 +19,7 @@ trait CourtValidationRules
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'category' => ['required', Rule::enum(CourtCategory::class)],
             'country_id' => ['required', 'integer', 'exists:countries,id'],
             'city' => ['required', 'string', 'max:255'],
             'host_name' => ['nullable', 'string', 'max:255'],

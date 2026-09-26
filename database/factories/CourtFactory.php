@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\CourtCategory;
 use App\Enums\CourtStatus;
 use App\Models\Country;
 use App\Models\Court;
@@ -23,6 +24,9 @@ final class CourtFactory extends Factory
      */
     public function definition(): array
     {
+        /** @var CourtCategory $category */
+        $category = fake()->randomElement(CourtCategory::cases());
+
         /** @var CourtStatus $status */
         $status = fake()->randomElement(CourtStatus::cases());
 
@@ -33,6 +37,7 @@ final class CourtFactory extends Factory
             'uuid' => Str::uuid(),
             'court_code' => Court::generateCourtCode($country, $city),
             'name' => fake()->company().' Court',
+            'category' => $category->value,
             'country_id' => $country->id,
             'city' => $city,
             'host_name' => fake()->name(),

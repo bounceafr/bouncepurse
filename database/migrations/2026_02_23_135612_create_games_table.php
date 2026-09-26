@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('vimeo_uri')->nullable();
             $table->string('vimeo_status')->nullable();
             $table->timestamp('scheduled_at')->nullable();
-            $table->timestamp('played_at');
+            $table->dateTime('played_at');
             $table->string('status')->default('pending');
             $table->string('result')->nullable();
             $table->integer('points')->nullable();
