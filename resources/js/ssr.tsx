@@ -4,11 +4,12 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { type ComponentType } from 'react';
 import ReactDOMServer from 'react-dom/server';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 const pages = import.meta.glob<{ default: ComponentType }>('./pages/**/*.tsx');
 
-createServer((page) =>
-    createInertiaApp({
+createServer((page) => {
+    const appName = (page.props.name as string | undefined) || 'Bounce Nodes';
+
+    return createInertiaApp({
         page,
         render: (element) => ReactDOMServer.renderToString(element),
         title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -19,5 +20,5 @@ createServer((page) =>
         setup: ({ App, props }) => {
             return <App {...props} />;
         },
-    }),
-);
+    });
+});

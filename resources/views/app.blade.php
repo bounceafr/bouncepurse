@@ -36,6 +36,7 @@
             }
         </style>
 
+        <meta name="application-name" content="{{ config('app.name', 'Bounce Nodes') }}">
         <title inertia>{{ config('app.name', 'Bounce Nodes') }}</title>
 
         <link rel="icon" href="/favicon.ico" sizes="any">

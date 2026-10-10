@@ -6,7 +6,9 @@ import '../css/app.css';
 import { TooltipProvider } from './components/ui/tooltip';
 import { initializeTheme } from './hooks/use-appearance';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName =
+    document.querySelector<HTMLMetaElement>('meta[name="application-name"]')
+        ?.content || 'Bounce Nodes';
 const pages = import.meta.glob<{ default: ComponentType }>('./pages/**/*.tsx');
 
 createInertiaApp({
