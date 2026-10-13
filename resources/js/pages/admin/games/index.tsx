@@ -184,9 +184,8 @@ function EditGameFormFields({
     );
     const [calendarOpen, setCalendarOpen] = useState(false);
 
-    const playedAtValue = date
-        ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-        : '';
+    // Start of the picked day in the viewer's timezone, so "today" is never in the future.
+    const playedAtValue = date ? combineLocalDateAndTime(date, '00:00') : '';
 
     return (
         <>
@@ -327,9 +326,7 @@ function CreateGameFormFields({
               : allFormats;
 
     const playedAtValue =
-        mode === 'played' && date
-            ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-            : '';
+        mode === 'played' && date ? combineLocalDateAndTime(date, '00:00') : '';
 
     const scheduledAtValue =
         mode === 'scheduled' && date && time

@@ -35,7 +35,7 @@ final class StoreGameRequest extends FormRequest
             'format' => ['required', 'string', new Enum(GameFormat::class)],
             'court_id' => ['nullable', 'exists:courts,id'],
             'scheduled_at' => ['nullable', $this->timestampRule(), 'after:now'],
-            'played_at' => ['required_without:scheduled_at', 'nullable', 'date', 'before_or_equal:now'],
+            'played_at' => ['required_without:scheduled_at', 'nullable', $this->timestampRule(), 'before_or_equal:now'],
             'team_id' => ['nullable', 'required_if:participant,team', 'prohibited_unless:participant,team', 'integer', 'exists:teams,id'],
             'opponent_player_id' => ['nullable', 'required_if:participant,player', 'prohibited_unless:participant,player', 'integer', 'exists:users,id'],
             'opponent_team_id' => ['nullable', 'required_if:participant,team', 'prohibited_unless:participant,team', 'integer', 'exists:teams,id', 'different:team_id'],
@@ -51,6 +51,7 @@ final class StoreGameRequest extends FormRequest
     {
         return [
             'scheduled_at.date_format' => 'The scheduled time must include a timezone offset.',
+            'played_at.date_format' => 'The played date must include a timezone offset.',
         ];
     }
 
@@ -83,7 +84,7 @@ final class StoreGameRequest extends FormRequest
     /** @return list<string> */
     protected function timestampFields(): array
     {
-        return ['scheduled_at'];
+        return ['scheduled_at', 'played_at'];
     }
 
     private function validateParticipants(Validator $validator): void

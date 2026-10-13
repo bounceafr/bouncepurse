@@ -9,13 +9,14 @@ import { ListPageShell } from '@/components/list-page-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useVimeoUpload, type VideoStatus } from '@/hooks/use-vimeo-upload';
+import { useVimeoUpload } from '@/hooks/use-vimeo-upload';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
 import {
     type GameResult,
     type GameResultCapabilities,
     type GameSide,
+    type VideoStatus,
 } from '@/lib/game';
 import type { BreadcrumbItem } from '@/types';
 

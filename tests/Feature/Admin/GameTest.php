@@ -84,7 +84,7 @@ test('authenticated users can create a game', function (): void {
         'format' => '1v1',
         'opponent_player_id' => $opponent->id,
         'court_id' => null,
-        'played_at' => '2026-01-15 10:00:00',
+        'played_at' => '2026-01-15T10:00:00+00:00',
     ]);
 
     $response->assertRedirect(route('admin.games.index'));
@@ -116,7 +116,7 @@ test('creator can update their scheduled game', function (): void {
         'title' => 'Updated Game',
         'format' => '1v1',
         'court_id' => null,
-        'played_at' => '2026-02-01 14:00:00',
+        'played_at' => '2026-02-01T14:00:00+00:00',
         'opponent_player_id' => $newOpponent->id,
         'points' => 42,
         'comments' => 'Great game!',
@@ -133,6 +133,59 @@ test('creator can update their scheduled game', function (): void {
     ]);
 });
 
+test('a UTC+10 player can record a game played today in their local date', function (): void {
+    // 21:00 UTC on the 13th is already 07:00 on the 14th in UTC+10.
+    $this->travelTo('2026-10-13 21:00:00');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Morning Game',
+        'participant' => 'player',
+        'format' => '1v1',
+        'opponent_player_id' => User::factory()->create()->id,
+        'played_at' => '2026-10-14T00:00:00+10:00',
+    ])->assertSessionHasNoErrors();
+
+    expect(Game::query()->where('title', 'Morning Game')->sole()->played_at?->toDateTimeString())
+        ->toBe('2026-10-13 14:00:00');
+});
+
+test('updating played_at normalises it to UTC', function (): void {
+    $this->travelTo('2026-10-13 21:00:00');
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = Game::factory()->scheduled()->againstPlayer()->create(['player_id' => $user->id]);
+    $this->actingAs($user);
+
+    $this->patch(route('admin.games.update', $game), [
+        'title' => $game->title,
+        'format' => '1v1',
+        'played_at' => '2026-10-14T00:00:00+10:00',
+    ])->assertSessionHasNoErrors();
+
+    expect($game->refresh()->played_at?->toDateTimeString())->toBe('2026-10-13 14:00:00');
+});
+
+test('played_at without a timezone offset is rejected', function (): void {
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
+    $game = Game::factory()->scheduled()->againstPlayer()->create(['player_id' => $user->id]);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Ambiguous',
+        'participant' => 'player',
+        'format' => '1v1',
+        'opponent_player_id' => User::factory()->create()->id,
+        'played_at' => '2026-02-01',
+    ])->assertSessionHasErrors(['played_at' => 'The played date must include a timezone offset.']);
+
+    $this->patch(route('admin.games.update', $game), [
+        'title' => $game->title,
+        'format' => '1v1',
+        'played_at' => '2026-02-01',
+    ])->assertSessionHasErrors(['played_at' => 'The played date must include a timezone offset.']);
+});
+
 test('a player game cannot be updated to play against its creator', function (): void {
     $user = User::factory()->create()->givePermissionTo('view-games');
     $game = Game::factory()->scheduled()->againstPlayer()->create(['player_id' => $user->id]);
@@ -141,7 +194,7 @@ test('a player game cannot be updated to play against its creator', function ():
     $this->patch(route('admin.games.update', $game), [
         'title' => 'Mirror',
         'format' => '1v1',
-        'played_at' => '2026-02-01 14:00:00',
+        'played_at' => '2026-02-01T14:00:00+00:00',
         'opponent_player_id' => $user->id,
     ])->assertSessionHasErrors('opponent_player_id');
 });
@@ -153,7 +206,7 @@ test('team game opponents are validated on update', function (): void {
     $newOpponent = Team::factory()->create();
     $this->actingAs($user);
 
-    $payload = ['title' => 'Team Game', 'format' => '5v5', 'played_at' => '2026-02-01 14:00:00'];
+    $payload = ['title' => 'Team Game', 'format' => '5v5', 'played_at' => '2026-02-01T14:00:00+00:00'];
 
     $this->patch(route('admin.games.update', $game), [...$payload, 'opponent_team_id' => $team->id])
         ->assertSessionHasErrors('opponent_team_id');
@@ -173,7 +226,7 @@ test('client supplied result is ignored when updating a game', function (): void
     $this->patch(route('admin.games.update', $game), [
         'title' => 'Updated Game',
         'format' => '1v1',
-        'played_at' => '2026-02-01 14:00:00',
+        'played_at' => '2026-02-01T14:00:00+00:00',
         'result' => 'win',
     ]);
 
@@ -188,7 +241,7 @@ test('users cannot update another player game', function (): void {
     $this->patch(route('admin.games.update', $game), [
         'title' => 'Hijacked',
         'format' => '1v1',
-        'played_at' => '2026-02-01 14:00:00',
+        'played_at' => '2026-02-01T14:00:00+00:00',
     ])->assertForbidden();
 });
 
@@ -200,7 +253,7 @@ test('users with edit-games permission can update any scheduled game', function 
     $this->patch(route('admin.games.update', $game), [
         'title' => 'Admin Edit',
         'format' => '1v1',
-        'played_at' => '2026-02-01 14:00:00',
+        'played_at' => '2026-02-01T14:00:00+00:00',
     ])->assertRedirect(route('admin.games.index'));
 
     expect($game->refresh()->title)->toBe('Admin Edit');
@@ -215,7 +268,7 @@ test('a game cannot be edited once its result has been submitted', function (Gam
     $this->patch(route('admin.games.update', $game), [
         'title' => 'Rewritten History',
         'format' => '1v1',
-        'played_at' => '2026-02-01 14:00:00',
+        'played_at' => '2026-02-01T14:00:00+00:00',
     ])->assertSessionHasErrors('game');
 
     expect($game->refresh()->title)->not->toBe('Rewritten History');

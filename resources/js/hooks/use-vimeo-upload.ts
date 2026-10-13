@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as tus from 'tus-js-client';
 import GameController from '@/actions/App/Http/Controllers/Admin/GameController';
-
-export type VideoStatus = 'uploading' | 'processing' | 'ready' | 'failed';
+import type { VideoStatus } from '@/lib/game';
 
 export type UploadState =
     'idle' | 'uploading' | 'paused' | 'verifying' | 'done' | 'error';

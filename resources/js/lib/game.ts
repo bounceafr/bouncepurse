@@ -9,6 +9,9 @@ export type GameResult = {
     rejection_reason: string | null;
 };
 
+/** Lifecycle of a game's Vimeo video (App\Enums\VideoStatus). */
+export type VideoStatus = 'uploading' | 'processing' | 'ready' | 'failed';
+
 export type GameSide = {
     player: { id: number; name: string } | null;
     team: { id: number; name: string } | null;
