@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace App\Actions\Admin\Game;
 
 use App\Enums\VideoStatus;
+use App\Exceptions\VimeoUnreachableException;
 use App\Models\Game;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Vimeo\Laravel\Facades\Vimeo;
 
-final class CompleteUploadAction
+final readonly class CompleteUploadAction
 {
+    public function __construct(private FetchVimeoVideoStatusAction $fetchVimeoVideoStatus) {}
+
     /**
      * Mark an upload attempt finished, trusting Vimeo rather than the browser.
      *
@@ -48,29 +50,16 @@ final class CompleteUploadAction
 
     private function fetchStatus(string $vimeoUri): VideoStatus
     {
-        // @phpstan-ignore staticMethod.notFound
-        $response = Vimeo::request($vimeoUri, ['fields' => 'upload.status,transcode.status'], 'GET');
-
-        /** @var array{status: int, body: array{upload?: array{status?: string}, transcode?: array{status?: string}}} $response */
-        if ($response['status'] === 404) {
-            return VideoStatus::Failed;
-        }
-
-        if ($response['status'] !== 200) {
+        try {
+            $status = $this->fetchVimeoVideoStatus->handle($vimeoUri);
+        } catch (VimeoUnreachableException) {
             throw ValidationException::withMessages(['vimeo_uri' => 'We could not reach Vimeo to verify the upload. Please try again.']);
         }
 
-        $upload = $response['body']['upload']['status'] ?? null;
-        $transcode = $response['body']['transcode']['status'] ?? null;
-
-        if ($upload === 'error' || $transcode === 'error') {
-            return VideoStatus::Failed;
-        }
-
-        if ($upload !== 'complete') {
+        if ($status === VideoStatus::Uploading) {
             throw ValidationException::withMessages(['vimeo_uri' => 'Vimeo has not received the whole video yet.']);
         }
 
-        return $transcode === 'complete' ? VideoStatus::Ready : VideoStatus::Processing;
+        return $status;
     }
 }
