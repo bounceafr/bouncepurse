@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Actions\Ranking\CalculateRankingsAction;
 use App\Models\Game;
+use App\Models\GameResult;
 use App\Models\PlayerRanking;
 use App\Models\RankingConfiguration;
 use App\Models\User;
@@ -154,4 +155,39 @@ test('rankings are split by format', function (): void {
 
     expect(PlayerRanking::query()->where('player_id', $player->id)->where('format', '1v1')->exists())->toBeTrue()
         ->and(PlayerRanking::query()->where('player_id', $player->id)->where('format', '3v3')->exists())->toBeTrue();
+});
+
+test('submitted scores take precedence over a stored result', function (): void {
+    $player = User::factory()->create();
+
+    $game = Game::factory()->create(['player_id' => $player->id, 'status' => 'approved', 'result' => 'win', 'format' => '1v1']);
+    GameResult::factory()->create(['game_id' => $game->id, 'your_score' => 12, 'opponent_score' => 21]);
+
+    new CalculateRankingsAction()->handle($this->config);
+
+    $ranking = PlayerRanking::query()
+        ->where('player_id', $player->id)
+        ->where('format', '1v1')
+        ->firstOrFail();
+
+    expect($ranking->wins)->toBe(0)
+        ->and($ranking->losses)->toBe(1);
+});
+
+test('tied scores count as neither a win nor a loss', function (): void {
+    $player = User::factory()->create();
+
+    $game = Game::factory()->create(['player_id' => $player->id, 'status' => 'approved', 'result' => null, 'format' => '1v1']);
+    GameResult::factory()->create(['game_id' => $game->id, 'your_score' => 20, 'opponent_score' => 20]);
+
+    new CalculateRankingsAction()->handle($this->config);
+
+    $ranking = PlayerRanking::query()
+        ->where('player_id', $player->id)
+        ->where('format', '1v1')
+        ->firstOrFail();
+
+    expect($ranking->wins)->toBe(0)
+        ->and($ranking->losses)->toBe(0)
+        ->and($ranking->total_games)->toBe(1);
 });

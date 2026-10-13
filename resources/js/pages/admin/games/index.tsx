@@ -53,6 +53,7 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
+import { gameStatusColors, gameStatusLabel } from '@/lib/game';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
@@ -73,14 +74,22 @@ type Game = {
     participant: string;
     court_id: number;
     player_id: number;
+    opponent_player_id: number | null;
+    opponent_team_id: number | null;
     scheduled_at: string | null;
     played_at: string | null;
     status: string;
     result: 'win' | 'lost' | null;
     court: Court;
     player: User | null;
+    team: Team | null;
+    opponent_player: User | null;
+    opponent_team: Team | null;
     game_result: GameResult | null;
+    can: { update: boolean; delete: boolean; upload_video: boolean };
 };
+
+type Opponents = { players: User[]; teams: Team[] };
 
 type PaginationLink = { url: string | null; label: string; active: boolean };
 
@@ -94,31 +103,79 @@ type PaginatedGames = {
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Games', href: index().url }];
 
-const statusColors: Record<string, string> = {
-    scheduled: 'bg-blue-500',
-    pending: 'bg-yellow-500',
-    approved: 'bg-green-500',
-    rejected: 'bg-red-500',
-    flagged: 'bg-orange-500',
-};
-
 function statusBadge(status: string) {
     return (
         <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white capitalize ${statusColors[status] ?? 'bg-gray-400'}`}
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white capitalize ${gameStatusColors[status] ?? 'bg-gray-400'}`}
         >
-            {status}
+            {gameStatusLabel(status)}
         </span>
+    );
+}
+
+function OpponentSelect({
+    participant,
+    opponents,
+    defaultValue,
+    errors,
+    idPrefix,
+}: {
+    participant: string;
+    opponents: Opponents;
+    defaultValue?: number | null;
+    errors: Record<string, string>;
+    idPrefix: string;
+}) {
+    const isTeam = participant === 'team';
+    const name = isTeam ? 'opponent_team_id' : 'opponent_player_id';
+    const options = isTeam ? opponents.teams : opponents.players;
+
+    return (
+        <div className="grid gap-2">
+            <Label htmlFor={`${idPrefix}-${name}`}>
+                {isTeam ? 'Opposing Team' : 'Opponent'}
+            </Label>
+            <Select
+                name={name}
+                defaultValue={defaultValue ? String(defaultValue) : undefined}
+                required
+            >
+                <SelectTrigger id={`${idPrefix}-${name}`}>
+                    <SelectValue
+                        placeholder={
+                            isTeam
+                                ? 'Select the team you played'
+                                : 'Select the player you played'
+                        }
+                    />
+                </SelectTrigger>
+                <SelectContent>
+                    {options.map((option) => (
+                        <SelectItem key={option.id} value={String(option.id)}>
+                            {option.name}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+                {isTeam
+                    ? "The opposing team's owner must confirm the result before it becomes final."
+                    : 'Your opponent must confirm the result before it becomes final.'}
+            </p>
+            <InputError message={errors[name]} />
+        </div>
     );
 }
 
 function EditGameFormFields({
     game,
     courts,
+    opponents,
     errors,
 }: {
     game: Game;
     courts: Court[];
+    opponents: Opponents;
     errors: Record<string, string>;
 }) {
     const [date, setDate] = useState<Date | undefined>(
@@ -223,19 +280,19 @@ function EditGameFormFields({
                 <InputError message={errors.played_at} />
             </div>
 
-            <div className="grid gap-2">
-                <Label htmlFor="edit-result">Result</Label>
-                <Select name="result" defaultValue={game.result ?? ''}>
-                    <SelectTrigger id="edit-result">
-                        <SelectValue placeholder="Select result (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="win">Win</SelectItem>
-                        <SelectItem value="lost">Lost</SelectItem>
-                    </SelectContent>
-                </Select>
-                <InputError message={errors.result} />
-            </div>
+            <OpponentSelect
+                participant={game.participant}
+                opponents={opponents}
+                defaultValue={
+                    game.participant === 'team'
+                        ? game.opponent_team_id
+                        : game.opponent_player_id
+                }
+                errors={errors}
+                idPrefix="edit"
+            />
+
+            <InputError message={errors.game} />
         </>
     );
 }
@@ -243,10 +300,12 @@ function EditGameFormFields({
 function CreateGameFormFields({
     courts,
     teams,
+    opponents,
     errors,
 }: {
     courts: Court[];
     teams: Team[];
+    opponents: Opponents;
     errors: Record<string, string>;
 }) {
     const [mode, setMode] = useState<'played' | 'scheduled'>('played');
@@ -321,9 +380,13 @@ function CreateGameFormFields({
 
             <div className="grid gap-2">
                 <Label htmlFor="create-participant">Participant Type</Label>
-                <Select name="participant" onValueChange={setParticipant}>
+                <Select
+                    name="participant"
+                    onValueChange={setParticipant}
+                    required
+                >
                     <SelectTrigger id="create-participant">
-                        <SelectValue placeholder="Select type (optional)" />
+                        <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="player">
@@ -355,6 +418,16 @@ function CreateGameFormFields({
                     </Select>
                     <InputError message={errors.team_id} />
                 </div>
+            )}
+
+            {participant && (
+                <OpponentSelect
+                    key={participant}
+                    participant={participant}
+                    opponents={opponents}
+                    errors={errors}
+                    idPrefix="create"
+                />
             )}
 
             <div className="grid gap-2">
@@ -441,20 +514,6 @@ function CreateGameFormFields({
                         />
                         <InputError message={errors.played_at} />
                     </div>
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="create-result">Result</Label>
-                        <Select name="result">
-                            <SelectTrigger id="create-result">
-                                <SelectValue placeholder="Select result (optional)" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="win">Win</SelectItem>
-                                <SelectItem value="lost">Lost</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <InputError message={errors.result} />
-                    </div>
                 </>
             ) : (
                 <div className="grid gap-2">
@@ -526,12 +585,20 @@ export default function GamesIndex({
     filters,
     courts,
     teams,
+    opponentPlayers,
+    opponentTeams,
 }: {
     games: PaginatedGames;
     filters: { search: string | null; filter: string | null };
     courts: Court[];
     teams: Team[];
+    opponentPlayers: User[];
+    opponentTeams: Team[];
 }) {
+    const opponents: Opponents = {
+        players: opponentPlayers,
+        teams: opponentTeams,
+    };
     const [createOpen, setCreateOpen] = useState(false);
     const [editGame, setEditGame] = useState<Game | null>(null);
     const [deleteGame, setDeleteGame] = useState<Game | null>(null);
@@ -576,6 +643,12 @@ export default function GamesIndex({
             id: 'player',
             accessorFn: (row) => row.player?.name ?? '—',
             header: sortableHeader('Player'),
+        },
+        {
+            id: 'opponent',
+            accessorFn: (row) =>
+                row.opponent_team?.name ?? row.opponent_player?.name ?? '—',
+            header: sortableHeader('Opponent'),
         },
         {
             accessorKey: 'format',
@@ -659,28 +732,39 @@ export default function GamesIndex({
                                         View
                                     </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={() => setEditGame(game)}
-                                >
-                                    Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        href={
-                                            GameController.showUpload(game.uuid)
-                                                .url
-                                        }
-                                    >
-                                        Upload Video
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    variant="destructive"
-                                    onClick={() => setDeleteGame(game)}
-                                >
-                                    Delete
-                                </DropdownMenuItem>
+                                {game.can.update &&
+                                    game.status === 'scheduled' &&
+                                    !game.game_result && (
+                                        <DropdownMenuItem
+                                            onClick={() => setEditGame(game)}
+                                        >
+                                            Edit
+                                        </DropdownMenuItem>
+                                    )}
+                                {game.can.upload_video && (
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href={
+                                                GameController.showUpload(
+                                                    game.uuid,
+                                                ).url
+                                            }
+                                        >
+                                            Upload Video
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
+                                {game.can.delete && !game.game_result && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            variant="destructive"
+                                            onClick={() => setDeleteGame(game)}
+                                        >
+                                            Delete
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -784,6 +868,7 @@ export default function GamesIndex({
                                 <CreateGameFormFields
                                     courts={courts}
                                     teams={teams}
+                                    opponents={opponents}
                                     errors={errors}
                                 />
 
@@ -834,6 +919,7 @@ export default function GamesIndex({
                                     <EditGameFormFields
                                         game={editGame}
                                         courts={courts}
+                                        opponents={opponents}
                                         errors={errors}
                                     />
 

@@ -12,6 +12,7 @@ use Spatie\Permission\Models\Permission;
 
 beforeEach(function (): void {
     Permission::query()->firstOrCreate(['name' => 'view-games']);
+    Permission::query()->firstOrCreate(['name' => 'create-games']);
 });
 
 test('guests are redirected from games routes', function (): void {
@@ -20,7 +21,7 @@ test('guests are redirected from games routes', function (): void {
 });
 
 test('player can view games index', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $this->actingAs($user);
 
     $response = $this->get(route('admin.games.index'));
@@ -34,7 +35,7 @@ test('player can view games index', function (): void {
 });
 
 test('games index includes teams data', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $this->actingAs($user);
 
     $response = $this->get(route('admin.games.index'));
@@ -48,13 +49,15 @@ test('games index includes teams data', function (): void {
 });
 
 test('player can schedule a game with valid data', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $court = Court::factory()->create();
+    $opponent = User::factory()->create();
     $this->actingAs($user);
 
     $response = $this->post(route('admin.games.store'), [
         'title' => 'Pickup Game',
         'participant' => 'player',
+        'opponent_player_id' => $opponent->id,
         'format' => '1v1',
         'court_id' => $court->id,
         'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
@@ -64,6 +67,7 @@ test('player can schedule a game with valid data', function (): void {
     $this->assertDatabaseHas('games', [
         'title' => 'Pickup Game',
         'participant' => 'player',
+        'opponent_player_id' => $opponent->id,
         'format' => '1v1',
         'court_id' => $court->id,
         'player_id' => $user->id,
@@ -72,7 +76,7 @@ test('player can schedule a game with valid data', function (): void {
 });
 
 test('cannot schedule a game in the past', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $court = Court::factory()->create();
     $this->actingAs($user);
 
@@ -88,7 +92,7 @@ test('cannot schedule a game in the past', function (): void {
 });
 
 test('must provide team_id when participant is team', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $court = Court::factory()->create();
     $this->actingAs($user);
 
@@ -104,7 +108,7 @@ test('must provide team_id when participant is team', function (): void {
 });
 
 test('player participant can only play 1v1 format', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $court = Court::factory()->create();
     $this->actingAs($user);
 
@@ -120,7 +124,7 @@ test('player participant can only play 1v1 format', function (): void {
 });
 
 test('team participant must use 3v3 or 5v5 format', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $court = Court::factory()->create();
     $team = Team::factory()->create(['user_id' => $user->id]);
     $this->actingAs($user);
@@ -138,7 +142,7 @@ test('team participant must use 3v3 or 5v5 format', function (): void {
 });
 
 test('player can view a game show page', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $game = Game::factory()->create(['player_id' => $user->id]);
     $this->actingAs($user);
 
@@ -152,7 +156,7 @@ test('player can view a game show page', function (): void {
 });
 
 test('cannot create game with future played_at', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $court = Court::factory()->create();
     $this->actingAs($user);
 
@@ -168,13 +172,14 @@ test('cannot create game with future played_at', function (): void {
 });
 
 test('scheduled game has status scheduled and null played_at', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $court = Court::factory()->create();
     $this->actingAs($user);
 
     $this->post(route('admin.games.store'), [
         'title' => 'Future Game',
         'participant' => 'player',
+        'opponent_player_id' => User::factory()->create()->id,
         'format' => '1v1',
         'court_id' => $court->id,
         'scheduled_at' => now()->addWeek()->format('Y-m-d H:i:s'),
@@ -188,13 +193,14 @@ test('scheduled game has status scheduled and null played_at', function (): void
 });
 
 test('played_at game has status scheduled awaiting result submission', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $court = Court::factory()->create();
     $this->actingAs($user);
 
     $this->post(route('admin.games.store'), [
         'title' => 'Already Played Game',
         'participant' => 'player',
+        'opponent_player_id' => User::factory()->create()->id,
         'format' => '1v1',
         'court_id' => $court->id,
         'played_at' => now()->subDay()->format('Y-m-d H:i:s'),
@@ -207,7 +213,7 @@ test('played_at game has status scheduled awaiting result submission', function 
 });
 
 test('cannot create game without scheduled_at or played_at', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
     $court = Court::factory()->create();
     $this->actingAs($user);
 
@@ -219,4 +225,115 @@ test('cannot create game without scheduled_at or played_at', function (): void {
     ]);
 
     $response->assertSessionHasErrors('scheduled_at');
+});
+
+test('cannot create a game without an opponent', function (): void {
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Solo Game',
+        'participant' => 'player',
+        'format' => '1v1',
+        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+    ])->assertSessionHasErrors('opponent_player_id');
+});
+
+test('cannot create a game against yourself', function (): void {
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Mirror Match',
+        'participant' => 'player',
+        'format' => '1v1',
+        'opponent_player_id' => $user->id,
+        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+    ])->assertSessionHasErrors('opponent_player_id');
+});
+
+test('cannot create a game for a team you do not belong to', function (): void {
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
+    $strangersTeam = Team::factory()->create();
+    $opponentTeam = Team::factory()->create();
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Borrowed Team',
+        'participant' => 'team',
+        'format' => '5v5',
+        'team_id' => $strangersTeam->id,
+        'opponent_team_id' => $opponentTeam->id,
+        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+    ])->assertSessionHasErrors('team_id');
+});
+
+test('team member can create a game against another team', function (): void {
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
+    $team = Team::factory()->create(['user_id' => $user->id]);
+    $team->members()->attach($user->id, ['joined_at' => now()]);
+    $opponentTeam = Team::factory()->create();
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Derby',
+        'participant' => 'team',
+        'format' => '5v5',
+        'team_id' => $team->id,
+        'opponent_team_id' => $opponentTeam->id,
+        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+    ])->assertRedirect(route('admin.games.index'));
+
+    $this->assertDatabaseHas('games', [
+        'title' => 'Derby',
+        'team_id' => $team->id,
+        'opponent_team_id' => $opponentTeam->id,
+    ]);
+});
+
+test('users without create-games permission cannot create games', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Sneaky Game',
+        'participant' => 'player',
+        'format' => '1v1',
+        'opponent_player_id' => User::factory()->create()->id,
+        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+    ])->assertForbidden();
+});
+
+test('client supplied result is ignored when creating a game', function (): void {
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Self Reported Win',
+        'participant' => 'player',
+        'format' => '1v1',
+        'opponent_player_id' => User::factory()->create()->id,
+        'played_at' => now()->subDay()->format('Y-m-d H:i:s'),
+        'result' => 'win',
+    ]);
+
+    $this->assertDatabaseHas('games', ['title' => 'Self Reported Win', 'result' => null]);
+});
+
+test('the opposing team cannot be one of your own teams', function (): void {
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
+    $team = Team::factory()->create(['user_id' => $user->id]);
+    $otherOwnTeam = Team::factory()->create(['user_id' => $user->id]);
+    $team->members()->attach($user->id, ['joined_at' => now()]);
+    $otherOwnTeam->members()->attach($user->id, ['joined_at' => now()]);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Scrimmage With Myself',
+        'participant' => 'team',
+        'format' => '5v5',
+        'team_id' => $team->id,
+        'opponent_team_id' => $otherOwnTeam->id,
+        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+    ])->assertSessionHasErrors('opponent_team_id');
 });

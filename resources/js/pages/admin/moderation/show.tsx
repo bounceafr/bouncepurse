@@ -19,12 +19,18 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
+import {
+    type GameResult,
+    type GameSide,
+    opponentSideName,
+    submittingSideName,
+} from '@/lib/game';
 import type { BreadcrumbItem } from '@/types';
 
 type User = { id: number; name: string };
 type Court = { id: number; name: string; category_label?: string | null };
 
-type Game = {
+type Game = GameSide & {
     id: number;
     uuid: string;
     title: string;
@@ -37,6 +43,9 @@ type Game = {
     status: string;
     court: Court | null;
     player: User | null;
+    game_result:
+        | (GameResult & { responder: { id: number; name: string } | null })
+        | null;
 };
 
 const statusOptions = [
@@ -161,6 +170,69 @@ export default function ModerationShow({ game }: { game: Game }) {
                                         ).toLocaleDateString()}
                                     </span>
                                 </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Submitted result */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Submitted Result</CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid gap-3 text-sm">
+                                {game.game_result ? (
+                                    <>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">
+                                                {submittingSideName(game)}
+                                            </span>
+                                            <span className="font-medium">
+                                                {game.game_result.your_score}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">
+                                                {opponentSideName(game)}
+                                            </span>
+                                            <span className="font-medium">
+                                                {
+                                                    game.game_result
+                                                        .opponent_score
+                                                }
+                                            </span>
+                                        </div>
+                                        {game.game_result.confirmed_at && (
+                                            <p className="text-green-600">
+                                                Confirmed by{' '}
+                                                {game.game_result.responder
+                                                    ?.name ??
+                                                    opponentSideName(game)}
+                                                .
+                                            </p>
+                                        )}
+                                        {game.game_result.rejected_at && (
+                                            <div className="space-y-1">
+                                                <p className="font-medium text-orange-600">
+                                                    Contested by{' '}
+                                                    {game.game_result.responder
+                                                        ?.name ??
+                                                        opponentSideName(game)}
+                                                </p>
+                                                <p className="text-muted-foreground">
+                                                    “
+                                                    {
+                                                        game.game_result
+                                                            .rejection_reason
+                                                    }
+                                                    ”
+                                                </p>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <p className="text-muted-foreground">
+                                        No result submitted.
+                                    </p>
+                                )}
                             </CardContent>
                         </Card>
 

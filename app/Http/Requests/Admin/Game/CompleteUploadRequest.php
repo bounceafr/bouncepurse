@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Game;
 
+use App\Models\Game;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -11,7 +12,10 @@ final class CompleteUploadRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        /** @var Game $game */
+        $game = $this->route('game');
+
+        return $this->user()?->can('uploadVideo', $game) === true;
     }
 
     /**

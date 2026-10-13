@@ -20,8 +20,9 @@ final class CalculateRankingsAction
 
         /** @var Collection<int, Game> $games */
         $games = Game::query()
+            ->with('gameResult:id,game_id,your_score,opponent_score')
             ->where('status', GameStatus::Approved)
-            ->select(['player_id', 'format', 'result', 'played_at'])
+            ->select(['id', 'player_id', 'format', 'result', 'played_at'])
             ->get();
 
         /** @var array<string, array<int, array{wins: int, losses: int, total: int, recent: int}>> $grouped */
@@ -40,9 +41,12 @@ final class CalculateRankingsAction
 
             $grouped[$format][$playerId]['total']++;
 
-            if ($game->result === ResultStatus::WIN) {
+            // Submitted scores are authoritative; the stored result only covers games recorded without them.
+            $outcome = $game->gameResult?->outcome() ?? $game->result;
+
+            if ($outcome === ResultStatus::WIN) {
                 $grouped[$format][$playerId]['wins']++;
-            } elseif ($game->result === ResultStatus::LOST) {
+            } elseif ($outcome === ResultStatus::LOST) {
                 $grouped[$format][$playerId]['losses']++;
             }
 

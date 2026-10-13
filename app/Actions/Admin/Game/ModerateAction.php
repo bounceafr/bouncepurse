@@ -9,18 +9,28 @@ use App\Jobs\CreateGameAllocationJob;
 use App\Jobs\RecalculateRankingsJob;
 use App\Models\Game;
 use App\Models\RankingConfiguration;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final class ModerateAction
 {
     public function handle(Game $game, GameStatus $status, string $reason, int $moderatorId): void
     {
-        $game->moderation()->create([
-            'moderator_id' => $moderatorId,
-            'status' => $status,
-            'reason' => $reason,
-        ]);
+        DB::transaction(function () use ($game, $status, $reason, $moderatorId): void {
+            $locked = Game::query()->withoutGlobalScopes()->lockForUpdate()->findOrFail($game->id);
 
-        $game->update(['status' => $status]);
+            if (! in_array($locked->status, [GameStatus::Pending, GameStatus::Contested], true)) {
+                throw ValidationException::withMessages(['status' => 'Only games awaiting moderation can be reviewed.']);
+            }
+
+            $locked->moderation()->create([
+                'moderator_id' => $moderatorId,
+                'status' => $status,
+                'reason' => $reason,
+            ]);
+
+            $locked->update(['status' => $status]);
+        });
 
         if ($status === GameStatus::Approved) {
             $config = RankingConfiguration::query()->latest()->firstOrFail();

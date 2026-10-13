@@ -8,6 +8,8 @@ test('game status label returns correct string for each case', function (GameSta
     expect($status->label())->toBe($expectedLabel);
 })->with([
     [GameStatus::Scheduled, 'Scheduled'],
+    [GameStatus::AwaitingConfirmation, 'Awaiting Confirmation'],
+    [GameStatus::Contested, 'Contested'],
     [GameStatus::Pending, 'Pending'],
     [GameStatus::Approved, 'Approved'],
     [GameStatus::Rejected, 'Rejected'],
@@ -18,6 +20,8 @@ test('game status color returns correct class for each case', function (GameStat
     expect($status->color())->toBe($expectedColor);
 })->with([
     [GameStatus::Scheduled, 'blue-500'],
+    [GameStatus::AwaitingConfirmation, 'purple-500'],
+    [GameStatus::Contested, 'orange-600'],
     [GameStatus::Pending, 'yellow-500'],
     [GameStatus::Approved, 'green-500'],
     [GameStatus::Rejected, 'red-500'],

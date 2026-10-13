@@ -8,6 +8,7 @@ use App\Enums\GameParticipant;
 use App\Enums\GameStatus;
 use App\Models\Court;
 use App\Models\Game;
+use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -36,6 +37,30 @@ final class GameFactory extends Factory
             'vimeo_status' => null,
             'result' => null,
         ];
+    }
+
+    public function againstPlayer(?User $opponent = null): static
+    {
+        return $this->state(fn (): array => [
+            'participant' => GameParticipant::PLAYER,
+            'format' => '1v1',
+            'opponent_player_id' => $opponent instanceof User ? $opponent->id : User::factory(),
+        ]);
+    }
+
+    public function betweenTeams(Team $team, Team $opponentTeam): static
+    {
+        return $this->state(fn (): array => [
+            'participant' => GameParticipant::TEAM,
+            'format' => '5v5',
+            'team_id' => $team->id,
+            'opponent_team_id' => $opponentTeam->id,
+        ]);
+    }
+
+    public function awaitingConfirmation(): static
+    {
+        return $this->state(fn (): array => ['status' => GameStatus::AwaitingConfirmation]);
     }
 
     public function scheduled(): static

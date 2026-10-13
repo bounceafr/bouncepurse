@@ -5,21 +5,16 @@ declare(strict_types=1);
 namespace App\Http\Requests\Admin\Game;
 
 use App\Models\Game;
-use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class SubmitResultRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        /** @var User $user */
-        $user = $this->user();
-
         /** @var Game $game */
         $game = $this->route('game');
 
-        return $game->player_id === $user->id
-            || ($game->team_id && $game->team?->hasMember($user));
+        return $this->user()?->can('submitResult', $game) === true;
     }
 
     /**
@@ -29,9 +24,19 @@ final class SubmitResultRequest extends FormRequest
     {
         return [
             'your_score' => ['required', 'integer', 'min:0'],
-            'opponent_score' => ['required', 'integer', 'min:0'],
+            'opponent_score' => ['required', 'integer', 'min:0', 'different:your_score'],
             'started_at' => ['required', 'date', 'before_or_equal:now'],
             'finished_at' => ['required', 'date', 'after:started_at', 'before_or_equal:now'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'opponent_score.different' => 'A game cannot end in a tie.',
         ];
     }
 }

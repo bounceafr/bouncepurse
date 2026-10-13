@@ -8,8 +8,11 @@ use App\Enums\GameStatus;
 use App\Models\Game;
 use App\Models\GameResult;
 use App\Models\User;
+use App\Notifications\GameResultAwaitingConfirmationNotification;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 final readonly class SubmitGameResultAction
 {
@@ -18,23 +21,42 @@ final readonly class SubmitGameResultAction
      */
     public function handle(Game $game, User $submitter, array $data): GameResult
     {
-        return DB::transaction(function () use ($game, $submitter, $data): GameResult {
-            $result = GameResult::query()->create([
-                'uuid' => Str::uuid(),
-                'game_id' => $game->id,
-                'submitter_id' => $submitter->id,
-                'started_at' => $data['started_at'],
-                'finished_at' => $data['finished_at'],
-                'your_score' => $data['your_score'],
-                'opponent_score' => $data['opponent_score'],
-            ]);
+        try {
+            $result = DB::transaction(function () use ($game, $submitter, $data): GameResult {
+                $locked = Game::query()->withoutGlobalScopes()->lockForUpdate()->findOrFail($game->id);
 
-            $game->update([
-                'played_at' => $data['finished_at'],
-                'status' => GameStatus::Pending,
-            ]);
+                $blocker = $locked->resultSubmissionBlocker();
 
-            return $result;
-        });
+                if ($blocker !== null) {
+                    throw ValidationException::withMessages(['result' => $blocker]);
+                }
+
+                $result = GameResult::query()->create([
+                    'uuid' => Str::uuid(),
+                    'game_id' => $locked->id,
+                    'submitter_id' => $submitter->id,
+                    'started_at' => $data['started_at'],
+                    'finished_at' => $data['finished_at'],
+                    'your_score' => $data['your_score'],
+                    'opponent_score' => $data['opponent_score'],
+                ]);
+
+                $locked->update([
+                    'played_at' => $data['finished_at'],
+                    'status' => GameStatus::AwaitingConfirmation,
+                    'result' => $result->outcome(),
+                ]);
+
+                return $result;
+            });
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages(['result' => 'A result has already been submitted for this game.']);
+        }
+
+        $game->refresh();
+        $confirmer = $game->opponentTeam !== null ? $game->opponentTeam->owner : $game->opponentPlayer;
+        $confirmer?->notify(new GameResultAwaitingConfirmationNotification($game, $result));
+
+        return $result;
     }
 }

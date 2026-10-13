@@ -15,7 +15,7 @@ final class ListModerationQueueAction
     {
         return Game::query()
             ->with(['court', 'player'])
-            ->where('status', GameStatus::Pending)
+            ->whereIn('status', [GameStatus::Pending, GameStatus::Contested])
             ->oldest()
             ->paginate(15)
             ->withQueryString();

@@ -29,6 +29,10 @@ Route::middleware(['auth', 'verified', 'permission:view-games'])->group(function
 
     Route::post('admin/games/{game}/result', [GameResultController::class, 'store'])
         ->name('admin.games.result.store');
+    Route::post('admin/games/{game}/result/confirm', [GameResultController::class, 'confirm'])
+        ->name('admin.games.result.confirm');
+    Route::post('admin/games/{game}/result/reject', [GameResultController::class, 'reject'])
+        ->name('admin.games.result.reject');
     Route::get('admin/games/{game}/upload', [GameController::class, 'showUpload'])
         ->name('admin.games.upload');
     Route::post('admin/games/{game}/upload-url', [GameController::class, 'initiateUpload'])
