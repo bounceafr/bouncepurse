@@ -32,6 +32,7 @@ final readonly class CompleteUploadAction
             $this->ensureCurrentAttempt($locked, $vimeoUri);
 
             $locked->update(['vimeo_status' => $status]);
+            $locked->releaseToModerationIfVideoReady();
         });
 
         if ($status === VideoStatus::Failed) {

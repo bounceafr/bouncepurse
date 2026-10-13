@@ -7,6 +7,7 @@ use App\Models\Game;
 use App\Models\GameResult;
 use App\Models\PlayerRanking;
 use App\Models\RankingConfiguration;
+use App\Models\Team;
 use App\Models\User;
 
 beforeEach(function (): void {
@@ -190,4 +191,57 @@ test('tied scores count as neither a win nor a loss', function (): void {
     expect($ranking->wins)->toBe(0)
         ->and($ranking->losses)->toBe(0)
         ->and($ranking->total_games)->toBe(1);
+});
+
+function rankingFor(User $player, string $format): PlayerRanking
+{
+    return PlayerRanking::query()->where('player_id', $player->id)->where('format', $format)->firstOrFail();
+}
+
+test('the 1v1 opponent is credited with the opposite outcome', function (): void {
+    $creator = User::factory()->create();
+    $opponent = User::factory()->create();
+
+    $game = Game::factory()->againstPlayer($opponent)->create(['player_id' => $creator->id, 'status' => 'approved']);
+    GameResult::factory()->create(['game_id' => $game->id, 'your_score' => 21, 'opponent_score' => 15]);
+
+    new CalculateRankingsAction()->handle($this->config);
+
+    expect(rankingFor($creator, '1v1')->wins)->toBe(1)
+        ->and(rankingFor($opponent, '1v1')->losses)->toBe(1)
+        ->and(rankingFor($opponent, '1v1')->total_games)->toBe(1);
+});
+
+test('every member of both teams is credited for a team game', function (): void {
+    [$creator, $teammate, $opponentOwner, $opponentMember] = User::factory()->count(4)->create()->all();
+    $team = Team::factory()->create(['user_id' => $creator->id]);
+    $team->members()->attach([$creator->id, $teammate->id], ['joined_at' => now()]);
+    $opponentTeam = Team::factory()->create(['user_id' => $opponentOwner->id]);
+    $opponentTeam->members()->attach([$opponentOwner->id, $opponentMember->id], ['joined_at' => now()]);
+
+    $game = Game::factory()->betweenTeams($team, $opponentTeam)->create(['player_id' => $creator->id, 'status' => 'approved']);
+    GameResult::factory()->create(['game_id' => $game->id, 'your_score' => 10, 'opponent_score' => 21]);
+
+    new CalculateRankingsAction()->handle($this->config);
+
+    expect(rankingFor($creator, '5v5')->losses)->toBe(1)
+        ->and(rankingFor($teammate, '5v5')->losses)->toBe(1)
+        ->and(rankingFor($opponentOwner, '5v5')->wins)->toBe(1)
+        ->and(rankingFor($opponentMember, '5v5')->wins)->toBe(1);
+});
+
+test('a player on both teams is only credited once, with the creator side', function (): void {
+    [$creator, $dualMember] = User::factory()->count(2)->create()->all();
+    $team = Team::factory()->create(['user_id' => $creator->id]);
+    $team->members()->attach([$creator->id, $dualMember->id], ['joined_at' => now()]);
+    $opponentTeam = Team::factory()->create();
+    $opponentTeam->members()->attach($dualMember->id, ['joined_at' => now()]);
+
+    $game = Game::factory()->betweenTeams($team, $opponentTeam)->create(['player_id' => $creator->id, 'status' => 'approved']);
+    GameResult::factory()->create(['game_id' => $game->id, 'your_score' => 21, 'opponent_score' => 10]);
+
+    new CalculateRankingsAction()->handle($this->config);
+
+    expect(rankingFor($dualMember, '5v5')->total_games)->toBe(1)
+        ->and(rankingFor($dualMember, '5v5')->wins)->toBe(1);
 });

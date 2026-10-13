@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Actions\Admin\Game;
 
-use App\Enums\GameStatus;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +23,7 @@ final readonly class RejectGameResultAction
                 'rejection_reason' => $reason,
             ]);
 
-            $locked->update(['status' => GameStatus::Contested]);
+            $locked->update(['status' => $locked->moderationEntryStatus()]);
         });
     }
 }

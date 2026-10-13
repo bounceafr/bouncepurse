@@ -42,7 +42,7 @@ test('games index can be filtered by search term', function (): void {
     $user = User::factory()->create()->givePermissionTo('view-games');
     $this->actingAs($user);
 
-    $matching = Game::factory()->create(['title' => 'Championship Finals', 'player_id' => $user->id]);
+    $matching = Game::factory()->scheduled()->create(['title' => 'Championship Finals', 'player_id' => $user->id]);
     Game::factory()->create(['title' => 'Friendly Match', 'player_id' => $user->id]);
 
     $response = $this->get(route('admin.games.index', ['search' => 'Championship']));
@@ -56,6 +56,20 @@ test('games index can be filtered by search term', function (): void {
             ->where('games.data.0.id', $matching->id)
             ->where('games.data.0.can.update', true)
     );
+});
+
+test('row actions reflect whether the game is still open', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $reviewed = Game::factory()->create(['player_id' => $user->id, 'status' => GameStatus::Approved]);
+    GameResult::factory()->create(['game_id' => $reviewed->id]);
+    $this->actingAs($user);
+
+    $this->get(route('admin.games.index'))
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->where('games.data.0.can.update', false)
+            ->where('games.data.0.can.delete', false)
+            ->where('games.data.0.can.upload_video', false)
+        );
 });
 
 test('players see games where they are the opponent', function (): void {
@@ -554,4 +568,72 @@ test('authenticated users can view the upload game page', function (): void {
         ->where('game.id', $game->id)
         ->has('canSubmitResult')
     );
+});
+
+test('completing an upload sends a game held for its video to moderation', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = gameUploadingVideo($user);
+    $game->update(['status' => GameStatus::AwaitingVideo]);
+    GameResult::factory()->create(['game_id' => $game->id, 'confirmed_at' => now()]);
+    $this->actingAs($user);
+
+    expectVimeoVideoLookup('/videos/123456789', [
+        'upload' => ['status' => 'complete'],
+        'transcode' => ['status' => 'complete'],
+    ]);
+
+    $this->patchJson(route('admin.games.complete-upload', $game), ['vimeo_uri' => '/videos/123456789'])->assertOk();
+
+    expect($game->refresh()->status)->toBe(GameStatus::Pending);
+});
+
+test('the video cannot be replaced after the game has been reviewed', function (GameStatus $status): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = Game::factory()->withReadyVideo()->create(['player_id' => $user->id, 'status' => $status]);
+    $this->actingAs($user);
+
+    Vimeo::shouldReceive('request')->never();
+
+    $this->postJson(route('admin.games.upload-url', $game), [
+        'file_size' => 1024000,
+        'file_name' => 'game-video.mp4',
+    ])->assertUnprocessable()->assertJsonValidationErrors('file_size');
+
+    expect($game->refresh()->vimeo_status)->toBe(VideoStatus::Ready);
+})->with([
+    'approved' => GameStatus::Approved,
+    'rejected' => GameStatus::Rejected,
+    'flagged' => GameStatus::Flagged,
+]);
+
+test('replacing the video of a game in moderation takes it out of the queue until the new video is ready', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = Game::factory()->withReadyVideo()->create(['player_id' => $user->id, 'status' => GameStatus::Pending, 'title' => 'My Game']);
+    $this->actingAs($user);
+
+    Vimeo::shouldReceive('request')->once()->andReturn([
+        'body' => ['uri' => '/videos/555', 'upload' => ['upload_link' => 'https://tus.vimeo.com/files/555']],
+    ]);
+
+    $this->postJson(route('admin.games.upload-url', $game), [
+        'file_size' => 1024000,
+        'file_name' => 'game-video.mp4',
+    ])->assertOk();
+
+    expect($game->refresh()->status)->toBe(GameStatus::AwaitingVideo)
+        ->and($game->vimeo_status)->toBe(VideoStatus::Uploading);
+});
+
+test('editing a scheduled game records it as played and awaiting its result', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = Game::factory()->scheduled()->againstPlayer()->create(['player_id' => $user->id]);
+    $this->actingAs($user);
+
+    $this->patch(route('admin.games.update', $game), [
+        'title' => 'Played Now',
+        'format' => '1v1',
+        'played_at' => '2026-02-01T14:00:00+00:00',
+    ])->assertRedirect(route('admin.games.index'));
+
+    expect($game->refresh()->status)->toBe(GameStatus::AwaitingResult);
 });

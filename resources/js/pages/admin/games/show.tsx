@@ -3,6 +3,7 @@ import { AlertCircle } from 'lucide-react';
 import GameController from '@/actions/App/Http/Controllers/Admin/GameController';
 import DisputeController from '@/actions/App/Http/Controllers/DisputeController';
 import { GameResultPanel } from '@/components/game-result';
+import { GameStatusBadge } from '@/components/game-status-badge';
 import InputError from '@/components/input-error';
 import { ListPageShell } from '@/components/list-page-shell';
 import { Badge } from '@/components/ui/badge';
@@ -15,34 +16,23 @@ import {
     type GameResult,
     type GameResultCapabilities,
     type GameSide,
-    gameStatusColors,
-    gameStatusLabel,
+    type GameSummary,
 } from '@/lib/game';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
+
+type Game = GameSummary &
+    GameSide & {
+        participant: string;
+        scheduled_at: string | null;
+        game_result: GameResult | null;
+    };
 
 type Dispute = {
     uuid: string;
     reason: string;
     status: string;
     created_at: string;
-};
-
-type Court = { id: number; name: string; category_label?: string | null };
-type Team = { id: number; name: string };
-
-type Game = GameSide & {
-    id: number;
-    uuid: string;
-    title: string;
-    format: string;
-    participant: string;
-    status: string;
-    scheduled_at: string | null;
-    played_at: string | null;
-    court: Court | null;
-    team: Team | null;
-    game_result: GameResult | null;
 };
 
 const disputeStatusColors: Record<string, string> = {
@@ -76,14 +66,7 @@ export default function GameShow({
             <ListPageShell>
                 <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-semibold">{game.title}</h1>
-                    <span
-                        className={cn(
-                            'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white capitalize',
-                            gameStatusColors[game.status] ?? 'bg-gray-400',
-                        )}
-                    >
-                        {gameStatusLabel(game.status)}
-                    </span>
+                    <GameStatusBadge status={game.status} />
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">

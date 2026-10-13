@@ -16,27 +16,18 @@ import {
     type GameResult,
     type GameResultCapabilities,
     type GameSide,
+    type GameSummary,
     type VideoStatus,
 } from '@/lib/game';
 import type { BreadcrumbItem } from '@/types';
 
-type Court = { id: number; name: string; category_label?: string | null };
-type Team = { id: number; name: string };
-
-type Game = GameSide & {
-    id: number;
-    uuid: string;
-    title: string;
-    format: string;
-    participant: string;
-    status: string;
-    scheduled_at: string | null;
-    played_at: string | null;
-    vimeo_status: VideoStatus | null;
-    court: Court | null;
-    team: Team | null;
-    game_result: GameResult | null;
-};
+type Game = GameSummary &
+    GameSide & {
+        participant: string;
+        scheduled_at: string | null;
+        vimeo_status: VideoStatus | null;
+        game_result: GameResult | null;
+    };
 
 export default function UploadGame({
     game,

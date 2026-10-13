@@ -24,4 +24,13 @@ enum ResultStatus: string
             self::LOST => 'red',
         };
     }
+
+    /** The same game's outcome from the other side. */
+    public function opposite(): self
+    {
+        return match ($this) {
+            self::WIN => self::LOST,
+            self::LOST => self::WIN,
+        };
+    }
 }

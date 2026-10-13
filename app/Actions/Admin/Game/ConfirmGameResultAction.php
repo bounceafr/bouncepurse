@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Actions\Admin\Game;
 
-use App\Enums\GameStatus;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +22,7 @@ final readonly class ConfirmGameResultAction
                 'confirmed_at' => now(),
             ]);
 
-            $locked->update(['status' => GameStatus::Pending]);
+            $locked->update(['status' => $locked->moderationEntryStatus()]);
         });
     }
 }

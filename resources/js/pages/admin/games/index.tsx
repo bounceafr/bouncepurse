@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import GameController, {
     index,
 } from '@/actions/App/Http/Controllers/Admin/GameController';
+import { GameStatusBadge } from '@/components/game-status-badge';
 import InputError from '@/components/input-error';
 import { ListPageShell } from '@/components/list-page-shell';
 import { Badge } from '@/components/ui/badge';
@@ -54,65 +55,33 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
 import { combineLocalDateAndTime } from '@/lib/datetime';
-import { gameStatusColors, gameStatusLabel } from '@/lib/game';
+import {
+    type GameCourt,
+    type GameResult,
+    type GameSummary,
+    type NamedRef,
+} from '@/lib/game';
 import { cn } from '@/lib/utils';
-import type { BreadcrumbItem } from '@/types';
+import type { BreadcrumbItem, Paginated } from '@/types';
 
-type User = { id: number; name: string };
-type Court = { id: number; name: string; category_label?: string | null };
-type Team = { id: number; name: string };
-
-type GameResult = {
-    your_score: number;
-    opponent_score: number;
-};
-
-type Game = {
-    id: number;
-    uuid: string;
-    title: string;
-    format: string;
+type Game = GameSummary & {
     participant: string;
     court_id: number;
     player_id: number;
     opponent_player_id: number | null;
     opponent_team_id: number | null;
     scheduled_at: string | null;
-    played_at: string | null;
-    status: string;
     result: 'win' | 'lost' | null;
-    court: Court;
-    player: User | null;
-    team: Team | null;
-    opponent_player: User | null;
-    opponent_team: Team | null;
-    game_result: GameResult | null;
+    team: NamedRef | null;
+    opponent_player: NamedRef | null;
+    opponent_team: NamedRef | null;
+    game_result: Pick<GameResult, 'your_score' | 'opponent_score'> | null;
     can: { update: boolean; delete: boolean; upload_video: boolean };
 };
 
-type Opponents = { players: User[]; teams: Team[] };
-
-type PaginationLink = { url: string | null; label: string; active: boolean };
-
-type PaginatedGames = {
-    data: Game[];
-    links: PaginationLink[];
-    current_page: number;
-    last_page: number;
-    total: number;
-};
+type Opponents = { players: NamedRef[]; teams: NamedRef[] };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Games', href: index().url }];
-
-function statusBadge(status: string) {
-    return (
-        <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white capitalize ${gameStatusColors[status] ?? 'bg-gray-400'}`}
-        >
-            {gameStatusLabel(status)}
-        </span>
-    );
-}
 
 function OpponentSelect({
     participant,
@@ -175,7 +144,7 @@ function EditGameFormFields({
     errors,
 }: {
     game: Game;
-    courts: Court[];
+    courts: GameCourt[];
     opponents: Opponents;
     errors: Record<string, string>;
 }) {
@@ -303,8 +272,8 @@ function CreateGameFormFields({
     opponents,
     errors,
 }: {
-    courts: Court[];
-    teams: Team[];
+    courts: GameCourt[];
+    teams: NamedRef[];
     opponents: Opponents;
     errors: Record<string, string>;
 }) {
@@ -586,12 +555,12 @@ export default function GamesIndex({
     opponentPlayers,
     opponentTeams,
 }: {
-    games: PaginatedGames;
+    games: Paginated<Game>;
     filters: { search: string | null; filter: string | null };
-    courts: Court[];
-    teams: Team[];
-    opponentPlayers: User[];
-    opponentTeams: Team[];
+    courts: GameCourt[];
+    teams: NamedRef[];
+    opponentPlayers: NamedRef[];
+    opponentTeams: NamedRef[];
 }) {
     const opponents: Opponents = {
         players: opponentPlayers,
@@ -676,7 +645,7 @@ export default function GamesIndex({
         {
             accessorKey: 'status',
             header: sortableHeader('Status'),
-            cell: ({ row }) => statusBadge(row.getValue('status')),
+            cell: ({ row }) => <GameStatusBadge status={row.original.status} />,
         },
         {
             id: 'result',
@@ -730,15 +699,13 @@ export default function GamesIndex({
                                         View
                                     </Link>
                                 </DropdownMenuItem>
-                                {game.can.update &&
-                                    game.status === 'scheduled' &&
-                                    !game.game_result && (
-                                        <DropdownMenuItem
-                                            onClick={() => setEditGame(game)}
-                                        >
-                                            Edit
-                                        </DropdownMenuItem>
-                                    )}
+                                {game.can.update && (
+                                    <DropdownMenuItem
+                                        onClick={() => setEditGame(game)}
+                                    >
+                                        Edit
+                                    </DropdownMenuItem>
+                                )}
                                 {game.can.upload_video && (
                                     <DropdownMenuItem asChild>
                                         <Link
@@ -752,7 +719,7 @@ export default function GamesIndex({
                                         </Link>
                                     </DropdownMenuItem>
                                 )}
-                                {game.can.delete && !game.game_result && (
+                                {game.can.delete && (
                                     <>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem
