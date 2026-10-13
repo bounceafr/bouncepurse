@@ -1,7 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { Upload, X } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
-import * as tus from 'tus-js-client';
 import GameController, {
     index,
 } from '@/actions/App/Http/Controllers/Admin/GameController';
@@ -10,6 +9,7 @@ import { ListPageShell } from '@/components/list-page-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useVimeoUpload, type VideoStatus } from '@/hooks/use-vimeo-upload';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
 import {
@@ -31,7 +31,7 @@ type Game = GameSide & {
     status: string;
     scheduled_at: string | null;
     played_at: string | null;
-    vimeo_status: string | null;
+    vimeo_status: VideoStatus | null;
     court: Court | null;
     team: Team | null;
     game_result: GameResult | null;
@@ -52,20 +52,13 @@ export default function UploadGame({
 
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [progress, setProgress] = useState(0);
-    const [status, setStatus] = useState<
-        'idle' | 'uploading' | 'paused' | 'done' | 'error'
-    >('idle');
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const uploadRef = useRef<tus.Upload | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
+    const upload = useVimeoUpload(game.uuid, () => router.visit(index().url));
+    const { state: status, progress, error } = upload;
 
     function selectFile(selected: File | null) {
         setFile(selected);
-        setProgress(0);
-        setStatus('idle');
-        setErrorMessage(null);
-        uploadRef.current = null;
+        upload.reset();
     }
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -78,92 +71,17 @@ export default function UploadGame({
         setIsDragging(false);
     }, []);
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
+    const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
         const dropped = e.dataTransfer.files[0];
+
         if (dropped?.type.startsWith('video/')) {
             selectFile(dropped);
         }
-    }, []);
+    };
 
-    async function startUpload() {
-        if (!file) return;
-
-        setStatus('uploading');
-        setErrorMessage(null);
-
-        const xsrfToken = decodeURIComponent(
-            document.cookie
-                .split('; ')
-                .find((c) => c.startsWith('XSRF-TOKEN='))
-                ?.split('=')[1] ?? '',
-        );
-
-        let uploadLink: string;
-        try {
-            const response = await fetch(
-                GameController.initiateUpload(game.uuid).url,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-XSRF-TOKEN': xsrfToken,
-                        Accept: 'application/json',
-                    },
-                    body: JSON.stringify({
-                        file_size: file.size,
-                        file_name: file.name,
-                    }),
-                },
-            );
-
-            if (!response.ok)
-                throw new Error('Failed to create upload session.');
-
-            const data = await response.json();
-            uploadLink = data.upload_link;
-        } catch (err) {
-            setStatus('error');
-            setErrorMessage(
-                err instanceof Error ? err.message : 'Unknown error occurred.',
-            );
-            return;
-        }
-
-        const upload = new tus.Upload(file, {
-            uploadUrl: uploadLink,
-            chunkSize: 5 * 1024 * 1024,
-            retryDelays: [0, 3000, 5000, 10000, 20000],
-            onProgress(bytesUploaded, bytesTotal) {
-                setProgress(Math.round((bytesUploaded / bytesTotal) * 100));
-            },
-            onSuccess() {
-                setProgress(100);
-                setStatus('done');
-                router.patch(GameController.completeUpload(game.uuid).url);
-            },
-            onError(error) {
-                setStatus('error');
-                setErrorMessage(error.message ?? 'Upload failed.');
-            },
-        });
-
-        uploadRef.current = upload;
-        upload.start();
-    }
-
-    function pauseUpload() {
-        uploadRef.current?.abort();
-        setStatus('paused');
-    }
-
-    function resumeUpload() {
-        setStatus('uploading');
-        uploadRef.current?.start();
-    }
-
-    const isUploading = status === 'uploading';
+    const isUploading = status === 'uploading' || status === 'verifying';
     const isPaused = status === 'paused';
     const isActive = isUploading || isPaused || status === 'done';
 
@@ -177,9 +95,21 @@ export default function UploadGame({
                     <p className="text-sm text-muted-foreground">
                         Upload a video for{' '}
                         <span className="font-medium">{game.title}</span>.
-                        {game.vimeo_status === 'complete' && (
+                        {game.vimeo_status === 'ready' && (
                             <span className="ml-2 font-medium text-green-600">
                                 A video has already been uploaded.
+                            </span>
+                        )}
+                        {game.vimeo_status === 'processing' && (
+                            <span className="ml-2 font-medium text-muted-foreground">
+                                A video has been uploaded and is still
+                                processing on Vimeo.
+                            </span>
+                        )}
+                        {game.vimeo_status === 'failed' && (
+                            <span className="ml-2 font-medium text-red-600">
+                                The last upload failed. Please upload the video
+                                again.
                             </span>
                         )}
                     </p>
@@ -258,9 +188,11 @@ export default function UploadGame({
                                     <span className="text-muted-foreground">
                                         {status === 'done'
                                             ? 'Complete'
-                                            : isPaused
-                                              ? 'Paused'
-                                              : 'Uploading...'}
+                                            : status === 'verifying'
+                                              ? 'Verifying with Vimeo...'
+                                              : isPaused
+                                                ? 'Paused'
+                                                : 'Uploading...'}
                                     </span>
                                     <span className="font-medium">
                                         {progress}%
@@ -275,32 +207,49 @@ export default function UploadGame({
                             </div>
                         )}
 
-                        {errorMessage && (
-                            <p className="text-sm text-red-600">
-                                {errorMessage}
+                        {error && (
+                            <p role="alert" className="text-sm text-red-600">
+                                {error.message}
                             </p>
                         )}
 
                         {status === 'done' && (
                             <p className="text-sm font-medium text-green-600">
-                                Upload complete! Redirecting...
+                                {upload.videoStatus === 'processing'
+                                    ? 'Upload received! Vimeo is still processing the video. Redirecting...'
+                                    : 'Upload complete! Redirecting...'}
                             </p>
                         )}
 
                         {/* Actions */}
                         <div className="flex gap-2">
-                            {!isUploading && !isPaused && status !== 'done' && (
+                            {error?.retryVerification ? (
                                 <Button
-                                    onClick={startUpload}
-                                    disabled={!file}
+                                    onClick={() =>
+                                        void upload.retryVerification()
+                                    }
                                     variant="default"
                                 >
-                                    Start Upload
+                                    Retry Verification
                                 </Button>
+                            ) : (
+                                !isUploading &&
+                                !isPaused &&
+                                status !== 'done' && (
+                                    <Button
+                                        onClick={() =>
+                                            file && void upload.start(file)
+                                        }
+                                        disabled={!file}
+                                        variant="default"
+                                    >
+                                        Start Upload
+                                    </Button>
+                                )
                             )}
-                            {isUploading && (
+                            {status === 'uploading' && (
                                 <Button
-                                    onClick={pauseUpload}
+                                    onClick={upload.pause}
                                     variant="secondary"
                                 >
                                     Pause
@@ -308,7 +257,7 @@ export default function UploadGame({
                             )}
                             {isPaused && (
                                 <Button
-                                    onClick={resumeUpload}
+                                    onClick={upload.resume}
                                     variant="default"
                                 >
                                     Resume

@@ -9,6 +9,7 @@ use App\Enums\GameParticipant;
 use App\Enums\GameStatus;
 use App\Enums\ResultStatus;
 use App\Enums\Role;
+use App\Enums\VideoStatus;
 use Carbon\CarbonInterface;
 use Database\Factories\GameFactory;
 use Illuminate\Database\Eloquent\Attributes\RouteKey;
@@ -32,7 +33,7 @@ use Illuminate\Support\Facades\DB;
  * @property-read ?int $opponent_team_id
  * @property-read string $title
  * @property-read ?string $vimeo_uri
- * @property-read ?string $vimeo_status
+ * @property-read ?VideoStatus $vimeo_status
  * @property-read ?CarbonInterface $scheduled_at
  * @property-read ?CarbonInterface $played_at
  * @property-read GameStatus $status
@@ -181,6 +182,7 @@ final class Game extends Model
             'format' => GameFormat::class,
             'status' => GameStatus::class,
             'result' => ResultStatus::class,
+            'vimeo_status' => VideoStatus::class,
             'scheduled_at' => 'datetime',
             'played_at' => 'datetime',
             'created_at' => 'datetime',

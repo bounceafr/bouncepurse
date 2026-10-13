@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\GameStatus;
 use App\Enums\Role;
+use App\Enums\VideoStatus;
 use App\Models\Game;
 use App\Models\GameResult;
 use App\Models\Team;
@@ -284,12 +285,15 @@ test('initiate upload returns json with upload link', function (): void {
     ]);
 
     $response->assertOk();
-    $response->assertJson(['upload_link' => 'https://asia-files.tus.vimeo.com/files/123456789']);
+    $response->assertJson([
+        'upload_link' => 'https://asia-files.tus.vimeo.com/files/123456789',
+        'vimeo_uri' => '/videos/123456789',
+    ]);
 
     $this->assertDatabaseHas('games', [
         'id' => $game->id,
         'vimeo_uri' => '/videos/123456789',
-        'vimeo_status' => 'pending',
+        'vimeo_status' => VideoStatus::Uploading->value,
     ]);
 });
 
@@ -306,33 +310,182 @@ test('users cannot start an upload for another player game', function (): void {
     ])->assertForbidden();
 });
 
-test('complete upload sets vimeo status to complete', function (): void {
-    $user = User::factory()->create()->givePermissionTo('view-games');
-    $game = Game::factory()->create([
+/**
+ * @param  array<mixed>  $body
+ */
+function expectVimeoVideoLookup(string $uri, array $body, int $status = 200): void
+{
+    Vimeo::shouldReceive('request')
+        ->once()
+        ->with($uri, ['fields' => 'upload.status,transcode.status'], 'GET')
+        ->andReturn(['status' => $status, 'body' => $body]);
+}
+
+function gameUploadingVideo(User $user, string $uri = '/videos/123456789'): Game
+{
+    return Game::factory()->create([
         'player_id' => $user->id,
-        'vimeo_uri' => '/videos/123456789',
-        'vimeo_status' => 'pending',
+        'vimeo_uri' => $uri,
+        'vimeo_status' => VideoStatus::Uploading,
     ]);
+}
+
+test('complete upload marks the video ready once Vimeo has transcoded it', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = gameUploadingVideo($user);
     $this->actingAs($user);
 
-    $response = $this->patch(route('admin.games.complete-upload', $game));
-
-    $response->assertRedirect(route('admin.games.index'));
-
-    $this->assertDatabaseHas('games', [
-        'id' => $game->id,
-        'vimeo_status' => 'complete',
+    expectVimeoVideoLookup('/videos/123456789', [
+        'upload' => ['status' => 'complete'],
+        'transcode' => ['status' => 'complete'],
     ]);
+
+    $this->patchJson(route('admin.games.complete-upload', $game), ['vimeo_uri' => '/videos/123456789'])
+        ->assertOk()
+        ->assertJson(['vimeo_status' => 'ready']);
+
+    expect($game->refresh()->vimeo_status)->toBe(VideoStatus::Ready);
+});
+
+test('complete upload marks the video processing while Vimeo is still transcoding', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = gameUploadingVideo($user);
+    $this->actingAs($user);
+
+    expectVimeoVideoLookup('/videos/123456789', [
+        'upload' => ['status' => 'complete'],
+        'transcode' => ['status' => 'in_progress'],
+    ]);
+
+    $this->patchJson(route('admin.games.complete-upload', $game), ['vimeo_uri' => '/videos/123456789'])
+        ->assertOk()
+        ->assertJson(['vimeo_status' => 'processing']);
+
+    expect($game->refresh()->vimeo_status)->toBe(VideoStatus::Processing);
+});
+
+test('complete upload is rejected while Vimeo has not received the whole file', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = gameUploadingVideo($user);
+    $this->actingAs($user);
+
+    expectVimeoVideoLookup('/videos/123456789', [
+        'upload' => ['status' => 'in_progress'],
+        'transcode' => ['status' => 'in_progress'],
+    ]);
+
+    $this->patchJson(route('admin.games.complete-upload', $game), ['vimeo_uri' => '/videos/123456789'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['vimeo_uri' => 'Vimeo has not received the whole video yet.']);
+
+    expect($game->refresh()->vimeo_status)->toBe(VideoStatus::Uploading);
+});
+
+test('complete upload records a failure reported by Vimeo', function (array $body, int $status): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = gameUploadingVideo($user);
+    $this->actingAs($user);
+
+    expectVimeoVideoLookup('/videos/123456789', $body, $status);
+
+    $this->patchJson(route('admin.games.complete-upload', $game), ['vimeo_uri' => '/videos/123456789'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['vimeo_uri' => 'Vimeo could not process this video. Please upload it again.']);
+
+    expect($game->refresh()->vimeo_status)->toBe(VideoStatus::Failed);
+})->with([
+    'upload error' => [['upload' => ['status' => 'error'], 'transcode' => ['status' => 'in_progress']], 200],
+    'transcode error' => [['upload' => ['status' => 'complete'], 'transcode' => ['status' => 'error']], 200],
+    'video deleted' => [['error' => "The requested video couldn't be found."], 404],
+]);
+
+test('complete upload leaves the status alone when Vimeo cannot be reached', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = gameUploadingVideo($user);
+    $this->actingAs($user);
+
+    expectVimeoVideoLookup('/videos/123456789', [], 503);
+
+    $this->patchJson(route('admin.games.complete-upload', $game), ['vimeo_uri' => '/videos/123456789'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['vimeo_uri' => 'We could not reach Vimeo to verify the upload. Please try again.']);
+
+    expect($game->refresh()->vimeo_status)->toBe(VideoStatus::Uploading);
+});
+
+test('a stale completion request cannot mark a newer upload complete', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = gameUploadingVideo($user, '/videos/222');
+    $this->actingAs($user);
+
+    Vimeo::shouldReceive('request')->never();
+
+    $this->patchJson(route('admin.games.complete-upload', $game), ['vimeo_uri' => '/videos/111'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['vimeo_uri' => 'This upload has been replaced by a newer one.']);
+
+    expect($game->refresh())
+        ->vimeo_uri->toBe('/videos/222')
+        ->vimeo_status->toBe(VideoStatus::Uploading);
+});
+
+test('a completion is discarded when a newer upload starts while Vimeo is being checked', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = gameUploadingVideo($user, '/videos/111');
+    $this->actingAs($user);
+
+    Vimeo::shouldReceive('request')
+        ->once()
+        ->with('/videos/111', ['fields' => 'upload.status,transcode.status'], 'GET')
+        ->andReturnUsing(function () use ($game): array {
+            Game::query()->withoutGlobalScopes()->whereKey($game->id)->update([
+                'vimeo_uri' => '/videos/222',
+                'vimeo_status' => VideoStatus::Uploading->value,
+            ]);
+
+            return ['status' => 200, 'body' => ['upload' => ['status' => 'complete'], 'transcode' => ['status' => 'complete']]];
+        });
+
+    $this->patchJson(route('admin.games.complete-upload', $game), ['vimeo_uri' => '/videos/111'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['vimeo_uri' => 'This upload has been replaced by a newer one.']);
+
+    expect($game->refresh())
+        ->vimeo_uri->toBe('/videos/222')
+        ->vimeo_status->toBe(VideoStatus::Uploading);
+});
+
+test('complete upload is rejected when no upload was started', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = Game::factory()->create(['player_id' => $user->id]);
+    $this->actingAs($user);
+
+    Vimeo::shouldReceive('request')->never();
+
+    $this->patchJson(route('admin.games.complete-upload', $game), ['vimeo_uri' => '/videos/111'])
+        ->assertJsonValidationErrors('vimeo_uri');
+
+    expect($game->refresh()->vimeo_status)->toBeNull();
+});
+
+test('complete upload requires the upload attempt identifier', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = gameUploadingVideo($user);
+    $this->actingAs($user);
+
+    $this->patchJson(route('admin.games.complete-upload', $game))
+        ->assertJsonValidationErrors('vimeo_uri');
 });
 
 test('users cannot complete an upload for another player game', function (): void {
     $user = User::factory()->create()->givePermissionTo('view-games');
-    $game = Game::factory()->create(['vimeo_status' => 'pending']);
+    $game = gameUploadingVideo(User::factory()->create());
     $this->actingAs($user);
 
-    $this->patch(route('admin.games.complete-upload', $game))->assertForbidden();
+    $this->patchJson(route('admin.games.complete-upload', $game), ['vimeo_uri' => '/videos/123456789'])
+        ->assertForbidden();
 
-    expect($game->refresh()->vimeo_status)->toBe('pending');
+    expect($game->refresh()->vimeo_status)->toBe(VideoStatus::Uploading);
 });
 
 test('authenticated users can view the upload game page', function (): void {

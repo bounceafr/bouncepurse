@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Game;
 
+use App\Concerns\NormalizesTimestamps;
 use App\Enums\GameFormat;
 use App\Enums\GameParticipant;
 use App\Models\Game;
@@ -16,6 +17,8 @@ use Illuminate\Validation\Rules\Enum;
 
 final class StoreGameRequest extends FormRequest
 {
+    use NormalizesTimestamps;
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', Game::class) === true;
@@ -31,13 +34,23 @@ final class StoreGameRequest extends FormRequest
             'participant' => ['required', new Enum(GameParticipant::class)],
             'format' => ['required', 'string', new Enum(GameFormat::class)],
             'court_id' => ['nullable', 'exists:courts,id'],
-            'scheduled_at' => ['nullable', 'date', 'after:now'],
+            'scheduled_at' => ['nullable', $this->timestampRule(), 'after:now'],
             'played_at' => ['required_without:scheduled_at', 'nullable', 'date', 'before_or_equal:now'],
             'team_id' => ['nullable', 'required_if:participant,team', 'prohibited_unless:participant,team', 'integer', 'exists:teams,id'],
             'opponent_player_id' => ['nullable', 'required_if:participant,player', 'prohibited_unless:participant,player', 'integer', 'exists:users,id'],
             'opponent_team_id' => ['nullable', 'required_if:participant,team', 'prohibited_unless:participant,team', 'integer', 'exists:teams,id', 'different:team_id'],
             'comments' => ['nullable', 'string', 'max:500'],
             'points' => ['nullable', 'integer'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'scheduled_at.date_format' => 'The scheduled time must include a timezone offset.',
         ];
     }
 
@@ -65,6 +78,12 @@ final class StoreGameRequest extends FormRequest
                 $validator->errors()->add('format', 'Team games must be 3v3 or 5v5 format.');
             }
         });
+    }
+
+    /** @return list<string> */
+    protected function timestampFields(): array
+    {
+        return ['scheduled_at'];
     }
 
     private function validateParticipants(Validator $validator): void

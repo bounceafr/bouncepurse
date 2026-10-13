@@ -139,11 +139,13 @@ final class GameController extends Controller
         return response()->json($result);
     }
 
-    public function completeUpload(CompleteUploadRequest $request, CompleteUploadAction $action, Game $game): RedirectResponse
+    public function completeUpload(CompleteUploadRequest $request, CompleteUploadAction $action, Game $game): JsonResponse
     {
-        $action->handle($game);
+        /** @var string $vimeoUri */
+        $vimeoUri = $request->validated('vimeo_uri');
+        $status = $action->handle($game, $vimeoUri);
 
-        return to_route('admin.games.index');
+        return response()->json(['vimeo_status' => $status->value]);
     }
 
     /**

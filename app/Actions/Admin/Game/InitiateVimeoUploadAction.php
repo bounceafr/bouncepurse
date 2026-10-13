@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Actions\Admin\Game;
 
+use App\Enums\VideoStatus;
 use App\Models\Game;
 use Vimeo\Laravel\Facades\Vimeo;
 
 final class InitiateVimeoUploadAction
 {
-    /** @return array{upload_link: string} */
+    /**
+     * The returned vimeo_uri identifies this upload attempt; the client must send it back on completion.
+     *
+     * @return array{upload_link: string, vimeo_uri: string}
+     */
     public function handle(Game $game, int $fileSize): array
     {
         // @phpstan-ignore staticMethod.notFound
@@ -26,9 +31,12 @@ final class InitiateVimeoUploadAction
 
         $game->update([
             'vimeo_uri' => $body['uri'],
-            'vimeo_status' => 'pending',
+            'vimeo_status' => VideoStatus::Uploading,
         ]);
 
-        return ['upload_link' => $body['upload']['upload_link']];
+        return [
+            'upload_link' => $body['upload']['upload_link'],
+            'vimeo_uri' => $body['uri'],
+        ];
     }
 }
