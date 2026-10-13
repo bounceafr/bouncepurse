@@ -1,6 +1,9 @@
 /** A related record the API sends as just its id and name (user, team). */
 export type NamedRef = { id: number; name: string };
 
+/** An opponent choice; `detail` (city, position) tells apart players who share a name. */
+export type OpponentOption = NamedRef & { detail: string | null };
+
 export type GameCourt = {
     id: number;
     name: string;
@@ -37,6 +40,7 @@ export type GameResult = {
     confirmed_at: string | null;
     rejected_at: string | null;
     rejection_reason: string | null;
+    confirmation_expired_at: string | null;
 };
 
 /** Lifecycle of a game's Vimeo video (App\Enums\VideoStatus). */
@@ -66,6 +70,9 @@ export type GameResultCapabilities = {
     canSubmitResult: boolean;
     submitResultBlockedReason: string | null;
     canRespondToResult: boolean;
+    canUploadVideo: boolean;
+    /** When an unanswered result goes to a moderator; only while awaiting confirmation. */
+    confirmationDeadline: string | null;
 };
 
 export const gameStatusColors: Record<GameStatus, string> = {

@@ -12,6 +12,7 @@ import GameController, {
 import { GameStatusBadge } from '@/components/game-status-badge';
 import InputError from '@/components/input-error';
 import { ListPageShell } from '@/components/list-page-shell';
+import { OpponentPicker } from '@/components/opponent-picker';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -60,6 +61,7 @@ import {
     type GameResult,
     type GameSummary,
     type NamedRef,
+    type OpponentOption,
 } from '@/lib/game';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem, Paginated } from '@/types';
@@ -79,7 +81,7 @@ type Game = GameSummary & {
     can: { update: boolean; delete: boolean; upload_video: boolean };
 };
 
-type Opponents = { players: NamedRef[]; teams: NamedRef[] };
+type Opponents = { players: OpponentOption[]; teams: OpponentOption[] };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Games', href: index().url }];
 
@@ -105,28 +107,17 @@ function OpponentSelect({
             <Label htmlFor={`${idPrefix}-${name}`}>
                 {isTeam ? 'Opposing Team' : 'Opponent'}
             </Label>
-            <Select
+            <OpponentPicker
+                id={`${idPrefix}-${name}`}
                 name={name}
-                defaultValue={defaultValue ? String(defaultValue) : undefined}
-                required
-            >
-                <SelectTrigger id={`${idPrefix}-${name}`}>
-                    <SelectValue
-                        placeholder={
-                            isTeam
-                                ? 'Select the team you played'
-                                : 'Select the player you played'
-                        }
-                    />
-                </SelectTrigger>
-                <SelectContent>
-                    {options.map((option) => (
-                        <SelectItem key={option.id} value={String(option.id)}>
-                            {option.name}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+                options={options}
+                defaultValue={defaultValue}
+                placeholder={
+                    isTeam
+                        ? 'Select the team you played'
+                        : 'Select the player you played'
+                }
+            />
             <p className="text-xs text-muted-foreground">
                 {isTeam
                     ? "The opposing team's owner must confirm the result before it becomes final."
@@ -242,6 +233,7 @@ function EditGameFormFields({
                                 setDate(d);
                                 setCalendarOpen(false);
                             }}
+                            disabled={{ after: new Date() }}
                         />
                     </PopoverContent>
                 </Popover>
@@ -471,6 +463,7 @@ function CreateGameFormFields({
                                         setDate(d);
                                         setCalendarOpen(false);
                                     }}
+                                    disabled={{ after: new Date() }}
                                 />
                             </PopoverContent>
                         </Popover>
@@ -559,8 +552,8 @@ export default function GamesIndex({
     filters: { search: string | null; filter: string | null };
     courts: GameCourt[];
     teams: NamedRef[];
-    opponentPlayers: NamedRef[];
-    opponentTeams: NamedRef[];
+    opponentPlayers: OpponentOption[];
+    opponentTeams: OpponentOption[];
 }) {
     const opponents: Opponents = {
         players: opponentPlayers,

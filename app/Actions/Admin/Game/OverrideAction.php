@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Admin\Game;
 
+use App\Actions\Game\NotifyGameActivityAction;
+use App\Enums\GameActivity;
 use App\Enums\GameStatus;
 use App\Jobs\CreateGameAllocationJob;
 use App\Jobs\RecalculateRankingsJob;
@@ -11,8 +13,10 @@ use App\Models\Game;
 use App\Models\RankingConfiguration;
 use Illuminate\Support\Facades\DB;
 
-final class OverrideAction
+final readonly class OverrideAction
 {
+    public function __construct(private NotifyGameActivityAction $notify) {}
+
     public function handle(Game $game, GameStatus $status, string $reason, int $adminId): void
     {
         DB::transaction(function () use ($game, $status, $reason, $adminId): void {
@@ -25,6 +29,12 @@ final class OverrideAction
 
             $game->update(['status' => $status]);
         });
+
+        $activity = GameActivity::forModeration($status);
+
+        if ($activity instanceof GameActivity) {
+            $this->notify->handle($game->refresh(), $activity);
+        }
 
         if ($status === GameStatus::Approved) {
             $config = RankingConfiguration::query()->latest()->firstOrFail();

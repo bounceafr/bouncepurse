@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { BasketballSurface } from '@/components/basketball-surface';
+import { FlashToasts } from '@/components/flash-toasts';
 import { PageEnter } from '@/components/motion';
 import type { AppLayoutProps } from '@/types';
 
@@ -12,6 +13,7 @@ export default function AppSidebarLayout({
 }: AppLayoutProps) {
     return (
         <AppShell variant="sidebar">
+            <FlashToasts />
             <AppSidebar />
             <AppContent
                 variant="sidebar"

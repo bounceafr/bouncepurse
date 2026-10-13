@@ -115,6 +115,14 @@ final class Game extends Model
             || ($this->team_id !== null && $this->team?->hasMember($user) === true);
     }
 
+    /** The person who must consent to a submitted result: the opponent, or the opposing team's owner. */
+    public function confirmer(): ?User
+    {
+        return $this->participant === GameParticipant::TEAM
+            ? $this->opponentTeam?->owner
+            : $this->opponentPlayer;
+    }
+
     /** The opponent's side representative who must consent to a submitted result. */
     public function isConfirmer(User $user): bool
     {
@@ -161,7 +169,12 @@ final class Game extends Model
             return GameStatus::AwaitingVideo;
         }
 
-        return $this->gameResult?->rejected_at !== null ? GameStatus::Contested : GameStatus::Pending;
+        $result = $this->gameResult;
+
+        // Rejected, or never answered in time: either way the opponent did not consent.
+        return $result?->rejected_at !== null || $result?->confirmation_expired_at !== null
+            ? GameStatus::Contested
+            : GameStatus::Pending;
     }
 
     /** Release a game held for its video once that video is ready; call on a locked row. */

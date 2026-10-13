@@ -56,16 +56,32 @@ final class GameController extends Controller
             'filters' => ['search' => $search, 'filter' => $filter],
             'courts' => Court::query()->select(['id', 'name', 'category'])->orderBy('name')->get(),
             'teams' => $user->teams()->select(['teams.id', 'teams.name'])->get(),
+            // Players often share a name, so each option carries public profile details to tell them apart.
             'opponentPlayers' => User::query()
                 ->active()
                 ->whereKeyNot($user->id)
                 ->whereHas('roles', fn (Builder $query) => $query->where('name', Role::Player->value))
+                ->with('profile:id,player_id,city,position')
                 ->orderBy('name')
-                ->get(['id', 'name']),
+                ->orderBy('id')
+                ->get(['id', 'name'])
+                ->map(fn (User $player): array => [
+                    'id' => $player->id,
+                    'name' => $player->name,
+                    'detail' => $player->profile !== null
+                        ? implode(' · ', array_filter([$player->profile->city, $player->profile->position]))
+                        : null,
+                ]),
             'opponentTeams' => Team::query()
                 ->whereNotIn('id', $myTeamIds)
                 ->orderBy('name')
-                ->get(['id', 'name']),
+                ->orderBy('id')
+                ->get(['id', 'name', 'city'])
+                ->map(fn (Team $team): array => [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'detail' => $team->city,
+                ]),
         ]);
     }
 
@@ -150,7 +166,7 @@ final class GameController extends Controller
     }
 
     /**
-     * @return array{canSubmitResult: bool, submitResultBlockedReason: ?string, canRespondToResult: bool}
+     * @return array{canSubmitResult: bool, submitResultBlockedReason: ?string, canRespondToResult: bool, canUploadVideo: bool, confirmationDeadline: ?string}
      */
     private function resultCapabilities(User $user, Game $game): array
     {
@@ -162,6 +178,10 @@ final class GameController extends Controller
             'submitResultBlockedReason' => $blocker,
             'canRespondToResult' => $game->status === GameStatus::AwaitingConfirmation
                 && $user->can('respondToResult', $game),
+            'canUploadVideo' => $user->can('uploadVideo', $game) && ! $game->status->isReviewed(),
+            'confirmationDeadline' => $game->status === GameStatus::AwaitingConfirmation
+                ? $game->gameResult?->confirmationDeadline()->toISOString()
+                : null,
         ];
     }
 }

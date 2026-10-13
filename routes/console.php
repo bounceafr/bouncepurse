@@ -11,3 +11,4 @@ Artisan::command('inspire', function (): void {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('app:sync-processing-videos')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('app:process-result-confirmations')->hourly()->withoutOverlapping();
