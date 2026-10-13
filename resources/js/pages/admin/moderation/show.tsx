@@ -22,32 +22,20 @@ import { formatCourtName } from '@/lib/court';
 import {
     type GameResult,
     type GameSide,
+    type GameSummary,
+    type NamedRef,
     opponentSideName,
     submittingSideName,
     type VideoStatus,
 } from '@/lib/game';
 import type { BreadcrumbItem } from '@/types';
 
-type User = { id: number; name: string };
-type Court = { id: number; name: string; category_label?: string | null };
-
-type Game = GameSide & {
-    id: number;
-    uuid: string;
-    title: string;
-    format: string;
-    court_id: number | null;
-    player_id: number;
-    played_at: string;
-    vimeo_uri: string | null;
-    vimeo_status: VideoStatus | null;
-    status: string;
-    court: Court | null;
-    player: User | null;
-    game_result:
-        | (GameResult & { responder: { id: number; name: string } | null })
-        | null;
-};
+type Game = GameSummary &
+    GameSide & {
+        vimeo_uri: string | null;
+        vimeo_status: VideoStatus | null;
+        game_result: (GameResult & { responder: NamedRef | null }) | null;
+    };
 
 const statusOptions = [
     { value: 'approved', label: 'Approve' },
@@ -166,9 +154,11 @@ export default function ModerationShow({ game }: { game: Game }) {
                                         Played
                                     </span>
                                     <span>
-                                        {new Date(
-                                            game.played_at,
-                                        ).toLocaleDateString()}
+                                        {game.played_at
+                                            ? new Date(
+                                                  game.played_at,
+                                              ).toLocaleDateString()
+                                            : '—'}
                                     </span>
                                 </div>
                             </CardContent>

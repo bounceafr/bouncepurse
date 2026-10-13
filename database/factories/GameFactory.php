@@ -6,6 +6,7 @@ namespace Database\Factories;
 
 use App\Enums\GameParticipant;
 use App\Enums\GameStatus;
+use App\Enums\VideoStatus;
 use App\Models\Court;
 use App\Models\Game;
 use App\Models\Team;
@@ -61,6 +62,14 @@ final class GameFactory extends Factory
     public function awaitingConfirmation(): static
     {
         return $this->state(fn (): array => ['status' => GameStatus::AwaitingConfirmation]);
+    }
+
+    public function withReadyVideo(): static
+    {
+        return $this->state(fn (): array => [
+            'vimeo_uri' => '/videos/'.fake()->unique()->numberBetween(100000, 999999),
+            'vimeo_status' => VideoStatus::Ready,
+        ]);
     }
 
     public function scheduled(): static

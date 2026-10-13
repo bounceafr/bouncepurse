@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\GameStatus;
 use App\Enums\Role;
+use App\Enums\VideoStatus;
 use App\Models\Game;
 use App\Models\GameResult;
 use App\Models\Team;
@@ -17,9 +18,10 @@ beforeEach(function (): void {
     Permission::query()->firstOrCreate(['name' => 'moderate-games']);
 });
 
-function gameAwaitingConfirmation(?User $opponent = null): Game
+function gameAwaitingConfirmation(?User $opponent = null, bool $videoReady = true): Game
 {
-    $game = Game::factory()->againstPlayer($opponent)->awaitingConfirmation()->create();
+    $factory = Game::factory()->againstPlayer($opponent)->awaitingConfirmation();
+    $game = ($videoReady ? $factory->withReadyVideo() : $factory)->create();
     GameResult::factory()->create(['game_id' => $game->id, 'submitter_id' => $game->player_id]);
 
     return $game;
@@ -88,7 +90,7 @@ test('only the opposing team owner can confirm a team result', function (): void
     $member = User::factory()->create()->givePermissionTo('view-games');
     $opponentTeam = Team::factory()->create(['user_id' => $owner->id]);
     $opponentTeam->members()->attach([$owner->id, $member->id], ['joined_at' => now()]);
-    $game = Game::factory()->betweenTeams(Team::factory()->create(), $opponentTeam)->awaitingConfirmation()->create();
+    $game = Game::factory()->betweenTeams(Team::factory()->create(), $opponentTeam)->awaitingConfirmation()->withReadyVideo()->create();
     GameResult::factory()->create(['game_id' => $game->id]);
 
     $this->actingAs($member)->post(route('admin.games.result.confirm', $game))->assertForbidden();
@@ -174,4 +176,46 @@ test('moderators see who contested a result and why', function (): void {
             ->where('game.game_result.rejection_reason', 'Score was 18-21.')
             ->where('game.game_result.responder.name', 'Bob')
         );
+});
+
+test('a confirmed result waits for its video before moderation', function (): void {
+    $opponent = User::factory()->create()->givePermissionTo('view-games');
+    $game = gameAwaitingConfirmation($opponent, videoReady: false);
+    $this->actingAs($opponent);
+
+    $this->post(route('admin.games.result.confirm', $game));
+
+    expect($game->refresh()->status)->toBe(GameStatus::AwaitingVideo)
+        ->and($game->gameResult()->sole()->confirmed_at)->not->toBeNull();
+});
+
+test('a rejected result without a video becomes contested once the video is ready', function (): void {
+    $opponent = User::factory()->create()->givePermissionTo('view-games');
+    $game = gameAwaitingConfirmation($opponent, videoReady: false);
+    $this->actingAs($opponent);
+
+    $this->post(route('admin.games.result.reject', $game), ['reason' => 'Wrong score.']);
+    expect($game->refresh()->status)->toBe(GameStatus::AwaitingVideo);
+
+    $game->update(['vimeo_status' => VideoStatus::Ready]);
+    $game->releaseToModerationIfVideoReady();
+
+    expect($game->refresh()->status)->toBe(GameStatus::Contested);
+});
+
+test('games awaiting their video are not in the moderation queue', function (): void {
+    $moderator = User::factory()->create()->givePermissionTo('moderate-games');
+    Game::factory()->againstPlayer()->create(['status' => GameStatus::AwaitingVideo]);
+    $this->actingAs($moderator);
+
+    $this->get(route('admin.moderation.index'))
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page->has('games.data', 0));
+});
+
+test('releasing leaves games that are not waiting for a video untouched', function (): void {
+    $game = Game::factory()->againstPlayer()->withReadyVideo()->awaitingConfirmation()->create();
+
+    $game->releaseToModerationIfVideoReady();
+
+    expect($game->refresh()->status)->toBe(GameStatus::AwaitingConfirmation);
 });

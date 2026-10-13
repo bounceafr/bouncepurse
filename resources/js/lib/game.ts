@@ -1,3 +1,33 @@
+/** A related record the API sends as just its id and name (user, team). */
+export type NamedRef = { id: number; name: string };
+
+export type GameCourt = {
+    id: number;
+    name: string;
+    category_label?: string | null;
+};
+
+/** App\Enums\GameStatus */
+export type GameStatus =
+    | 'scheduled'
+    | 'awaiting_result'
+    | 'awaiting_confirmation'
+    | 'awaiting_video'
+    | 'contested'
+    | 'pending'
+    | 'approved'
+    | 'rejected'
+    | 'flagged';
+
+export type GameModeration = {
+    id: number;
+    status: string;
+    reason: string;
+    is_override: boolean;
+    created_at: string;
+    moderator: NamedRef | null;
+};
+
 export type GameResult = {
     uuid: string;
     your_score: number;
@@ -13,10 +43,22 @@ export type GameResult = {
 export type VideoStatus = 'uploading' | 'processing' | 'ready' | 'failed';
 
 export type GameSide = {
-    player: { id: number; name: string } | null;
-    team: { id: number; name: string } | null;
-    opponent_player: { id: number; name: string } | null;
-    opponent_team: { id: number; name: string } | null;
+    player: NamedRef | null;
+    team: NamedRef | null;
+    opponent_player: NamedRef | null;
+    opponent_team: NamedRef | null;
+};
+
+/** Fields every game page receives; pages add the relations they load. */
+export type GameSummary = {
+    id: number;
+    uuid: string;
+    title: string;
+    format: string;
+    status: GameStatus;
+    played_at: string | null;
+    court: GameCourt | null;
+    player: NamedRef | null;
 };
 
 /** Capabilities computed on the server; the client never decides eligibility itself. */
@@ -26,9 +68,11 @@ export type GameResultCapabilities = {
     canRespondToResult: boolean;
 };
 
-export const gameStatusColors: Record<string, string> = {
+export const gameStatusColors: Record<GameStatus, string> = {
     scheduled: 'bg-blue-500',
+    awaiting_result: 'bg-sky-500',
     awaiting_confirmation: 'bg-purple-500',
+    awaiting_video: 'bg-indigo-500',
     contested: 'bg-orange-600',
     pending: 'bg-yellow-500',
     approved: 'bg-green-500',
@@ -36,7 +80,7 @@ export const gameStatusColors: Record<string, string> = {
     flagged: 'bg-orange-500',
 };
 
-export function gameStatusLabel(status: string): string {
+export function gameStatusLabel(status: GameStatus): string {
     return status.replace(/_/g, ' ');
 }
 

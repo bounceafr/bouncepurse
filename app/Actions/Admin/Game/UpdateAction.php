@@ -13,8 +13,13 @@ final class UpdateAction
     /** @param array<string, mixed> $data */
     public function handle(Game $game, array $data): Game
     {
-        if ($game->status !== GameStatus::Scheduled || $game->gameResult()->exists()) {
+        if (! $game->status->isOpenForResult() || $game->gameResult()->exists()) {
             throw ValidationException::withMessages(['game' => 'A game cannot be edited after its result has been submitted.']);
+        }
+
+        // The edit form always records when the game was played.
+        if (isset($data['played_at'])) {
+            $data['status'] = GameStatus::AwaitingResult;
         }
 
         $game->update($data);

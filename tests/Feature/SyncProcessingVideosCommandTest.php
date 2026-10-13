@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Enums\GameStatus;
 use App\Enums\VideoStatus;
 use App\Models\Game;
+use App\Models\GameResult;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Testing\PendingCommand;
@@ -142,4 +144,19 @@ it('is scheduled every five minutes', function (): void {
 
     expect($event)->toBeInstanceOf(Event::class)
         ->and($event?->expression)->toBe('*/5 * * * *');
+});
+
+it('sends a game held for its video to moderation once the video is ready', function (): void {
+    $game = gameProcessingVideo();
+    $game->update(['status' => GameStatus::AwaitingVideo]);
+    GameResult::factory()->create(['game_id' => $game->id, 'rejected_at' => now(), 'rejection_reason' => 'Wrong score.']);
+
+    expectProcessingVideoLookup('/videos/123456789', [
+        'upload' => ['status' => 'complete'],
+        'transcode' => ['status' => 'complete'],
+    ]);
+
+    syncProcessingVideos($this)->assertSuccessful();
+
+    expect($game->refresh()->status)->toBe(GameStatus::Contested);
 });

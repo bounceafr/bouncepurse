@@ -41,10 +41,11 @@ final class GameController extends Controller
 
         $games = $action->handle($search, $filter)->through(fn (Game $game): array => [
             ...$game->toArray(),
+            // Who may act comes from the policy; whether the game still allows it comes from its state.
             'can' => [
-                'update' => $user->can('update', $game),
-                'delete' => $user->can('delete', $game),
-                'upload_video' => $user->can('uploadVideo', $game),
+                'update' => $user->can('update', $game) && $game->status->isOpenForResult() && $game->gameResult === null,
+                'delete' => $user->can('delete', $game) && $game->gameResult === null,
+                'upload_video' => $user->can('uploadVideo', $game) && ! $game->status->isReviewed(),
             ],
         ]);
 

@@ -32,6 +32,16 @@ function ConfirmationStatus({
     game: ResultGame;
     result: GameResult;
 }) {
+    if (game.status === 'awaiting_video') {
+        return (
+            <p className="text-sm text-indigo-600">
+                {result.rejected_at ? 'Rejected' : 'Confirmed'} by{' '}
+                {opponentSideName(game)}. Upload a video of the game to send it
+                for review; moderators only review games with a video.
+            </p>
+        );
+    }
+
     if (result.confirmed_at) {
         return (
             <p className="text-sm text-green-600">

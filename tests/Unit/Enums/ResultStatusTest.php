@@ -17,3 +17,8 @@ test('result status color returns correct value for each case', function (Result
     [ResultStatus::WIN, 'green'],
     [ResultStatus::LOST, 'red'],
 ]);
+
+test('result status opposite flips the outcome', function (): void {
+    expect(ResultStatus::WIN->opposite())->toBe(ResultStatus::LOST)
+        ->and(ResultStatus::LOST->opposite())->toBe(ResultStatus::WIN);
+});

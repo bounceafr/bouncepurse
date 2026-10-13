@@ -17,46 +17,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
-import type { VideoStatus } from '@/lib/game';
+import type { GameModeration, GameSummary, VideoStatus } from '@/lib/game';
 import { index, show } from '@/routes/admin/override';
-import type { BreadcrumbItem } from '@/types';
+import type { BreadcrumbItem, Paginated } from '@/types';
 
-type User = { id: number; name: string };
-type Court = { id: number; name: string; category_label?: string | null };
-
-type GameModeration = {
-    id: number;
-    status: string;
-    reason: string;
-    is_override: boolean;
-    created_at: string;
-    moderator: User | null;
-};
-
-type Game = {
-    id: number;
-    uuid: string;
-    title: string;
-    format: string;
-    court_id: number | null;
-    player_id: number;
-    played_at: string;
+type Game = GameSummary & {
     vimeo_uri: string | null;
     vimeo_status: VideoStatus | null;
-    status: string;
-    court: Court | null;
-    player: User | null;
     moderation: GameModeration[];
-};
-
-type PaginationLink = { url: string | null; label: string; active: boolean };
-
-type PaginatedGames = {
-    data: Game[];
-    links: PaginationLink[];
-    current_page: number;
-    last_page: number;
-    total: number;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -136,7 +104,7 @@ const columns: ColumnDef<Game, unknown>[] = [
     },
 ];
 
-export default function OverrideIndex({ games }: { games: PaginatedGames }) {
+export default function OverrideIndex({ games }: { games: Paginated<Game> }) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Flagged Games" />

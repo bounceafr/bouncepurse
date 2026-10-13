@@ -12,6 +12,7 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 #[Description('Re-check videos Vimeo is still transcoding and mark them ready or failed')]
 #[Signature('app:sync-processing-videos')]
@@ -50,15 +51,21 @@ final class SyncProcessingVideosCommand extends Command
             return;
         }
 
-        // Only move the game on if no newer upload replaced this video while we were asking Vimeo.
-        $updated = Game::query()
-            ->withoutGlobalScopes()
-            ->whereKey($game->id)
-            ->where('vimeo_uri', $vimeoUri)
-            ->where('vimeo_status', VideoStatus::Processing)
-            ->update(['vimeo_status' => $status]);
+        $updated = DB::transaction(function () use ($game, $vimeoUri, $status): bool {
+            $locked = Game::query()->withoutGlobalScopes()->lockForUpdate()->find($game->id);
 
-        if ($updated > 0) {
+            // Only move the game on if no newer upload replaced this video while we were asking Vimeo.
+            if ($locked === null || $locked->vimeo_uri !== $vimeoUri || $locked->vimeo_status !== VideoStatus::Processing) {
+                return false;
+            }
+
+            $locked->update(['vimeo_status' => $status]);
+            $locked->releaseToModerationIfVideoReady();
+
+            return true;
+        });
+
+        if ($updated) {
             $this->info(sprintf('Game %d video is now %s.', $game->id, $status->value));
         }
     }

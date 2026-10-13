@@ -136,7 +136,7 @@ final class Game extends Model
     /** Why a result cannot be submitted for this game right now, or null when it can. */
     public function resultSubmissionBlocker(): ?string
     {
-        if ($this->status !== GameStatus::Scheduled || $this->gameResult()->exists()) {
+        if (! $this->status->isOpenForResult() || $this->gameResult()->exists()) {
             return 'A result has already been submitted for this game.';
         }
 
@@ -149,6 +149,27 @@ final class Game extends Model
         }
 
         return null;
+    }
+
+    /**
+     * Where an answered result goes next: moderators only review games with a ready video,
+     * and a rejected result goes to them as contested.
+     */
+    public function moderationEntryStatus(): GameStatus
+    {
+        if ($this->vimeo_status !== VideoStatus::Ready) {
+            return GameStatus::AwaitingVideo;
+        }
+
+        return $this->gameResult?->rejected_at !== null ? GameStatus::Contested : GameStatus::Pending;
+    }
+
+    /** Release a game held for its video once that video is ready; call on a locked row. */
+    public function releaseToModerationIfVideoReady(): void
+    {
+        if ($this->status === GameStatus::AwaitingVideo && $this->vimeo_status === VideoStatus::Ready) {
+            $this->update(['status' => $this->moderationEntryStatus()]);
+        }
     }
 
     protected static function booted(): void

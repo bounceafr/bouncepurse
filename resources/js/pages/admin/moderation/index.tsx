@@ -4,6 +4,7 @@ import {
     index,
     show,
 } from '@/actions/App/Http/Controllers/Admin/ModerationController';
+import { GameStatusBadge } from '@/components/game-status-badge';
 import { ListPageShell } from '@/components/list-page-shell';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,39 +22,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
-import {
-    gameStatusColors,
-    gameStatusLabel,
-    type VideoStatus,
-} from '@/lib/game';
-import type { BreadcrumbItem } from '@/types';
+import { type GameSummary, type VideoStatus } from '@/lib/game';
+import type { BreadcrumbItem, Paginated } from '@/types';
 
-type User = { id: number; name: string };
-type Court = { id: number; name: string; category_label?: string | null };
-
-type Game = {
-    id: number;
-    uuid: string;
-    title: string;
-    format: string;
-    court_id: number | null;
-    player_id: number;
-    played_at: string;
+type Game = GameSummary & {
     vimeo_uri: string | null;
     vimeo_status: VideoStatus | null;
-    status: string;
-    court: Court | null;
-    player: User | null;
-};
-
-type PaginationLink = { url: string | null; label: string; active: boolean };
-
-type PaginatedGames = {
-    data: Game[];
-    links: PaginationLink[];
-    current_page: number;
-    last_page: number;
-    total: number;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -92,16 +66,7 @@ const columns: ColumnDef<Game, unknown>[] = [
     {
         accessorKey: 'status',
         header: sortableHeader('Status'),
-        cell: ({ row }) => {
-            const status = row.original.status;
-            return (
-                <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white capitalize ${gameStatusColors[status] ?? 'bg-gray-400'}`}
-                >
-                    {gameStatusLabel(status)}
-                </span>
-            );
-        },
+        cell: ({ row }) => <GameStatusBadge status={row.original.status} />,
     },
     {
         id: 'video',
@@ -150,7 +115,7 @@ const columns: ColumnDef<Game, unknown>[] = [
     },
 ];
 
-export default function ModerationIndex({ games }: { games: PaginatedGames }) {
+export default function ModerationIndex({ games }: { games: Paginated<Game> }) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Moderation Queue" />

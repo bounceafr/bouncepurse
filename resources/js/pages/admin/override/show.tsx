@@ -17,35 +17,13 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
-import type { VideoStatus } from '@/lib/game';
+import type { GameModeration, GameSummary, VideoStatus } from '@/lib/game';
 import { index, update } from '@/routes/admin/override';
 import type { BreadcrumbItem } from '@/types';
 
-type User = { id: number; name: string };
-type Court = { id: number; name: string; category_label?: string | null };
-
-type GameModeration = {
-    id: number;
-    status: string;
-    reason: string;
-    is_override: boolean;
-    created_at: string;
-    moderator: User | null;
-};
-
-type Game = {
-    id: number;
-    uuid: string;
-    title: string;
-    format: string;
-    court_id: number | null;
-    player_id: number;
-    played_at: string;
+type Game = GameSummary & {
     vimeo_uri: string | null;
     vimeo_status: VideoStatus | null;
-    status: string;
-    court: Court | null;
-    player: User | null;
     moderation: GameModeration[];
 };
 
@@ -175,9 +153,11 @@ export default function OverrideShow({ game }: { game: Game }) {
                                         Played
                                     </span>
                                     <span>
-                                        {new Date(
-                                            game.played_at,
-                                        ).toLocaleDateString()}
+                                        {game.played_at
+                                            ? new Date(
+                                                  game.played_at,
+                                              ).toLocaleDateString()
+                                            : '—'}
                                     </span>
                                 </div>
                             </CardContent>
