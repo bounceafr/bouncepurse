@@ -21,7 +21,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
-import { gameStatusColors, gameStatusLabel } from '@/lib/game';
+import {
+    gameStatusColors,
+    gameStatusLabel,
+    type VideoStatus,
+} from '@/lib/game';
 import type { BreadcrumbItem } from '@/types';
 
 type User = { id: number; name: string };
@@ -36,7 +40,7 @@ type Game = {
     player_id: number;
     played_at: string;
     vimeo_uri: string | null;
-    vimeo_status: string | null;
+    vimeo_status: VideoStatus | null;
     status: string;
     court: Court | null;
     player: User | null;

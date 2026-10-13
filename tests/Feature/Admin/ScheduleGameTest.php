@@ -165,7 +165,7 @@ test('cannot create game with future played_at', function (): void {
         'participant' => 'player',
         'format' => '1v1',
         'court_id' => $court->id,
-        'played_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        'played_at' => now()->addDay()->toAtomString(),
     ]);
 
     $response->assertSessionHasErrors('played_at');
@@ -203,7 +203,7 @@ test('played_at game has status scheduled awaiting result submission', function 
         'opponent_player_id' => User::factory()->create()->id,
         'format' => '1v1',
         'court_id' => $court->id,
-        'played_at' => now()->subDay()->format('Y-m-d H:i:s'),
+        'played_at' => now()->subDay()->toAtomString(),
     ]);
 
     $this->assertDatabaseHas('games', [
@@ -313,7 +313,7 @@ test('client supplied result is ignored when creating a game', function (): void
         'participant' => 'player',
         'format' => '1v1',
         'opponent_player_id' => User::factory()->create()->id,
-        'played_at' => now()->subDay()->format('Y-m-d H:i:s'),
+        'played_at' => now()->subDay()->toAtomString(),
         'result' => 'win',
     ]);
 

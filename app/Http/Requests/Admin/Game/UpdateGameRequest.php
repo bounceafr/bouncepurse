@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Game;
 
+use App\Concerns\NormalizesTimestamps;
 use App\Enums\GameParticipant;
 use App\Models\Game;
 use Closure;
@@ -12,6 +13,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 final class UpdateGameRequest extends FormRequest
 {
+    use NormalizesTimestamps;
+
     public function authorize(): bool
     {
         /** @var Game $game */
@@ -29,11 +32,27 @@ final class UpdateGameRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'format' => ['required', 'string'],
             'court_id' => ['nullable', 'exists:courts,id'],
-            'played_at' => ['required', 'date', 'before_or_equal:now'],
+            'played_at' => ['required', $this->timestampRule(), 'before_or_equal:now'],
             'points' => ['nullable', 'integer'],
             'comments' => ['nullable', 'string', 'max:500'],
             ...$this->opponentRules(),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'played_at.date_format' => 'The played date must include a timezone offset.',
+        ];
+    }
+
+    /** @return list<string> */
+    protected function timestampFields(): array
+    {
+        return ['played_at'];
     }
 
     /**

@@ -24,6 +24,7 @@ import {
     type GameSide,
     opponentSideName,
     submittingSideName,
+    type VideoStatus,
 } from '@/lib/game';
 import type { BreadcrumbItem } from '@/types';
 
@@ -39,7 +40,7 @@ type Game = GameSide & {
     player_id: number;
     played_at: string;
     vimeo_uri: string | null;
-    vimeo_status: string | null;
+    vimeo_status: VideoStatus | null;
     status: string;
     court: Court | null;
     player: User | null;
