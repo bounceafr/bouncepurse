@@ -60,7 +60,7 @@ test('player can schedule a game with valid data', function (): void {
         'opponent_player_id' => $opponent->id,
         'format' => '1v1',
         'court_id' => $court->id,
-        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->addDay()->toAtomString(),
     ]);
 
     $response->assertRedirect(route('admin.games.index'));
@@ -85,7 +85,7 @@ test('cannot schedule a game in the past', function (): void {
         'participant' => 'player',
         'format' => '1v1',
         'court_id' => $court->id,
-        'scheduled_at' => now()->subDay()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->subDay()->toAtomString(),
     ]);
 
     $response->assertSessionHasErrors('scheduled_at');
@@ -101,7 +101,7 @@ test('must provide team_id when participant is team', function (): void {
         'participant' => 'team',
         'format' => '3v3',
         'court_id' => $court->id,
-        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->addDay()->toAtomString(),
     ]);
 
     $response->assertSessionHasErrors('team_id');
@@ -117,7 +117,7 @@ test('player participant can only play 1v1 format', function (): void {
         'participant' => 'player',
         'format' => '3v3',
         'court_id' => $court->id,
-        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->addDay()->toAtomString(),
     ]);
 
     $response->assertSessionHasErrors('format');
@@ -135,7 +135,7 @@ test('team participant must use 3v3 or 5v5 format', function (): void {
         'format' => '1v1',
         'court_id' => $court->id,
         'team_id' => $team->id,
-        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->addDay()->toAtomString(),
     ]);
 
     $response->assertSessionHasErrors('format');
@@ -182,7 +182,7 @@ test('scheduled game has status scheduled and null played_at', function (): void
         'opponent_player_id' => User::factory()->create()->id,
         'format' => '1v1',
         'court_id' => $court->id,
-        'scheduled_at' => now()->addWeek()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->addWeek()->toAtomString(),
     ]);
 
     $this->assertDatabaseHas('games', [
@@ -235,7 +235,7 @@ test('cannot create a game without an opponent', function (): void {
         'title' => 'Solo Game',
         'participant' => 'player',
         'format' => '1v1',
-        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->addDay()->toAtomString(),
     ])->assertSessionHasErrors('opponent_player_id');
 });
 
@@ -248,7 +248,7 @@ test('cannot create a game against yourself', function (): void {
         'participant' => 'player',
         'format' => '1v1',
         'opponent_player_id' => $user->id,
-        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->addDay()->toAtomString(),
     ])->assertSessionHasErrors('opponent_player_id');
 });
 
@@ -264,7 +264,7 @@ test('cannot create a game for a team you do not belong to', function (): void {
         'format' => '5v5',
         'team_id' => $strangersTeam->id,
         'opponent_team_id' => $opponentTeam->id,
-        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->addDay()->toAtomString(),
     ])->assertSessionHasErrors('team_id');
 });
 
@@ -281,7 +281,7 @@ test('team member can create a game against another team', function (): void {
         'format' => '5v5',
         'team_id' => $team->id,
         'opponent_team_id' => $opponentTeam->id,
-        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->addDay()->toAtomString(),
     ])->assertRedirect(route('admin.games.index'));
 
     $this->assertDatabaseHas('games', [
@@ -300,7 +300,7 @@ test('users without create-games permission cannot create games', function (): v
         'participant' => 'player',
         'format' => '1v1',
         'opponent_player_id' => User::factory()->create()->id,
-        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->addDay()->toAtomString(),
     ])->assertForbidden();
 });
 
@@ -334,6 +334,54 @@ test('the opposing team cannot be one of your own teams', function (): void {
         'format' => '5v5',
         'team_id' => $team->id,
         'opponent_team_id' => $otherOwnTeam->id,
-        'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        'scheduled_at' => now()->addDay()->toAtomString(),
     ])->assertSessionHasErrors('opponent_team_id');
+});
+
+test('scheduled_at with an offset is stored in UTC', function (): void {
+    $this->travelTo('2026-10-13 10:00:00');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Evening Game',
+        'participant' => 'player',
+        'opponent_player_id' => User::factory()->create()->id,
+        'format' => '1v1',
+        'court_id' => Court::factory()->create()->id,
+        'scheduled_at' => '2026-10-13T18:30:00+02:00',
+    ])->assertSessionHasNoErrors();
+
+    expect(Game::query()->where('title', 'Evening Game')->sole()->scheduled_at?->toDateTimeString())
+        ->toBe('2026-10-13 16:30:00');
+});
+
+test('a UTC+2 player cannot schedule a game that is already past locally', function (): void {
+    $this->travelTo('2026-10-13 10:00:00');
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
+    $this->actingAs($user);
+
+    // 11:30 in UTC+2 is 09:30 UTC, half an hour ago, though it reads as the future in UTC.
+    $this->post(route('admin.games.store'), [
+        'title' => 'Too Late',
+        'participant' => 'player',
+        'opponent_player_id' => User::factory()->create()->id,
+        'format' => '1v1',
+        'court_id' => Court::factory()->create()->id,
+        'scheduled_at' => '2026-10-13T11:30:00+02:00',
+    ])->assertSessionHasErrors('scheduled_at');
+});
+
+test('scheduled_at without a timezone offset is rejected', function (): void {
+    $user = User::factory()->create()->givePermissionTo(['view-games', 'create-games']);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.store'), [
+        'title' => 'Ambiguous',
+        'participant' => 'player',
+        'opponent_player_id' => User::factory()->create()->id,
+        'format' => '1v1',
+        'court_id' => Court::factory()->create()->id,
+        'scheduled_at' => now()->addDay()->format('Y-m-d H:i'),
+    ])->assertSessionHasErrors(['scheduled_at' => 'The scheduled time must include a timezone offset.']);
 });

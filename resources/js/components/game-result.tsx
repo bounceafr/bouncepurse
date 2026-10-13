@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { localInputToOffsetIso } from '@/lib/datetime';
 import {
     type GameResult,
     type GameResultCapabilities,
@@ -106,7 +107,19 @@ function GameResultSummary({
 
 function GameResultSubmitForm({ game }: { game: ResultGame }) {
     return (
-        <Form {...storeResult.form(game.uuid)} className="space-y-4">
+        <Form
+            {...storeResult.form(game.uuid)}
+            transform={(data) => ({
+                ...data,
+                started_at: localInputToOffsetIso(
+                    String(data.started_at ?? ''),
+                ),
+                finished_at: localInputToOffsetIso(
+                    String(data.finished_at ?? ''),
+                ),
+            })}
+            className="space-y-4"
+        >
             {({ processing, errors }) => (
                 <>
                     <div className="grid grid-cols-2 gap-4">
@@ -160,6 +173,11 @@ function GameResultSubmitForm({ game }: { game: ResultGame }) {
                             <InputError message={errors.finished_at} />
                         </div>
                     </div>
+
+                    <p className="text-xs text-muted-foreground">
+                        Times are in your local timezone (
+                        {Intl.DateTimeFormat().resolvedOptions().timeZone}).
+                    </p>
 
                     <p className="text-sm text-muted-foreground">
                         {opponentSideName(game)} must confirm this score before

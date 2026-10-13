@@ -31,8 +31,8 @@ function resultPayload(array $overrides = []): array
     return array_merge([
         'your_score' => 21,
         'opponent_score' => 15,
-        'started_at' => now()->subHours(2)->format('Y-m-d H:i:s'),
-        'finished_at' => now()->subHour()->format('Y-m-d H:i:s'),
+        'started_at' => now()->subHours(2)->toAtomString(),
+        'finished_at' => now()->subHour()->toAtomString(),
     ], $overrides);
 }
 
@@ -255,8 +255,8 @@ test('cannot submit with finished_at before started_at', function (): void {
     $this->actingAs($user);
 
     $this->post(route('admin.games.result.store', $game), resultPayload([
-        'started_at' => now()->format('Y-m-d H:i:s'),
-        'finished_at' => now()->subHour()->format('Y-m-d H:i:s'),
+        'started_at' => now()->toAtomString(),
+        'finished_at' => now()->subHour()->toAtomString(),
     ]))->assertSessionHasErrors('finished_at');
 });
 
@@ -266,8 +266,8 @@ test('cannot submit result with future started_at', function (): void {
     $this->actingAs($user);
 
     $this->post(route('admin.games.result.store', $game), resultPayload([
-        'started_at' => now()->addHour()->format('Y-m-d H:i:s'),
-        'finished_at' => now()->addHours(2)->format('Y-m-d H:i:s'),
+        'started_at' => now()->addHour()->toAtomString(),
+        'finished_at' => now()->addHours(2)->toAtomString(),
     ]))->assertSessionHasErrors('started_at');
 });
 
@@ -277,8 +277,8 @@ test('cannot submit result with future finished_at', function (): void {
     $this->actingAs($user);
 
     $this->post(route('admin.games.result.store', $game), resultPayload([
-        'started_at' => now()->subHour()->format('Y-m-d H:i:s'),
-        'finished_at' => now()->addHour()->format('Y-m-d H:i:s'),
+        'started_at' => now()->subHour()->toAtomString(),
+        'finished_at' => now()->addHour()->toAtomString(),
     ]))->assertSessionHasErrors('finished_at');
 });
 
@@ -335,4 +335,64 @@ test('the confirmation email shows the submitted score and links to the game', f
         ->and($mail->subject)->toContain($game->title)
         ->and($mail->introLines[0])->toContain('Alice submitted a final score of 21 – 15')
         ->and($mail->actionUrl)->toBe(route('admin.games.show', $game));
+});
+
+test('a UTC+2 player can submit a game that just ended in their local time', function (): void {
+    $this->travelTo('2026-10-13 10:00:00');
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = playedGameFor($user);
+    $this->actingAs($user);
+
+    // 11:55 in Kigali is 09:55 UTC: five minutes ago, even though it reads as the future in UTC.
+    $this->post(route('admin.games.result.store', $game), resultPayload([
+        'started_at' => '2026-10-13T11:00:00+02:00',
+        'finished_at' => '2026-10-13T11:55:00+02:00',
+    ]))->assertSessionHasNoErrors();
+
+    $result = $game->refresh()->gameResult;
+    expect($result?->started_at?->toDateTimeString())->toBe('2026-10-13 09:00:00')
+        ->and($result?->finished_at?->toDateTimeString())->toBe('2026-10-13 09:55:00')
+        ->and($game->played_at?->toDateTimeString())->toBe('2026-10-13 09:55:00');
+});
+
+test('a UTC+2 player cannot submit a finish time that is still in the future', function (): void {
+    $this->travelTo('2026-10-13 10:00:00');
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = playedGameFor($user);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.result.store', $game), resultPayload([
+        'started_at' => '2026-10-13T11:00:00+02:00',
+        'finished_at' => '2026-10-13T12:01:00+02:00',
+    ]))->assertSessionHasErrors('finished_at');
+});
+
+test('a player behind UTC has their times stored in UTC', function (): void {
+    $this->travelTo('2026-10-13 10:00:00');
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = playedGameFor($user);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.result.store', $game), resultPayload([
+        'started_at' => '2026-10-13T04:00:00-05:00',
+        'finished_at' => '2026-10-13T04:59:00-05:00',
+    ]))->assertSessionHasNoErrors();
+
+    expect($game->refresh()->gameResult?->finished_at?->toDateTimeString())->toBe('2026-10-13 09:59:00');
+});
+
+test('result times without a timezone offset are rejected', function (): void {
+    $user = User::factory()->create()->givePermissionTo('view-games');
+    $game = playedGameFor($user);
+    $this->actingAs($user);
+
+    $this->post(route('admin.games.result.store', $game), resultPayload([
+        'started_at' => now()->subHours(2)->format('Y-m-d\TH:i'),
+        'finished_at' => now()->subHour()->format('Y-m-d\TH:i'),
+    ]))->assertSessionHasErrors([
+        'started_at' => 'The start time must include a timezone offset.',
+        'finished_at' => 'The finish time must include a timezone offset.',
+    ]);
+
+    expect($game->refresh()->gameResult)->toBeNull();
 });

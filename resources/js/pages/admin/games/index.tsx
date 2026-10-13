@@ -53,6 +53,7 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
+import { combineLocalDateAndTime } from '@/lib/datetime';
 import { gameStatusColors, gameStatusLabel } from '@/lib/game';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
@@ -332,7 +333,7 @@ function CreateGameFormFields({
 
     const scheduledAtValue =
         mode === 'scheduled' && date && time
-            ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${time}`
+            ? combineLocalDateAndTime(date, time)
             : '';
 
     return (
