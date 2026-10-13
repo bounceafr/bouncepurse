@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\RouteKey;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Config;
 
 /**
  * @property-read int $id
@@ -25,6 +26,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read ?CarbonInterface $confirmed_at
  * @property-read ?CarbonInterface $rejected_at
  * @property-read ?string $rejection_reason
+ * @property-read ?CarbonInterface $confirmation_reminded_at
+ * @property-read ?CarbonInterface $confirmation_expired_at
  * @property-read ?CarbonInterface $created_at
  * @property-read ?CarbonInterface $updated_at
  * @property-read Game $game
@@ -65,6 +68,12 @@ final class GameResult extends Model
         };
     }
 
+    /** When an unanswered result goes to a moderator without the opponent's consent. */
+    public function confirmationDeadline(): CarbonInterface
+    {
+        return ($this->created_at ?? now())->addHours(Config::integer('games.result_confirmation.expire_after_hours'));
+    }
+
     /** @return array<string, string> */
     protected function casts(): array
     {
@@ -73,6 +82,8 @@ final class GameResult extends Model
             'finished_at' => 'datetime',
             'confirmed_at' => 'datetime',
             'rejected_at' => 'datetime',
+            'confirmation_reminded_at' => 'datetime',
+            'confirmation_expired_at' => 'datetime',
         ];
     }
 }

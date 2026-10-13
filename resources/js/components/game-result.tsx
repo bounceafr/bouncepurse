@@ -1,4 +1,5 @@
-import { Form } from '@inertiajs/react';
+import { Form, Link } from '@inertiajs/react';
+import GameController from '@/actions/App/Http/Controllers/Admin/GameController';
 import {
     confirm as confirmResult,
     reject as rejectResult,
@@ -25,19 +26,33 @@ type ResultGame = GameSide & {
     game_result: GameResult | null;
 };
 
-function ConfirmationStatus({
+/** What the opponent said, or that they never answered. */
+function OpponentResponse({
     game,
     result,
 }: {
     game: ResultGame;
     result: GameResult;
 }) {
-    if (game.status === 'awaiting_video') {
+    if (result.rejected_at) {
         return (
-            <p className="text-sm text-indigo-600">
-                {result.rejected_at ? 'Rejected' : 'Confirmed'} by{' '}
-                {opponentSideName(game)}. Upload a video of the game to send it
-                for review; moderators only review games with a video.
+            <div className="space-y-1 text-sm">
+                <p className="text-orange-600">
+                    Rejected by {opponentSideName(game)}.
+                </p>
+                {result.rejection_reason && (
+                    <p className="text-muted-foreground">
+                        “{result.rejection_reason}”
+                    </p>
+                )}
+            </div>
+        );
+    }
+
+    if (result.confirmation_expired_at) {
+        return (
+            <p className="text-sm text-orange-600">
+                {opponentSideName(game)} did not confirm in time.
             </p>
         );
     }
@@ -51,35 +66,72 @@ function ConfirmationStatus({
         );
     }
 
-    if (result.rejected_at) {
+    return null;
+}
+
+function ConfirmationStatus({
+    game,
+    result,
+    capabilities,
+}: {
+    game: ResultGame;
+    result: GameResult;
+    capabilities: GameResultCapabilities;
+}) {
+    if (game.status === 'awaiting_confirmation') {
+        const deadline = capabilities.confirmationDeadline
+            ? new Date(capabilities.confirmationDeadline).toLocaleString()
+            : null;
+
         return (
-            <div className="space-y-1 text-sm">
-                <p className="text-orange-600">
-                    Rejected by {opponentSideName(game)}. A moderator will
-                    review this game.
-                </p>
-                {result.rejection_reason && (
-                    <p className="text-muted-foreground">
-                        “{result.rejection_reason}”
-                    </p>
-                )}
-            </div>
+            <p className="text-sm text-muted-foreground">
+                {capabilities.canRespondToResult
+                    ? 'Your confirmation is needed.'
+                    : `Waiting for ${opponentSideName(game)} to confirm this result.`}
+                {deadline &&
+                    ` If there is no answer by ${deadline}, a moderator will review the game.`}
+            </p>
         );
     }
 
     return (
-        <p className="text-sm text-muted-foreground">
-            Waiting for {opponentSideName(game)} to confirm this result.
-        </p>
+        <div className="space-y-2">
+            <OpponentResponse game={game} result={result} />
+            {game.status === 'awaiting_video' &&
+                (capabilities.canUploadVideo ? (
+                    <p className="text-sm text-indigo-600">
+                        Moderators only review games with a video.{' '}
+                        <Link
+                            href={GameController.showUpload(game.uuid).url}
+                            className="font-medium underline"
+                        >
+                            Upload a video
+                        </Link>{' '}
+                        to send this game for review.
+                    </p>
+                ) : (
+                    <p className="text-sm text-indigo-600">
+                        Waiting for {submittingSideName(game)} to upload a video
+                        of the game before a moderator reviews it.
+                    </p>
+                ))}
+            {(game.status === 'pending' || game.status === 'contested') && (
+                <p className="text-sm text-muted-foreground">
+                    A moderator will review this game.
+                </p>
+            )}
+        </div>
     );
 }
 
 function GameResultSummary({
     game,
     result,
+    capabilities,
 }: {
     game: ResultGame;
     result: GameResult;
+    capabilities: GameResultCapabilities;
 }) {
     return (
         <div className="space-y-3">
@@ -110,7 +162,11 @@ function GameResultSummary({
                 <span className="text-muted-foreground">Finished</span>
                 <span>{new Date(result.finished_at).toLocaleString()}</span>
             </div>
-            <ConfirmationStatus game={game} result={result} />
+            <ConfirmationStatus
+                game={game}
+                result={result}
+                capabilities={capabilities}
+            />
         </div>
     );
 }
@@ -274,7 +330,11 @@ export function GameResultPanel({
             <CardContent>
                 {result ? (
                     <>
-                        <GameResultSummary game={game} result={result} />
+                        <GameResultSummary
+                            game={game}
+                            result={result}
+                            capabilities={capabilities}
+                        />
                         {capabilities.canRespondToResult && (
                             <GameResultResponse game={game} />
                         )}

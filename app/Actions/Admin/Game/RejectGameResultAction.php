@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Actions\Admin\Game;
 
+use App\Actions\Game\NotifyGameActivityAction;
+use App\Enums\GameActivity;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 final readonly class RejectGameResultAction
 {
-    public function __construct(private LockGameAwaitingConfirmation $lock) {}
+    public function __construct(
+        private LockGameAwaitingConfirmation $lock,
+        private NotifyGameActivityAction $notify,
+    ) {}
 
     public function handle(Game $game, User $responder, string $reason): void
     {
@@ -25,5 +30,7 @@ final readonly class RejectGameResultAction
 
             $locked->update(['status' => $locked->moderationEntryStatus()]);
         });
+
+        $this->notify->handle($game->refresh(), GameActivity::ResultRejected);
     }
 }

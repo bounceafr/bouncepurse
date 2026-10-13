@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\GameActivity;
 use App\Enums\GameStatus;
 use App\Enums\ResultStatus;
 use App\Enums\Role;
@@ -9,7 +10,7 @@ use App\Models\Game;
 use App\Models\GameResult;
 use App\Models\Team;
 use App\Models\User;
-use App\Notifications\GameResultAwaitingConfirmationNotification;
+use App\Notifications\GameActivityNotification;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -125,7 +126,7 @@ test('submitting result notifies the opponent', function (): void {
 
     $this->post(route('admin.games.result.store', $game), resultPayload());
 
-    Notification::assertSentTo($opponent, GameResultAwaitingConfirmationNotification::class);
+    Notification::assertSentTo($opponent, GameActivityNotification::class, fn (GameActivityNotification $notification): bool => $notification->activity === GameActivity::ResultSubmitted);
 });
 
 test('submitting a team result notifies the opposing team owner', function (): void {
@@ -142,7 +143,7 @@ test('submitting a team result notifies the opposing team owner', function (): v
 
     $this->post(route('admin.games.result.store', $game), resultPayload());
 
-    Notification::assertSentTo($opponentOwner, GameResultAwaitingConfirmationNotification::class);
+    Notification::assertSentTo($opponentOwner, GameActivityNotification::class, fn (GameActivityNotification $notification): bool => $notification->activity === GameActivity::ResultSubmitted);
 });
 
 test('game outcome is derived from submitted scores', function (int $yourScore, int $opponentScore, ResultStatus $expected): void {
@@ -327,11 +328,11 @@ test('the confirmation email shows the submitted score and links to the game', f
 
     $this->post(route('admin.games.result.store', $game), resultPayload());
 
-    /** @var GameResultAwaitingConfirmationNotification $notification */
-    $notification = Notification::sent($opponent, GameResultAwaitingConfirmationNotification::class)->sole();
+    /** @var GameActivityNotification $notification */
+    $notification = Notification::sent($opponent, GameActivityNotification::class)->sole();
     $mail = $notification->toMail($opponent);
 
-    expect($notification->via($opponent))->toBe(['mail'])
+    expect($notification->via($opponent))->toBe(['mail', 'database'])
         ->and($mail->subject)->toContain($game->title)
         ->and($mail->introLines[0])->toContain('Alice submitted a final score of 21 – 15')
         ->and($mail->actionUrl)->toBe(route('admin.games.show', $game));

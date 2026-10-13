@@ -200,6 +200,13 @@ export default function ModerationShow({ game }: { game: Game }) {
                                                 .
                                             </p>
                                         )}
+                                        {game.game_result
+                                            .confirmation_expired_at && (
+                                            <p className="font-medium text-orange-600">
+                                                {opponentSideName(game)} did not
+                                                confirm the result in time.
+                                            </p>
+                                        )}
                                         {game.game_result.rejected_at && (
                                             <div className="space-y-1">
                                                 <p className="font-medium text-orange-600">

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Actions\Admin\Game;
 
+use App\Actions\Game\NotifyGameActivityAction;
+use App\Enums\GameActivity;
 use App\Enums\GameStatus;
 use App\Models\Game;
 use App\Models\GameResult;
 use App\Models\User;
-use App\Notifications\GameResultAwaitingConfirmationNotification;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -16,6 +17,8 @@ use Illuminate\Validation\ValidationException;
 
 final readonly class SubmitGameResultAction
 {
+    public function __construct(private NotifyGameActivityAction $notify) {}
+
     /**
      * @param  array{your_score: int, opponent_score: int, started_at: string, finished_at: string}  $data
      */
@@ -53,9 +56,7 @@ final readonly class SubmitGameResultAction
             throw ValidationException::withMessages(['result' => 'A result has already been submitted for this game.']);
         }
 
-        $game->refresh();
-        $confirmer = $game->opponentTeam !== null ? $game->opponentTeam->owner : $game->opponentPlayer;
-        $confirmer?->notify(new GameResultAwaitingConfirmationNotification($game, $result));
+        $this->notify->handle($game->refresh(), GameActivity::ResultSubmitted);
 
         return $result;
     }

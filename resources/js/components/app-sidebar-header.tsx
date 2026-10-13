@@ -1,7 +1,8 @@
-import { Bell, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { NavUser } from '@/components/nav-user';
+import { NotificationsMenu } from '@/components/notifications-menu';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -62,23 +63,7 @@ export function AppSidebarHeader({
                         />
                     </DropdownMenuContent>
                 </DropdownMenu>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9 hover:bg-primary/10 hover:text-primary"
-                            aria-label="Notifications"
-                        >
-                            <Bell className="size-5 opacity-80" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-72">
-                        <div className="p-4 text-center text-sm text-muted-foreground">
-                            No new notifications
-                        </div>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <NotificationsMenu />
                 <NavUser />
             </div>
         </header>

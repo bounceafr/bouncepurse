@@ -9,6 +9,7 @@ use App\Http\Controllers\DisputeController;
 use App\Http\Controllers\GuardianVerificationController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LedgerController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PlayerProfileController;
 use Illuminate\Http\Request;
@@ -26,6 +27,8 @@ Route::get('auth/google/redirect', [SocialAuthController::class, 'redirect'])->n
 Route::get('auth/google/callback', [SocialAuthController::class, 'callback'])->name('auth.google.callback');
 
 Route::middleware(['auth'])->group(function (): void {
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::post('email/verify-code', [EmailVerificationCodeController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('verification.code.verify');
