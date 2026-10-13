@@ -1,7 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
-import Player from '@vimeo/player';
 import { ShieldAlert } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { GameVideoPlayer } from '@/components/game-video-player';
 import InputError from '@/components/input-error';
 import { ListPageShell } from '@/components/list-page-shell';
 import { Badge } from '@/components/ui/badge';
@@ -17,15 +16,14 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
-import type { GameModeration, GameSummary, VideoStatus } from '@/lib/game';
+import type { GameModeration, GameSummary, GameVideo } from '@/lib/game';
 import { index, update } from '@/routes/admin/override';
 import type { BreadcrumbItem } from '@/types';
 
-type Game = GameSummary & {
-    vimeo_uri: string | null;
-    vimeo_status: VideoStatus | null;
-    moderation: GameModeration[];
-};
+type Game = GameSummary &
+    GameVideo & {
+        moderation: GameModeration[];
+    };
 
 const overrideStatusOptions = [
     { value: 'approved', label: 'Approve' },
@@ -42,58 +40,6 @@ const statusVariant: Record<
     pending: 'outline',
 };
 
-function extractVimeoId(uri: string): string | null {
-    return uri.match(/\/(\d+)$/)?.[1] ?? null;
-}
-
-function VimeoPlayer({
-    vimeoUri,
-    subtitle,
-}: {
-    vimeoUri: string | null;
-    subtitle: string;
-}) {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const vimeoId = vimeoUri ? extractVimeoId(vimeoUri) : null;
-
-    useEffect(() => {
-        if (!containerRef.current || !vimeoId) return;
-
-        const player = new Player(containerRef.current, {
-            id: Number(vimeoId),
-            byline: false,
-            portrait: false,
-            title: false,
-            dnt: true,
-            responsive: true,
-        });
-
-        return () => {
-            player.destroy().catch(() => {});
-        };
-    }, [vimeoId]);
-
-    if (!vimeoId) {
-        return (
-            <div className="flex aspect-video w-full items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30">
-                <p className="text-sm text-muted-foreground">
-                    No video available
-                </p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="flex flex-col gap-2">
-            <div
-                ref={containerRef}
-                className="w-full overflow-hidden rounded-lg"
-            />
-            <p className="text-base text-muted-foreground">{subtitle}</p>
-        </div>
-    );
-}
-
 export default function OverrideShow({ game }: { game: Game }) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Flagged Games', href: index().url },
@@ -108,10 +54,7 @@ export default function OverrideShow({ game }: { game: Game }) {
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* Video — spans 2 columns */}
                     <div className="lg:col-span-2">
-                        <VimeoPlayer
-                            vimeoUri={game.vimeo_uri}
-                            subtitle={game.title}
-                        />
+                        <GameVideoPlayer game={game} subtitle={game.title} />
                     </div>
 
                     {/* Sidebar */}

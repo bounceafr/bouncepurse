@@ -9,7 +9,7 @@ import { ListPageShell } from '@/components/list-page-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useVimeoUpload } from '@/hooks/use-vimeo-upload';
+import { useVideoUpload } from '@/hooks/use-video-upload';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
 import {
@@ -45,7 +45,7 @@ export default function UploadGame({
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const inputRef = useRef<HTMLInputElement | null>(null);
-    const upload = useVimeoUpload(game.uuid, () => router.visit(index().url));
+    const upload = useVideoUpload(game.uuid, () => router.visit(index().url));
     const { state: status, progress, error } = upload;
 
     function selectFile(selected: File | null) {
@@ -181,7 +181,7 @@ export default function UploadGame({
                                         {status === 'done'
                                             ? 'Complete'
                                             : status === 'verifying'
-                                              ? 'Verifying with Vimeo...'
+                                              ? 'Verifying upload...'
                                               : isPaused
                                                 ? 'Paused'
                                                 : 'Uploading...'}
@@ -197,6 +197,13 @@ export default function UploadGame({
                                     />
                                 </div>
                             </div>
+                        )}
+
+                        {upload.failedOver && !error && status !== 'done' && (
+                            <p className="text-sm text-muted-foreground">
+                                The upload to our server failed, so the video is
+                                being sent to Vimeo instead.
+                            </p>
                         )}
 
                         {error && (

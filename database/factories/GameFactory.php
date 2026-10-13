@@ -72,6 +72,15 @@ final class GameFactory extends Factory
         ]);
     }
 
+    public function withServerVideo(): static
+    {
+        return $this->state(fn (): array => [
+            'video_path' => fake()->uuid().'/'.Str::lower((string) Str::ulid()).'.mp4',
+            'video_size' => 24,
+            'vimeo_status' => VideoStatus::Ready,
+        ]);
+    }
+
     public function scheduled(): static
     {
         return $this->state(fn (): array => [

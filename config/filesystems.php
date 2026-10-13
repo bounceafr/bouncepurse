@@ -49,6 +49,14 @@ return [
             'report' => false,
         ],
 
+        // Game videos; must stay a local disk because uploads are appended to the file chunk by chunk.
+        'videos' => [
+            'driver' => 'local',
+            'root' => env('GAME_VIDEO_STORAGE_PATH', storage_path('app/videos')),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

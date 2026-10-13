@@ -1,10 +1,9 @@
 import { Form, Head } from '@inertiajs/react';
-import Player from '@vimeo/player';
-import { useEffect, useRef } from 'react';
 import {
     index,
     update,
 } from '@/actions/App/Http/Controllers/Admin/ModerationController';
+import { GameVideoPlayer } from '@/components/game-video-player';
 import InputError from '@/components/input-error';
 import { ListPageShell } from '@/components/list-page-shell';
 import { Button } from '@/components/ui/button';
@@ -23,17 +22,16 @@ import {
     type GameResult,
     type GameSide,
     type GameSummary,
+    type GameVideo,
     type NamedRef,
     opponentSideName,
     submittingSideName,
-    type VideoStatus,
 } from '@/lib/game';
 import type { BreadcrumbItem } from '@/types';
 
 type Game = GameSummary &
-    GameSide & {
-        vimeo_uri: string | null;
-        vimeo_status: VideoStatus | null;
+    GameSide &
+    GameVideo & {
         game_result: (GameResult & { responder: NamedRef | null }) | null;
     };
 
@@ -42,58 +40,6 @@ const statusOptions = [
     { value: 'rejected', label: 'Reject' },
     { value: 'flagged', label: 'Flag' },
 ];
-
-function extractVimeoId(uri: string): string | null {
-    return uri.match(/\/(\d+)$/)?.[1] ?? null;
-}
-
-function VimeoPlayer({
-    vimeoUri,
-    subtitle,
-}: {
-    vimeoUri: string | null;
-    subtitle: string;
-}) {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const vimeoId = vimeoUri ? extractVimeoId(vimeoUri) : null;
-
-    useEffect(() => {
-        if (!containerRef.current || !vimeoId) return;
-
-        const player = new Player(containerRef.current, {
-            id: Number(vimeoId),
-            byline: false,
-            portrait: false,
-            title: false,
-            dnt: true,
-            responsive: true,
-        });
-
-        return () => {
-            player.destroy().catch(() => {});
-        };
-    }, [vimeoId]);
-
-    if (!vimeoId) {
-        return (
-            <div className="flex aspect-video w-full items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30">
-                <p className="text-sm text-muted-foreground">
-                    No video available
-                </p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="flex flex-col gap-2">
-            <div
-                ref={containerRef}
-                className="w-full overflow-hidden rounded-lg"
-            />
-            <p className="text-base text-muted-foreground">{subtitle}</p>
-        </div>
-    );
-}
 
 export default function ModerationShow({ game }: { game: Game }) {
     const breadcrumbs: BreadcrumbItem[] = [
@@ -109,10 +55,7 @@ export default function ModerationShow({ game }: { game: Game }) {
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* Video — spans 2 columns */}
                     <div className="lg:col-span-2">
-                        <VimeoPlayer
-                            vimeoUri={game.vimeo_uri}
-                            subtitle={game.title}
-                        />
+                        <GameVideoPlayer game={game} subtitle={game.title} />
                     </div>
 
                     {/* Sidebar */}

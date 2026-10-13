@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-/** Lifecycle of a game's Vimeo video; independent of the game's moderation status. */
+/** Lifecycle of a game's video, on this server or on Vimeo; independent of the game's moderation status. */
 enum VideoStatus: string
 {
     case Uploading = 'uploading';

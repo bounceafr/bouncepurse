@@ -43,8 +43,19 @@ export type GameResult = {
     confirmation_expired_at: string | null;
 };
 
-/** Lifecycle of a game's Vimeo video (App\Enums\VideoStatus). */
+/** Lifecycle of a game's video, on this server or on Vimeo (App\Enums\VideoStatus). */
 export type VideoStatus = 'uploading' | 'processing' | 'ready' | 'failed';
+
+/**
+ * Where a game's video lives: on this server (video_path), or on Vimeo when the
+ * upload failed over there. vimeo_status is the video's status in either case.
+ */
+export type GameVideo = {
+    uuid: string;
+    vimeo_uri: string | null;
+    vimeo_status: VideoStatus | null;
+    video_path: string | null;
+};
 
 export type GameSide = {
     player: NamedRef | null;

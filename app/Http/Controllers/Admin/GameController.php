@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Admin\Game\CompleteUploadAction;
 use App\Actions\Admin\Game\DeleteAction;
-use App\Actions\Admin\Game\InitiateVimeoUploadAction;
+use App\Actions\Admin\Game\InitiateVideoUploadAction;
 use App\Actions\Admin\Game\ListAction;
 use App\Actions\Admin\Game\StoreAction;
 use App\Actions\Admin\Game\UpdateAction;
@@ -147,20 +147,22 @@ final class GameController extends Controller
         ]);
     }
 
-    public function initiateUpload(UploadGameRequest $request, InitiateVimeoUploadAction $action, Game $game): JsonResponse
+    public function initiateUpload(UploadGameRequest $request, InitiateVideoUploadAction $action, Game $game): JsonResponse
     {
         /** @var int $fileSize */
         $fileSize = $request->validated('file_size');
-        $result = $action->handle($game, $fileSize);
+        /** @var string $fileName */
+        $fileName = $request->validated('file_name');
+        $result = $action->handle($game, $fileSize, $fileName, $request->boolean('failover'));
 
         return response()->json($result);
     }
 
     public function completeUpload(CompleteUploadRequest $request, CompleteUploadAction $action, Game $game): JsonResponse
     {
-        /** @var string $vimeoUri */
-        $vimeoUri = $request->validated('vimeo_uri');
-        $status = $action->handle($game, $vimeoUri);
+        /** @var string $uploadId */
+        $uploadId = $request->validated('upload_id');
+        $status = $action->handle($game, $uploadId);
 
         return response()->json(['vimeo_status' => $status->value]);
     }
