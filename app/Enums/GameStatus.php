@@ -7,6 +7,8 @@ namespace App\Enums;
 enum GameStatus: string
 {
     case Scheduled = 'scheduled';
+    case AwaitingConfirmation = 'awaiting_confirmation';
+    case Contested = 'contested';
     case Pending = 'pending';
     case Approved = 'approved';
     case Rejected = 'rejected';
@@ -16,6 +18,8 @@ enum GameStatus: string
     {
         return match ($this) {
             self::Scheduled => 'Scheduled',
+            self::AwaitingConfirmation => 'Awaiting Confirmation',
+            self::Contested => 'Contested',
             self::Pending => 'Pending',
             self::Approved => 'Approved',
             self::Rejected => 'Rejected',
@@ -27,6 +31,8 @@ enum GameStatus: string
     {
         return match ($this) {
             self::Scheduled => 'blue-500',
+            self::AwaitingConfirmation => 'purple-500',
+            self::Contested => 'orange-600',
             self::Pending => 'yellow-500',
             self::Approved => 'green-500',
             self::Rejected => 'red-500',

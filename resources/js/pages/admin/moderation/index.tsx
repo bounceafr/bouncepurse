@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
+import { gameStatusColors, gameStatusLabel } from '@/lib/game';
 import type { BreadcrumbItem } from '@/types';
 
 type User = { id: number; name: string };
@@ -83,6 +84,20 @@ const columns: ColumnDef<Game, unknown>[] = [
         header: sortableHeader('Played At'),
         cell: ({ row }) =>
             new Date(row.getValue('played_at')).toLocaleDateString(),
+    },
+    {
+        accessorKey: 'status',
+        header: sortableHeader('Status'),
+        cell: ({ row }) => {
+            const status = row.original.status;
+            return (
+                <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white capitalize ${gameStatusColors[status] ?? 'bg-gray-400'}`}
+                >
+                    {gameStatusLabel(status)}
+                </span>
+            );
+        },
     },
     {
         id: 'video',

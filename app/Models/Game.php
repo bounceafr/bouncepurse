@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property-read int $id
@@ -27,6 +28,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read int $court_id
  * @property-read ?int $team_id
  * @property-read int $player_id
+ * @property-read ?int $opponent_player_id
+ * @property-read ?int $opponent_team_id
  * @property-read string $title
  * @property-read ?string $vimeo_uri
  * @property-read ?string $vimeo_status
@@ -39,6 +42,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read ?Court $court
  * @property-read User $player
  * @property-read ?Team $team
+ * @property-read ?User $opponentPlayer
+ * @property-read ?Team $opponentTeam
  * @property-read ?GameResult $gameResult
  */
 #[RouteKey('uuid')]
@@ -65,6 +70,18 @@ final class Game extends Model
         return $this->belongsTo(Team::class);
     }
 
+    /** @return BelongsTo<User, $this> */
+    public function opponentPlayer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'opponent_player_id');
+    }
+
+    /** @return BelongsTo<Team, $this> */
+    public function opponentTeam(): BelongsTo
+    {
+        return $this->belongsTo(Team::class, 'opponent_team_id');
+    }
+
     /** @return HasOne<GameResult, $this> */
     public function gameResult(): HasOne
     {
@@ -83,14 +100,77 @@ final class Game extends Model
         return $this->hasMany(Dispute::class);
     }
 
+    public function hasOpponent(): bool
+    {
+        return $this->participant === GameParticipant::TEAM
+            ? $this->opponent_team_id !== null
+            : $this->opponent_player_id !== null;
+    }
+
+    /** The creator's side: the player who created the game, or a member of their team. */
+    public function isOnSubmittingSide(User $user): bool
+    {
+        return $this->player_id === $user->id
+            || ($this->team_id !== null && $this->team?->hasMember($user) === true);
+    }
+
+    /** The opponent's side representative who must consent to a submitted result. */
+    public function isConfirmer(User $user): bool
+    {
+        return $this->participant === GameParticipant::TEAM
+            ? $this->opponentTeam?->user_id === $user->id
+            : $this->opponent_player_id === $user->id;
+    }
+
+    public function isParticipant(User $user): bool
+    {
+        return $this->isOnSubmittingSide($user)
+            || $this->opponent_player_id === $user->id
+            || ($this->opponent_team_id !== null && (
+                $this->opponentTeam?->user_id === $user->id
+                || $this->opponentTeam?->hasMember($user) === true
+            ));
+    }
+
+    /** Why a result cannot be submitted for this game right now, or null when it can. */
+    public function resultSubmissionBlocker(): ?string
+    {
+        if ($this->status !== GameStatus::Scheduled || $this->gameResult()->exists()) {
+            return 'A result has already been submitted for this game.';
+        }
+
+        if (! $this->hasOpponent()) {
+            return 'Add an opponent to this game before submitting a result.';
+        }
+
+        if ($this->played_at === null && ($this->scheduled_at === null || $this->scheduled_at->isFuture())) {
+            return 'You can submit results after the scheduled time.';
+        }
+
+        return null;
+    }
+
     protected static function booted(): void
     {
         self::addGlobalScope('player_scope', function (Builder $query): void {
             $user = auth()->user();
 
-            if ($user instanceof User && $user->hasRole(Role::Player->value)) {
-                $query->where('player_id', $user->id);
+            if (! $user instanceof User || ! $user->hasRole(Role::Player->value)) {
+                return;
             }
+
+            $memberTeamIds = DB::table('team_members')->select('team_id')->where('user_id', $user->id);
+            $ownedTeamIds = DB::table('teams')->select('id')->where('user_id', $user->id);
+
+            $query->where(function (Builder $query) use ($user, $memberTeamIds, $ownedTeamIds): void {
+                $query->where($query->qualifyColumn('player_id'), $user->id)
+                    ->orWhere($query->qualifyColumn('opponent_player_id'), $user->id);
+
+                foreach (['team_id', 'opponent_team_id'] as $column) {
+                    $query->orWhereIn($query->qualifyColumn($column), $memberTeamIds)
+                        ->orWhereIn($query->qualifyColumn($column), $ownedTeamIds);
+                }
+            });
         });
     }
 

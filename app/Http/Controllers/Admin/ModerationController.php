@@ -26,7 +26,7 @@ final class ModerationController extends Controller
 
     public function show(Game $game): Response
     {
-        $game->load(['court', 'player']);
+        $game->load(['court', 'player:id,name', 'team', 'opponentPlayer:id,name', 'opponentTeam', 'gameResult.responder:id,name']);
 
         return Inertia::render('admin/moderation/show', ['game' => $game]);
     }

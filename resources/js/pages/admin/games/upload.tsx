@@ -1,34 +1,28 @@
-import { Form, Head, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Upload, X } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 import * as tus from 'tus-js-client';
 import GameController, {
     index,
 } from '@/actions/App/Http/Controllers/Admin/GameController';
-import { store as storeResult } from '@/actions/App/Http/Controllers/Admin/GameResultController';
-import InputError from '@/components/input-error';
+import { GameResultPanel } from '@/components/game-result';
 import { ListPageShell } from '@/components/list-page-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
+import {
+    type GameResult,
+    type GameResultCapabilities,
+    type GameSide,
+} from '@/lib/game';
 import type { BreadcrumbItem } from '@/types';
-
-type GameResult = {
-    uuid: string;
-    your_score: number;
-    opponent_score: number;
-    started_at: string;
-    finished_at: string;
-};
 
 type Court = { id: number; name: string; category_label?: string | null };
 type Team = { id: number; name: string };
 
-type Game = {
+type Game = GameSide & {
     id: number;
     uuid: string;
     title: string;
@@ -43,17 +37,10 @@ type Game = {
     game_result: GameResult | null;
 };
 
-function canSubmitResult(game: Game): boolean {
-    if (game.game_result) {
-        return false;
-    }
-    if (!game.scheduled_at) {
-        return false;
-    }
-    return new Date(game.scheduled_at) < new Date();
-}
-
-export default function UploadGame({ game }: { game: Game }) {
+export default function UploadGame({
+    game,
+    ...capabilities
+}: { game: Game } & GameResultCapabilities) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Games', href: index().url },
         { title: game.title, href: '#' },
@@ -337,166 +324,7 @@ export default function UploadGame({ game }: { game: Game }) {
                     </div>
 
                     {/* Result Section */}
-                    {game.game_result ? (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Result</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="flex items-center justify-center gap-4 py-4">
-                                    <div className="text-center">
-                                        <div className="text-3xl font-bold">
-                                            {game.game_result.your_score}
-                                        </div>
-                                        <div className="text-sm text-muted-foreground">
-                                            Your Score
-                                        </div>
-                                    </div>
-                                    <div className="text-2xl text-muted-foreground">
-                                        –
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-3xl font-bold">
-                                            {game.game_result.opponent_score}
-                                        </div>
-                                        <div className="text-sm text-muted-foreground">
-                                            Opponent
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">
-                                        Started
-                                    </span>
-                                    <span>
-                                        {new Date(
-                                            game.game_result.started_at,
-                                        ).toLocaleString()}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">
-                                        Finished
-                                    </span>
-                                    <span>
-                                        {new Date(
-                                            game.game_result.finished_at,
-                                        ).toLocaleString()}
-                                    </span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ) : canSubmitResult(game) ? (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Submit Result</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Form
-                                    {...storeResult.form(game.uuid)}
-                                    className="space-y-4"
-                                >
-                                    {({ processing, errors }) => (
-                                        <>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="your_score">
-                                                        Your Score
-                                                    </Label>
-                                                    <Input
-                                                        id="your_score"
-                                                        name="your_score"
-                                                        type="number"
-                                                        min={0}
-                                                        required
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            errors.your_score
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="opponent_score">
-                                                        Opponent Score
-                                                    </Label>
-                                                    <Input
-                                                        id="opponent_score"
-                                                        name="opponent_score"
-                                                        type="number"
-                                                        min={0}
-                                                        required
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            errors.opponent_score
-                                                        }
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="started_at">
-                                                        Started At
-                                                    </Label>
-                                                    <Input
-                                                        id="started_at"
-                                                        name="started_at"
-                                                        type="datetime-local"
-                                                        required
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            errors.started_at
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="finished_at">
-                                                        Finished At
-                                                    </Label>
-                                                    <Input
-                                                        id="finished_at"
-                                                        name="finished_at"
-                                                        type="datetime-local"
-                                                        required
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            errors.finished_at
-                                                        }
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <Button
-                                                disabled={processing}
-                                                asChild
-                                            >
-                                                <button type="submit">
-                                                    Submit Result
-                                                </button>
-                                            </Button>
-                                        </>
-                                    )}
-                                </Form>
-                            </CardContent>
-                        </Card>
-                    ) : game.scheduled_at ? (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Result</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    {new Date(game.scheduled_at) > new Date()
-                                        ? 'You can submit results after the scheduled date.'
-                                        : 'No result submitted yet.'}
-                                </p>
-                            </CardContent>
-                        </Card>
-                    ) : null}
+                    <GameResultPanel game={game} capabilities={capabilities} />
 
                     {/* Game Details */}
                     <Card>

@@ -15,7 +15,7 @@ final class ListAction
     public function handle(?string $search = null, ?string $filter = null): LengthAwarePaginator
     {
         return Game::query()
-            ->with(['court', 'player', 'gameResult'])
+            ->with(['court', 'player', 'team', 'opponentPlayer:id,name', 'opponentTeam', 'gameResult'])
             ->when($search, function (Builder $query, string $search): void {
                 $query->where('title', 'like', sprintf('%%%s%%', $search));
             })
