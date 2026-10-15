@@ -91,19 +91,21 @@ function OpponentSelect({
     defaultValue,
     errors,
     idPrefix,
+    className,
 }: {
     participant: string;
     opponents: Opponents;
     defaultValue?: number | null;
     errors: Record<string, string>;
     idPrefix: string;
+    className?: string;
 }) {
     const isTeam = participant === 'team';
     const name = isTeam ? 'opponent_team_id' : 'opponent_player_id';
     const options = isTeam ? opponents.teams : opponents.players;
 
     return (
-        <div className="grid gap-2">
+        <div className={cn('grid content-start gap-2', className)}>
             <Label htmlFor={`${idPrefix}-${name}`}>
                 {isTeam ? 'Opposing Team' : 'Opponent'}
             </Label>
@@ -148,8 +150,8 @@ function EditGameFormFields({
     const playedAtValue = date ? combineLocalDateAndTime(date, '00:00') : '';
 
     return (
-        <>
-            <div className="grid gap-2">
+        <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid content-start gap-2">
                 <Label htmlFor="edit-title">Title</Label>
                 <Input
                     id="edit-title"
@@ -161,14 +163,14 @@ function EditGameFormFields({
                 <InputError message={errors.title} />
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid content-start gap-2">
                 <Label htmlFor="edit-format">Format</Label>
                 <Select
                     name="format"
                     defaultValue={game.format ?? '5v5'}
                     required
                 >
-                    <SelectTrigger id="edit-format">
+                    <SelectTrigger id="edit-format" className="w-full">
                         <SelectValue placeholder="Select format" />
                     </SelectTrigger>
                     <SelectContent>
@@ -182,14 +184,14 @@ function EditGameFormFields({
                 <InputError message={errors.format} />
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid content-start gap-2">
                 <Label htmlFor="edit-court_id">Court</Label>
                 <Select
                     name="court_id"
                     defaultValue={String(game.court_id)}
                     required
                 >
-                    <SelectTrigger id="edit-court_id">
+                    <SelectTrigger id="edit-court_id" className="w-full">
                         <SelectValue placeholder="Select a court" />
                     </SelectTrigger>
                     <SelectContent>
@@ -203,7 +205,7 @@ function EditGameFormFields({
                 <InputError message={errors.court_id} />
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid content-start gap-2">
                 <Label>Played At</Label>
                 <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
@@ -251,10 +253,11 @@ function EditGameFormFields({
                 }
                 errors={errors}
                 idPrefix="edit"
+                className="sm:col-span-2"
             />
 
-            <InputError message={errors.game} />
-        </>
+            <InputError message={errors.game} className="sm:col-span-2" />
+        </div>
     );
 }
 
@@ -295,8 +298,8 @@ function CreateGameFormFields({
             : '';
 
     return (
-        <>
-            <div className="grid gap-2">
+        <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid content-start gap-2">
                 <Label htmlFor="create-title">Title</Label>
                 <Input
                     id="create-title"
@@ -307,7 +310,7 @@ function CreateGameFormFields({
                 <InputError message={errors.title} />
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid content-start gap-2">
                 <Label>Game Type</Label>
                 <div className="flex gap-2">
                     <Button
@@ -337,14 +340,14 @@ function CreateGameFormFields({
                 </div>
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid content-start gap-2">
                 <Label htmlFor="create-participant">Participant Type</Label>
                 <Select
                     name="participant"
                     onValueChange={setParticipant}
                     required
                 >
-                    <SelectTrigger id="create-participant">
+                    <SelectTrigger id="create-participant" className="w-full">
                         <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -357,11 +360,33 @@ function CreateGameFormFields({
                 <InputError message={errors.participant} />
             </div>
 
+            <div className="grid content-start gap-2">
+                <Label htmlFor="create-format">Format</Label>
+                <Select
+                    name="format"
+                    defaultValue={formats[0]}
+                    key={participant}
+                    required
+                >
+                    <SelectTrigger id="create-format" className="w-full">
+                        <SelectValue placeholder="Select format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {formats.map((f) => (
+                            <SelectItem key={f} value={f}>
+                                {f}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.format} />
+            </div>
+
             {participant === 'team' && (
-                <div className="grid gap-2">
+                <div className="grid content-start gap-2">
                     <Label htmlFor="create-team_id">Team</Label>
                     <Select name="team_id" required>
-                        <SelectTrigger id="create-team_id">
+                        <SelectTrigger id="create-team_id" className="w-full">
                             <SelectValue placeholder="Select your team" />
                         </SelectTrigger>
                         <SelectContent>
@@ -386,35 +411,17 @@ function CreateGameFormFields({
                     opponents={opponents}
                     errors={errors}
                     idPrefix="create"
+                    // Without a team beside it, the opponent takes the whole row.
+                    className={
+                        participant === 'team' ? undefined : 'sm:col-span-2'
+                    }
                 />
             )}
 
-            <div className="grid gap-2">
-                <Label htmlFor="create-format">Format</Label>
-                <Select
-                    name="format"
-                    defaultValue={formats[0]}
-                    key={participant}
-                    required
-                >
-                    <SelectTrigger id="create-format">
-                        <SelectValue placeholder="Select format" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {formats.map((f) => (
-                            <SelectItem key={f} value={f}>
-                                {f}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <InputError message={errors.format} />
-            </div>
-
-            <div className="grid gap-2">
+            <div className="grid content-start gap-2">
                 <Label htmlFor="create-court_id">Court</Label>
                 <Select name="court_id" required>
-                    <SelectTrigger id="create-court_id">
+                    <SelectTrigger id="create-court_id" className="w-full">
                         <SelectValue placeholder="Select a court" />
                     </SelectTrigger>
                     <SelectContent>
@@ -430,7 +437,7 @@ function CreateGameFormFields({
 
             {mode === 'played' ? (
                 <>
-                    <div className="grid gap-2">
+                    <div className="grid content-start gap-2">
                         <Label>Played At</Label>
                         <Popover
                             open={calendarOpen}
@@ -476,7 +483,7 @@ function CreateGameFormFields({
                     </div>
                 </>
             ) : (
-                <div className="grid gap-2">
+                <div className="grid content-start gap-2">
                     <Label>Scheduled Date & Time</Label>
                     <div className="flex gap-2">
                         <Popover
@@ -530,7 +537,7 @@ function CreateGameFormFields({
                     <InputError message={errors.scheduled_at} />
                 </div>
             )}
-        </>
+        </div>
     );
 }
 
@@ -806,7 +813,7 @@ export default function GamesIndex({
 
             {/* Create Game Modal */}
             <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>Create Game</DialogTitle>
                         <DialogDescription>
@@ -857,7 +864,7 @@ export default function GamesIndex({
                     }
                 }}
             >
-                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>Edit Game</DialogTitle>
                         <DialogDescription>
