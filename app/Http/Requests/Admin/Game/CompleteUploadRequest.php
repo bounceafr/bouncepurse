@@ -24,7 +24,7 @@ final class CompleteUploadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'vimeo_uri' => ['required', 'string'],
+            'upload_id' => ['required', 'string'],
         ];
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Admin\Game;
 
 use App\Models\Game;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 final class DeleteAction
@@ -16,5 +17,7 @@ final class DeleteAction
         }
 
         $game->delete();
+
+        Storage::disk('videos')->deleteDirectory($game->uuid);
     }
 }

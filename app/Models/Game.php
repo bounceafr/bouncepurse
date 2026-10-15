@@ -33,7 +33,9 @@ use Illuminate\Support\Facades\DB;
  * @property-read ?int $opponent_team_id
  * @property-read string $title
  * @property-read ?string $vimeo_uri
- * @property-read ?VideoStatus $vimeo_status
+ * @property-read ?VideoStatus $vimeo_status Status of the game's video, whether it is stored on this server or on Vimeo
+ * @property-read ?string $video_path Path of the video on the "videos" disk when this server stores it
+ * @property-read ?int $video_size Size in bytes the browser declared for a video uploaded to this server
  * @property-read ?CarbonInterface $scheduled_at
  * @property-read ?CarbonInterface $played_at
  * @property-read GameStatus $status
@@ -177,6 +179,25 @@ final class Game extends Model
             : GameStatus::Pending;
     }
 
+    /**
+     * Identifies the current upload attempt: the file name of a video stored on this server, or the Vimeo URI.
+     * Clients send it back, so a stale attempt cannot overwrite a newer one.
+     */
+    public function videoUploadId(): ?string
+    {
+        return $this->video_path !== null
+            ? pathinfo($this->video_path, PATHINFO_FILENAME)
+            : $this->vimeo_uri;
+    }
+
+    /** Whether this server is still receiving the given upload attempt. */
+    public function isReceivingServerUpload(string $uploadId): bool
+    {
+        return $this->video_path !== null
+            && $this->vimeo_status === VideoStatus::Uploading
+            && $this->videoUploadId() === $uploadId;
+    }
+
     /** Release a game held for its video once that video is ready; call on a locked row. */
     public function releaseToModerationIfVideoReady(): void
     {
@@ -217,6 +238,7 @@ final class Game extends Model
             'status' => GameStatus::class,
             'result' => ResultStatus::class,
             'vimeo_status' => VideoStatus::class,
+            'video_size' => 'integer',
             'scheduled_at' => 'datetime',
             'played_at' => 'datetime',
             'created_at' => 'datetime',

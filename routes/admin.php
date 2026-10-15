@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AllocationController;
 use App\Http\Controllers\Admin\CourtController;
 use App\Http\Controllers\Admin\GameController;
 use App\Http\Controllers\Admin\GameResultController;
+use App\Http\Controllers\Admin\GameVideoController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\ModeratorController;
 use App\Http\Controllers\Admin\OverrideController;
@@ -39,6 +40,16 @@ Route::middleware(['auth', 'verified', 'permission:view-games'])->group(function
         ->name('admin.games.upload-url');
     Route::patch('admin/games/{game}/complete-upload', [GameController::class, 'completeUpload'])
         ->name('admin.games.complete-upload');
+
+    // Videos stored on this server; uploads use the tus protocol (HEAD for the offset, PATCH for each chunk).
+    Route::get('admin/games/{game}/video', [GameVideoController::class, 'show'])
+        ->name('admin.games.video');
+    Route::match(['HEAD'], 'admin/games/{game}/video-uploads/{upload}', [GameVideoController::class, 'uploadOffset'])
+        ->where('upload', '[0-9a-z]{26}')
+        ->name('admin.games.video-upload.offset');
+    Route::patch('admin/games/{game}/video-uploads/{upload}', [GameVideoController::class, 'uploadChunk'])
+        ->where('upload', '[0-9a-z]{26}')
+        ->name('admin.games.video-upload.chunk');
 });
 
 Route::middleware(['auth', 'verified', 'permission:manage-users'])->group(function (): void {

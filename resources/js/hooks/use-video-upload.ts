@@ -8,8 +8,15 @@ export type UploadState =
 
 type UploadError = {
     message: string;
-    /** The file reached Vimeo; only the server-side verification needs repeating. */
+    /** The whole file was sent; only the server-side verification needs repeating. */
     retryVerification: boolean;
+};
+
+/** Where an upload attempt sends the video: this server, or Vimeo as its failover. */
+type UploadAttempt = {
+    storage: 'server' | 'vimeo';
+    upload_link: string;
+    upload_id: string;
 };
 
 class RequestError extends Error {}
@@ -61,10 +68,11 @@ function isAbort(error: unknown): boolean {
 }
 
 /**
- * Resumable tus upload to Vimeo for one game. The server hands out an upload attempt
- * (vimeo_uri) and only accepts completion for that attempt, after checking with Vimeo.
+ * Resumable tus upload of one game's video. The server hands out an upload attempt
+ * (upload_id), normally on itself, and only accepts completion for that attempt after
+ * checking the stored file. When uploading to the server fails, the video goes to Vimeo.
  */
-export function useVimeoUpload(
+export function useVideoUpload(
     gameUuid: string,
     onComplete?: (videoStatus: VideoStatus) => void,
 ) {
@@ -72,9 +80,11 @@ export function useVimeoUpload(
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState<UploadError | null>(null);
     const [videoStatus, setVideoStatus] = useState<VideoStatus | null>(null);
+    /** The upload to the server failed, so the video is going to Vimeo instead. */
+    const [failedOver, setFailedOver] = useState(false);
 
     const uploadRef = useRef<tus.Upload | null>(null);
-    const vimeoUriRef = useRef<string | null>(null);
+    const uploadIdRef = useRef<string | null>(null);
     const abortRef = useRef<AbortController | null>(null);
     const onCompleteRef = useRef(onComplete);
 
@@ -88,7 +98,7 @@ export function useVimeoUpload(
 
         return () => {
             controller.abort();
-            // Stop sending chunks but keep the upload on Vimeo so it could be resumed.
+            // Stop sending chunks but keep the partial upload so it could be resumed.
             void uploadRef.current?.abort(false);
             uploadRef.current = null;
         };
@@ -100,10 +110,10 @@ export function useVimeoUpload(
     }, []);
 
     const verify = useCallback(async () => {
-        const vimeoUri = vimeoUriRef.current;
+        const uploadId = uploadIdRef.current;
         const signal = abortRef.current?.signal;
 
-        if (!vimeoUri || !signal) return;
+        if (!uploadId || !signal) return;
 
         setState('verifying');
         setError(null);
@@ -113,7 +123,7 @@ export function useVimeoUpload(
             const data = await jsonRequest<{ vimeo_status: VideoStatus }>(
                 route.url,
                 route.method,
-                { vimeo_uri: vimeoUri },
+                { upload_id: uploadId },
                 signal,
                 'We could not confirm the upload with the server.',
             );
@@ -143,60 +153,98 @@ export function useVimeoUpload(
             setProgress(0);
             setError(null);
             setVideoStatus(null);
+            setFailedOver(false);
 
-            let uploadLink: string;
+            const begin = async (failover: boolean): Promise<void> => {
+                let attempt: UploadAttempt;
 
-            try {
-                const route = GameController.initiateUpload(gameUuid);
-                const data = await jsonRequest<{
-                    upload_link: string;
-                    vimeo_uri: string;
-                }>(
-                    route.url,
-                    route.method,
-                    { file_size: file.size, file_name: file.name },
-                    signal,
-                    'Failed to create upload session.',
-                );
+                try {
+                    const route = GameController.initiateUpload(gameUuid);
+                    attempt = await jsonRequest<UploadAttempt>(
+                        route.url,
+                        route.method,
+                        {
+                            file_size: file.size,
+                            file_name: file.name,
+                            failover,
+                        },
+                        signal,
+                        'Failed to create upload session.',
+                    );
+                } catch (err) {
+                    if (isAbort(err)) return;
 
-                uploadLink = data.upload_link;
-                vimeoUriRef.current = data.vimeo_uri;
-            } catch (err) {
-                if (isAbort(err)) return;
+                    fail(
+                        err instanceof Error
+                            ? err.message
+                            : 'Unknown error occurred.',
+                    );
 
-                fail(
-                    err instanceof Error
-                        ? err.message
-                        : 'Unknown error occurred.',
-                );
+                    return;
+                }
 
-                return;
-            }
+                uploadIdRef.current = attempt.upload_id;
+                setProgress(0);
 
-            const upload = new tus.Upload(file, {
-                uploadUrl: uploadLink,
-                chunkSize: 5 * 1024 * 1024,
-                retryDelays: [0, 3000, 5000, 10000, 20000],
-                onProgress(bytesUploaded, bytesTotal) {
-                    if (signal.aborted) return;
+                const upload = new tus.Upload(file, {
+                    uploadUrl: attempt.upload_link,
+                    chunkSize: 5 * 1024 * 1024,
+                    retryDelays: [0, 3000, 5000, 10000, 20000],
+                    onBeforeRequest(req) {
+                        // Only our own server checks the CSRF token; it must never be sent to Vimeo.
+                        if (attempt.storage === 'server') {
+                            req.setHeader('X-XSRF-TOKEN', xsrfToken());
+                        }
+                    },
+                    onProgress(bytesUploaded, bytesTotal) {
+                        if (signal.aborted) return;
 
-                    setProgress(Math.round((bytesUploaded / bytesTotal) * 100));
-                },
-                onSuccess() {
-                    if (signal.aborted) return;
+                        setProgress(
+                            Math.round((bytesUploaded / bytesTotal) * 100),
+                        );
+                    },
+                    onSuccess() {
+                        if (signal.aborted) return;
 
-                    setProgress(100);
-                    void verify();
-                },
-                onError(uploadError) {
-                    if (signal.aborted) return;
+                        setProgress(100);
+                        void verify();
+                    },
+                    onError(uploadError) {
+                        if (signal.aborted) return;
 
-                    fail(uploadError.message ?? 'Upload failed.');
-                },
-            });
+                        if (attempt.storage === 'vimeo') {
+                            fail(
+                                failover
+                                    ? 'The video could not be uploaded to our server or to Vimeo. Please check your connection and try again.'
+                                    : (uploadError.message ?? 'Upload failed.'),
+                            );
 
-            uploadRef.current = upload;
-            upload.start();
+                            return;
+                        }
+
+                        // The server no longer knows this attempt: a newer upload replaced it.
+                        if (
+                            uploadError instanceof tus.DetailedError &&
+                            uploadError.originalResponse?.getStatus() === 404
+                        ) {
+                            fail(
+                                'This upload has been replaced by a newer one.',
+                            );
+
+                            return;
+                        }
+
+                        // Retries are exhausted; Vimeo is the failover.
+                        setFailedOver(true);
+                        void begin(true);
+                    },
+                });
+
+                uploadRef.current = upload;
+                upload.start();
+            };
+
+            await begin(false);
         },
         [fail, gameUuid, verify],
     );
@@ -214,11 +262,12 @@ export function useVimeoUpload(
     const reset = useCallback(() => {
         void uploadRef.current?.abort();
         uploadRef.current = null;
-        vimeoUriRef.current = null;
+        uploadIdRef.current = null;
         setState('idle');
         setProgress(0);
         setError(null);
         setVideoStatus(null);
+        setFailedOver(false);
     }, []);
 
     return {
@@ -226,6 +275,7 @@ export function useVimeoUpload(
         progress,
         error,
         videoStatus,
+        failedOver,
         start,
         pause,
         resume,

@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { MoreHorizontal } from 'lucide-react';
+import GameVideoController from '@/actions/App/Http/Controllers/Admin/GameVideoController';
 import {
     index,
     show,
@@ -22,13 +23,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/app-layout';
 import { formatCourtName } from '@/lib/court';
-import { type GameSummary, type VideoStatus } from '@/lib/game';
+import { type GameSummary, type GameVideo } from '@/lib/game';
 import type { BreadcrumbItem, Paginated } from '@/types';
 
-type Game = GameSummary & {
-    vimeo_uri: string | null;
-    vimeo_status: VideoStatus | null;
-};
+type Game = GameSummary & GameVideo;
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Moderation Queue', href: index().url },
@@ -74,9 +72,13 @@ const columns: ColumnDef<Game, unknown>[] = [
         enableSorting: false,
         cell: ({ row }) => {
             const game = row.original;
-            return game.vimeo_uri ? (
+            const href = game.video_path
+                ? GameVideoController.show(game.uuid).url
+                : game.vimeo_uri && `https://vimeo.com${game.vimeo_uri}`;
+
+            return href ? (
                 <a
-                    href={`https://vimeo.com${game.vimeo_uri}`}
+                    href={href}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-blue-600 underline hover:text-blue-800"

@@ -26,6 +26,8 @@ final class UploadGameRequest extends FormRequest
         return [
             'file_size' => ['required', 'integer', 'min:1'],
             'file_name' => ['required', 'string'],
+            // The browser could not finish uploading to this server; send the video to Vimeo instead.
+            'failover' => ['sometimes', 'boolean'],
         ];
     }
 }
